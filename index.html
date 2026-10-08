@@ -1,0 +1,1672 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vida Vitoriosa</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Playfair+Display:wght@600;700&display=swap">
+<style>
+:root{
+  --bg:#e8ecf0;--surface:#ffffff;--ink:#2e3138;--muted:#5f6672;--line:#e3e7ec;--field:#e8ecf0;
+  --accent:#7c6b50;--accent2:#c4a882;--link:#7c6b50;--nav:#2e3138;--nav-ink:#d9dce1;
+  --good:#3d6b52;--bad:#a4573d;
+  --k-sage:#567565;--k-terra:#a4573d;--k-brown:#7c6b50;--k-slate:#4f6378;
+  --bad-bg:#f3e3dd;--bad-ink:#8a3f27;--warn-bg:#f1e7d4;--warn-ink:#6e5a2f;
+  --ok-bg:#dfe9e3;--ok-ink:#2f5441;--info-bg:#dde4ea;--info-ink:#3b4e63;
+  --c0:#7c6b50;--c1:#6f9480;--c2:#b8956a;--c3:#4f6378;--warnbar:#8a6d3b;
+  --shadow:0 10px 24px rgba(46,49,56,.07);
+  --inset:inset 3px 3px 7px rgba(46,49,56,.12),inset -3px -3px 7px rgba(255,255,255,.9);
+  --btn-sh:4px 4px 10px rgba(46,49,56,.12),-4px -4px 10px rgba(255,255,255,.9);
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#16181c;--surface:#23262c;--ink:#eceef1;--muted:#a9b0bb;--line:#343841;--field:#16181c;
+    --link:#d2b98f;--nav:#101215;--nav-ink:#cfd3d9;--good:#8cc3a4;--bad:#e7a08a;
+    --bad-bg:#46302a;--bad-ink:#f0b9a6;--warn-bg:#443a26;--warn-ink:#e6cf98;
+    --ok-bg:#2a3d33;--ok-ink:#a9d1bc;--info-bg:#2d3945;--info-ink:#b4c8dc;
+    --c0:#c4a882;--c1:#8fb59f;--c2:#d1a97b;--c3:#8aa3bd;--warnbar:#d1a97b;
+    --shadow:0 10px 24px rgba(0,0,0,.35);
+    --inset:inset 3px 3px 7px rgba(0,0,0,.5),inset -3px -3px 7px rgba(255,255,255,.04);
+    --btn-sh:4px 4px 10px rgba(0,0,0,.45),-4px -4px 10px rgba(255,255,255,.04);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16181c;--surface:#23262c;--ink:#eceef1;--muted:#a9b0bb;--line:#343841;--field:#16181c;
+  --link:#d2b98f;--nav:#101215;--nav-ink:#cfd3d9;--good:#8cc3a4;--bad:#e7a08a;
+  --bad-bg:#46302a;--bad-ink:#f0b9a6;--warn-bg:#443a26;--warn-ink:#e6cf98;
+  --ok-bg:#2a3d33;--ok-ink:#a9d1bc;--info-bg:#2d3945;--info-ink:#b4c8dc;
+  --c0:#c4a882;--c1:#8fb59f;--c2:#d1a97b;--c3:#8aa3bd;--warnbar:#d1a97b;
+  --shadow:0 10px 24px rgba(0,0,0,.35);
+  --inset:inset 3px 3px 7px rgba(0,0,0,.5),inset -3px -3px 7px rgba(255,255,255,.04);
+  --btn-sh:4px 4px 10px rgba(0,0,0,.45),-4px -4px 10px rgba(255,255,255,.04);
+}
+html{background:var(--bg);scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Nunito',system-ui,sans-serif;font-size:15px;line-height:1.45}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{font-family:'Playfair Display',Georgia,serif;margin:0}
+h1{font-size:32px;font-weight:700}
+h2{font-size:20px;font-weight:600}
+p{margin:0}
+:focus-visible{outline:3px solid var(--link);outline-offset:2px}
+#main:focus{outline:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.muted{color:var(--muted)}.small{font-size:13px}.mb{margin-bottom:14px}
+.ic{flex:none}
+
+/* topo */
+.top{background:var(--surface);box-shadow:0 2px 14px rgba(0,0,0,.08)}
+.top-in{max-width:1280px;margin:0 auto;padding:12px 20px;display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',Georgia,serif;font-size:22px;font-weight:700;flex:none}
+.brand-n{line-height:1.15}.brand-n b{display:block;font-family:'Playfair Display',Georgia,serif;font-size:20px}
+.brand-n small{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.search{flex:1 1 220px;max-width:420px;min-height:44px;display:flex;align-items:center;gap:10px;padding:0 14px;background:var(--field);border-radius:12px;box-shadow:var(--inset)}
+.search input{flex:1;min-width:0;border:0;background:transparent;outline:none;font-size:14px}
+.search:focus-within{outline:3px solid var(--link);outline-offset:2px}
+.top-right{margin-left:auto;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.ed-sel{min-height:44px;display:flex;align-items:center;gap:8px;padding:0 6px 0 14px;background:var(--field);border-radius:12px}
+.ed-sel span{font-size:12px;font-weight:600;color:var(--muted)}
+.ed-sel select{min-height:44px;border:0;background:transparent;font-weight:800;font-size:15px;cursor:pointer;max-width:200px}
+.ed-sel select option{color:#2e3138;background:#fff}
+.icon-btn{width:44px;height:44px;border:0;border-radius:12px;background:var(--field);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
+.user{min-height:44px;display:flex;align-items:center;gap:10px;border:0;background:transparent;cursor:pointer;padding:0 4px;text-align:left}
+.avatar{width:44px;height:44px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800}
+.user-t{line-height:1.2}.user-t b{display:block;font-size:14px}.user-t small{font-size:12px;color:var(--muted)}
+.nav{background:var(--nav)}
+.nav-in{max-width:1280px;margin:0 auto;padding:8px 20px;display:flex;flex-wrap:wrap;gap:6px}
+.tab{min-height:44px;padding:0 16px;border:0;border-radius:10px;background:transparent;color:var(--nav-ink);font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px;cursor:pointer}
+.tab:hover{background:rgba(255,255,255,.08)}
+.tab.on{background:var(--accent);color:#fff}
+main{max-width:1280px;margin:0 auto;padding:28px 20px 40px;display:flex;flex-direction:column;gap:24px}
+.ph{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px}
+.ph-a{display:flex;flex-wrap:wrap;gap:12px}
+
+/* blocos */
+.card{background:var(--surface);border-radius:16px;padding:22px;box-shadow:var(--shadow);min-width:0}
+.card-h{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}
+.kpi{color:#fff;border-radius:16px;padding:22px;display:flex;align-items:center;justify-content:space-between;gap:16px;box-shadow:0 10px 24px rgba(0,0,0,.14)}
+.k-sage{background:var(--k-sage)}.k-terra{background:var(--k-terra)}.k-brown{background:var(--k-brown)}.k-slate{background:var(--k-slate)}
+.k-l{font-size:14px;font-weight:700}
+.k-v{font-family:'Playfair Display',Georgia,serif;font-size:30px;font-weight:700;line-height:1.2;overflow-wrap:anywhere}
+.k-s{font-size:13px}
+.k-i{width:56px;height:56px;flex:none;border-radius:14px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center}
+.row{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.r2{flex:2 1 520px;min-width:0}.r1{flex:1 1 320px;min-width:0}
+.stack{display:flex;flex-direction:column;gap:18px}
+.scroll{overflow-x:auto}
+.tbl{width:100%;min-width:560px;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em;padding:10px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:12px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:0}
+.num{text-align:right}
+th.num{text-align:right}
+.neg{color:var(--bad);font-weight:800;white-space:nowrap}.pos{color:var(--good);font-weight:800;white-space:nowrap}
+.badge{display:inline-block;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:800;white-space:nowrap}
+.b-bad{background:var(--bad-bg);color:var(--bad-ink)}.b-warn{background:var(--warn-bg);color:var(--warn-ink)}
+.b-ok{background:var(--ok-bg);color:var(--ok-ink)}.b-info{background:var(--info-bg);color:var(--info-ink)}
+.empty{padding:20px;text-align:center;color:var(--muted)}
+.note{padding:12px 16px;border-radius:12px;background:var(--field);font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.acts-c{display:flex;gap:8px;align-items:center}
+
+/* botões e campos */
+.btn{min-height:44px;padding:0 20px;border:0;border-radius:999px;font-weight:700;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--field);color:var(--ink);box-shadow:var(--btn-sh)}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:none}
+.btn-sm{padding:0 14px;font-size:13px;box-shadow:none}
+.btn-block{width:100%;min-height:48px;font-size:16px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.link{background:none;border:0;padding:0 4px;min-height:44px;color:var(--link);font-weight:800;cursor:pointer;text-align:left}
+.link:hover{text-decoration:underline}
+.form{display:flex;flex-direction:column;gap:16px}
+.fg{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fl{font-size:13px;font-weight:800}
+.fl small{font-weight:600;color:var(--muted)}
+.inp{min-height:48px;width:100%;padding:0 16px;border:0;border-radius:12px;background:var(--field);box-shadow:var(--inset);outline-offset:2px}
+.inp.sm{min-height:44px;padding:0 12px;font-size:14px}
+textarea.inp{padding:12px 16px;min-height:90px;resize:vertical}
+input[type=file].inp{padding:10px 12px;min-height:48px}
+.two{display:flex;flex-wrap:wrap;gap:12px}.two>*{flex:1 1 130px;min-width:0}
+.filters{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px}.filters>*{flex:1 1 140px;min-width:0}
+.fl-s{font-size:12px;font-weight:800;color:var(--muted)}
+.seg{position:relative;display:flex;padding:4px;border-radius:999px;background:var(--field)}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:999px;font-weight:800;font-size:14px;cursor:pointer;text-align:center;padding:0 8px}
+.seg input:checked+label{background:var(--accent);color:#fff}
+.seg input:focus-visible+label{outline:3px solid var(--link)}
+.tabs-seg{display:inline-flex;padding:4px;border-radius:999px;background:var(--surface);box-shadow:var(--shadow)}
+.tabs-seg button{min-height:44px;padding:0 26px;border:0;border-radius:999px;background:transparent;font-weight:800;font-size:14px;cursor:pointer}
+.tabs-seg button.on{background:var(--accent);color:#fff}
+.dropzone{display:flex;flex-direction:column;align-items:center;gap:8px;padding:22px;border:2px dashed var(--muted);border-radius:14px;text-align:center;cursor:pointer;background:transparent;width:100%}
+.dropzone.over{background:var(--field)}
+.chk{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;min-width:0}
+.chk legend{padding:0;margin-bottom:8px}
+.chk-i{position:relative;display:flex;align-items:center;gap:12px;min-height:44px;padding:0 14px;border-radius:12px;background:var(--field);box-shadow:var(--inset);cursor:pointer;font-weight:700;font-size:14px}
+.chk-i input{width:20px;height:20px;flex:none;accent-color:var(--accent)}
+
+/* permissões por área e setor */
+.perm{display:flex;flex-direction:column;gap:12px}
+.perm-m{border:1px solid var(--line);margin:0;padding:12px;border-radius:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.perm-s{display:flex;flex-direction:column;gap:10px}
+.perm-l{display:flex;flex-direction:column;gap:10px;max-height:260px;overflow:auto;padding:4px 2px}
+.perm-g{display:flex;flex-direction:column;gap:2px}
+.chk-s{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 10px;border-radius:10px;font-size:14px;cursor:pointer}
+.chk-s input{width:20px;height:20px;accent-color:var(--accent);flex:none}
+
+/* configurações */
+.sw-row{display:flex;flex-wrap:wrap;gap:10px}
+.sw-pick{position:relative;display:flex;align-items:center;gap:8px;min-height:44px;padding:0 14px 0 8px;border-radius:999px;background:var(--field);cursor:pointer;font-weight:700;font-size:14px}
+.sw-pick input{position:absolute;opacity:0}
+.sw-pick .dot{width:28px;height:28px;border-radius:50%;border:3px solid var(--surface);box-shadow:0 0 0 1px var(--muted)}
+.sw-pick input:checked+.dot{box-shadow:0 0 0 3px var(--ink)}
+.sw-pick input:focus-visible+.dot{outline:3px solid var(--link);outline-offset:2px}
+.li{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
+.li:last-child{border-bottom:0}
+.li b{flex:1 1 140px;min-width:0;overflow-wrap:anywhere}
+.cfg-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.add-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}.add-row .inp{flex:1 1 180px}
+.cfg-area{padding:10px 0 14px;border-bottom:2px solid var(--line)}
+.cfg-area:last-of-type{border-bottom:0}
+
+/* gráficos */
+.chart{width:100%;height:auto;display:block}
+.chart .lbl{fill:var(--ink);font-size:13px;font-weight:600}
+.chart .val{fill:var(--ink);font-size:13px;font-weight:700}
+.chart .ax{fill:var(--muted);font-size:12px}
+.chart .axb{fill:var(--ink);font-size:12px;font-weight:700}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .base{stroke:var(--muted);stroke-width:1}
+.chart .bar{fill:var(--c0)}.chart .ge{fill:var(--c1)}.chart .gs{fill:var(--bad)}
+.donut{display:block;width:200px;max-width:100%;height:auto;margin:0 auto}
+.dn-track{stroke:var(--field)}
+.dn{fill:none}.dn.c0{stroke:var(--c0)}.dn.c1{stroke:var(--c1)}.dn.c2{stroke:var(--c2)}.dn.c3{stroke:var(--c3)}
+.dn-v{font-family:'Playfair Display',Georgia,serif;font-size:20px;font-weight:700;fill:var(--ink)}
+.dn-s{font-size:12px;fill:var(--muted)}
+.lgs{margin-top:14px;display:flex;flex-direction:column;gap:10px;font-size:14px}
+.lg{display:flex;align-items:center;gap:10px}.lg span:nth-child(2){flex:1}
+.sw{width:12px;height:12px;border-radius:4px;flex:none}
+.c0b{background:var(--c0)}.c1b{background:var(--c1)}.c2b{background:var(--c2)}.c3b{background:var(--c3)}
+.legend{display:flex;flex-wrap:wrap;gap:18px;font-size:13px;color:var(--muted);margin-bottom:12px}
+.legend div{display:flex;align-items:center;gap:8px}
+.bar-t{width:110px;height:8px;margin-top:4px;border-radius:999px;background:var(--field)}
+.bar-f{display:block;height:8px;border-radius:999px}
+.bf-ok{background:var(--k-sage)}.bf-low{background:var(--warnbar)}.bf-crit{background:var(--k-terra)}.bf-acc{background:var(--c0)}
+
+/* atividade */
+.act{display:flex;align-items:center;gap:12px}
+.acts{display:flex;flex-direction:column;gap:16px}
+.act-i{width:40px;height:40px;flex:none;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.act-t{font-size:14px;font-weight:700}
+
+/* linha do tempo */
+.tl{position:relative;min-width:620px}
+.tl-row{display:grid;grid-template-columns:80px 1fr;gap:12px;align-items:center;margin-bottom:12px}
+.tl-n{font-weight:800;font-size:14px}
+.tl-track{position:relative;height:36px}
+.tl-head .tl-track{height:22px;font-size:12px;font-weight:700;color:var(--muted)}
+.tl-head .tl-track span{position:absolute}
+.tl-pill{transform:translateX(-50%);padding:2px 8px;border-radius:999px;background:var(--ink);color:var(--surface);font-size:11px}
+.tl-bar{position:absolute;top:0;height:36px;padding:0 12px;display:flex;align-items:center;border-radius:10px;font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-a{background:var(--k-brown);color:#fff}.tl-b{background:var(--k-slate);color:#fff}
+.tl-p{border:2px dashed var(--warnbar);background:var(--warn-bg);color:var(--warn-ink)}
+.tl-c{background:var(--field);color:var(--muted)}
+.tl-ov{position:absolute;left:92px;right:0;top:0;bottom:0;pointer-events:none}
+.tl-today{position:absolute;top:22px;bottom:0;width:2px;background:var(--ink);opacity:.7}
+
+/* organizacional */
+.org{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.org-side{flex:1 1 240px;max-width:300px;min-width:0}
+.org-main{flex:999 1 520px;min-width:0}
+.tr{display:flex;align-items:center;gap:8px;width:100%;min-height:44px;padding:0 12px;border:0;border-radius:10px;background:transparent;font-weight:700;font-size:14px;text-align:left;cursor:pointer}
+.tr span:nth-of-type(1){flex:1}
+.tr small{font-size:12px;color:var(--muted)}
+.tr.on{background:var(--accent);color:#fff}.tr.on small{color:#fff}
+.tr.l1{padding-left:38px}
+.vis{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:var(--field);font-size:13px;font-weight:700}
+.fi{width:40px;height:40px;flex:none;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.fcell{display:flex;align-items:center;gap:12px}
+
+/* login: metade com foto, metade com o formulário */
+.login{min-height:100vh;display:flex;flex-wrap:wrap}
+.login-photo{flex:1 1 420px;min-width:0;min-height:260px;background-color:#2e3138;background-image:var(--login-photo,linear-gradient(135deg,var(--accent),#2e3138));background-position:center;background-size:cover;background-repeat:no-repeat}
+.login-wrap{flex:1 1 420px;min-width:0;padding:40px 20px;display:flex;align-items:center;justify-content:center}
+.login-card{width:100%;max-width:420px;padding:36px;border-radius:20px;box-shadow:0 16px 40px rgba(0,0,0,.16)}
+
+.gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.gate-card{max-width:460px;width:100%;padding:32px}
+/* modal e aviso */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50}
+.dlg{background:var(--surface);color:var(--ink);border-radius:18px;max-width:560px;width:100%;max-height:90vh;overflow:auto;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+.dlg.wide{max-width:720px}
+.dlg h2{margin-bottom:12px}
+.dlg-a{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;margin-top:20px}
+.kv{width:100%;border-collapse:collapse;font-size:14px}
+.kv td{padding:8px 0;border-bottom:1px solid var(--line)}.kv td:last-child{text-align:right;font-weight:800}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:12px 20px;border-radius:999px;font-weight:700;z-index:60;max-width:90vw;text-align:center}
+@media (max-width:640px){
+  h1{font-size:26px}
+  .card{padding:16px}
+  .login-photo{flex-basis:100%;min-height:180px}
+  .login-card{padding:24px}
+  .user-t{display:none}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal"></div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<noscript>Ative o JavaScript para usar a plataforma.</noscript>
+<script>
+(function(){
+'use strict';
+
+/* ---------- utilidades ---------- */
+const $ = (s, r) => (r || document).querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nfBRL = new Intl.NumberFormat('pt-BR', {style:'currency', currency:'BRL'});
+const nfBRL0 = new Intl.NumberFormat('pt-BR', {style:'currency', currency:'BRL', minimumFractionDigits:0, maximumFractionDigits:0});
+const brl = n => nfBRL.format(Math.round(n * 100) / 100);
+const brl0 = n => nfBRL0.format(n);
+const signed = n => (n >= 0 ? '+ ' : '− ') + brl(Math.abs(n));
+const pad = n => String(n).padStart(2, '0');
+const isoOf = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const today = () => isoOf(new Date());
+const curYM = () => today().slice(0, 7);
+const parseISO = iso => { const p = iso.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); };
+const addDays = (iso, n) => { const d = parseISO(iso); d.setDate(d.getDate() + n); return isoOf(d); };
+const days = (a, b) => Math.round((parseISO(b) - parseISO(a)) / 86400000);
+const dmy = iso => iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) : '—';
+const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const MES3 = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const mesLabel = ym => cap(MESES[+ym.slice(5, 7) - 1]) + ' de ' + ym.slice(0, 4);
+let seq = 0;
+const nid = p => p + (++seq) + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const sum = (a, f) => a.reduce((t, x) => t + f(x), 0);
+const fmtQ = n => Number.isInteger(n) ? String(n) : n.toLocaleString('pt-BR');
+const retiroLabel = e => {
+  const a = e.ini, b = e.fim;
+  return a.slice(0, 7) === b.slice(0, 7) ? a.slice(8, 10) + ' a ' + b.slice(8, 10) + '/' + b.slice(5, 7) : dmy(a) + ' a ' + dmy(b);
+};
+const parseMoney = s => {
+  s = String(s || '').replace(/R\$|\s/g, '');
+  if (!s) return NaN;
+  if (s.indexOf(',') >= 0) s = s.replace(/\./g, '').replace(',', '.');
+  const n = Number(s);
+  return isFinite(n) ? n : NaN;
+};
+const fmtSize = b => b < 1024 ? b + ' B' : b < 1048576 ? Math.round(b / 1024) + ' KB' : (b / 1048576).toFixed(1).replace('.', ',') + ' MB';
+const initials = nome => nome.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w.charAt(0).toUpperCase()).join('');
+const mixHex = (hex, t) => { const n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255; const m = c => Math.round(c + (255 - c) * t); return '#' + [m(r), m(g), m(b)].map(v => v.toString(16).padStart(2, '0')).join(''); };
+
+/* ---------- padrões (tudo isto pode ser editado em Configurações) ---------- */
+const GERAL = '*geral';
+const MODS = ['edicoes', 'financeiro', 'estoque', 'organizacional', 'equipe', 'relatorios'];
+const MOD_ICON = {edicoes:'cal', financeiro:'wallet', estoque:'boxes', organizacional:'folder', equipe:'users', relatorios:'chart'};
+const DEF_MENU = {inicio:'Início', edicoes:'Edições', financeiro:'Financeiro', estoque:'Estoque', organizacional:'Organizacional', equipe:'Equipe', relatorios:'Relatórios', acessos:'Acessos', config:'Configurações'};
+const PRESETS = [['#7c6b50', 'Marrom'], ['#3b5f8a', 'Azul'], ['#2f6b57', 'Verde'], ['#7a4f6d', 'Ameixa'], ['#a4573d', 'Terracota'], ['#4f6378', 'Grafite']];
+const DEF_AREAS = [
+  {nome:'Apoio', setores:['Templo', 'Placa', 'Silêncio']},
+  {nome:'Eclesiástico', setores:['Teatro', 'Louvor', 'Intercessão']},
+  {nome:'Administrativo', setores:['Secretaria 1', 'Secretaria 2', 'Material de Dinâmicas']},
+  {nome:'Logística', setores:['Som', 'Estacionamento', 'Recepção', 'Saúde', 'Refeitório']}
+];
+
+/* ---------- estado e ligação com o Firebase ---------- */
+let BE = null, S = null, U = null, AU = null, phase = 'pre', fatalMsg = '';
+const PREFS = 'vv-gestao-prefs';
+const mkUI = () => ({view:'inicio', login:{modo:'entrar'}, fin:{tipo:'all', setor:'all', cat:'all', q:'', lim:12}, est:{setor:'all', sit:'all'}, org:{pasta:'geral', open:{}, q:'', ord:'recentes'}, eq:{alvo:'all', q:''}, rel:{modo:'mensal', mes:null, ano:null}, search:''});
+const emptyState = () => ({cfg:null, users:[], convites:[], team:[], ed:[], lanc:[], items:[], movs:[], files:[], userId:null, selEd:'all', theme:'auto'});
+let selPref = false;
+function loadPrefs(){ try { const p = JSON.parse(localStorage.getItem(PREFS) || '{}'); if (p.theme) S.theme = p.theme; if (p.selEd){ S.selEd = p.selEd; selPref = true; } } catch (e) {} }
+function save(){ try { localStorage.setItem(PREFS, JSON.stringify({theme:S.theme, selEd:S.selEd})); } catch (e) {} }
+function defaultCfg(){
+  return {
+    nome:'Vida Vitoriosa', sub:'Plataforma de gestão', sigla:'V', cor:'#7c6b50',
+    menu:Object.assign({}, DEF_MENU),
+    areas:DEF_AREAS.map(a => ({nome:a.nome, setores:a.setores.slice()})),
+    cargos:['Presidente', 'Gestor', 'Líder', 'Vice', 'Membro'],
+    unidades:['un', 'rolos', 'fls', 'caixas', 'pacotes', 'kg', 'litros'],
+    cats:['Material', 'Serviços', 'Alimentação', 'Impressão', 'Receita', 'Outros']
+  };
+}
+const normCfg = c => { const o = Object.assign(defaultCfg(), c || {}); o.menu = Object.assign({}, DEF_MENU, (c && c.menu) || {}); return o; };
+
+/* ---------- dados em tempo real (cada pessoa só recebe o que as regras deixam) ---------- */
+let unsubs = [], parts = {}, rT = null, pend = false, permKey = '', seeding = false, edDocs = [], edFin = {}, selInit = false, errT = 0;
+function stopAll(){
+  unsubs.splice(0).forEach(u => { try { u(); } catch (e) {} });
+  parts = {}; edDocs = []; edFin = {}; selInit = false; seeding = false;
+}
+function dataErr(what, e){
+  console.error(what, e);
+  const t = Date.now(); if (t - errT < 4000) return; errT = t;
+  toast(e && e.code === 'permission-denied' ? 'Sem permissão para carregar parte dos dados. Confira se as regras do Firebase foram publicadas.' : 'Falha ao carregar os dados. Confira a conexão.');
+}
+function mergeEd(){
+  S.ed = edDocs.map(e => Object.assign({}, e, edFin[e.id] ? {saldoInicial:edFin[e.id].saldoInicial, snap:edFin[e.id].snap} : {}));
+  if (!selInit && edDocs.length){
+    selInit = true;
+    if (S.selEd !== 'all' && !edDocs.some(e => e.id === S.selEd)) S.selEd = 'all';
+  }
+  if (!selPref && S.selEd === 'all'){ const o = S.ed.filter(e => e.status === 'aberta').sort((a, b) => a.ini.localeCompare(b.ini))[0]; if (o) S.selEd = o.id; }
+}
+const typing = () => { const a = document.activeElement; return !!(a && a.closest && a.closest('#app') && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && !/^(button|submit|checkbox|radio|file)$/.test(a.type || '')); };
+function scheduleRender(force){
+  if (rT) return;
+  rT = setTimeout(() => { rT = null; if (!force && typing()){ pend = true; return; } pend = false; render(); }, 30);
+}
+function planKeys(mods){
+  if (isAdmin()) return 'all';
+  const keys = new Set();
+  for (const m of mods){ const p = pOf(m); if (!p || p === true) continue; if (p.all) return 'all'; (p.s || []).forEach(k => keys.add(k)); }
+  return keys.size ? Array.from(keys) : null;
+}
+function watch(coll, target, mods, field){
+  const plan = planKeys(mods); S[target] = []; parts[coll] = {};
+  if (!plan) return;
+  const flts = plan === 'all' ? [null] : plan.map(k => ({field, eq:k}));
+  flts.forEach((flt, i) => unsubs.push(BE.db.listenQuery(coll, flt, docs => { parts[coll][i] = docs; S[target] = [].concat.apply([], Object.keys(parts[coll]).map(k => parts[coll][k])); scheduleRender(); }, e => dataErr(coll, e))));
+}
+let cfgSeeded = false;
+function startData(){
+  stopAll(); cfgSeeded = false;
+  permKey = JSON.stringify((ME() || {}).perm || {});
+  S.lanc = []; S.items = []; S.movs = []; S.files = []; S.team = []; S.ed = []; S.convites = [];
+  unsubs.push(BE.db.listenDoc('config/app', cfg => {
+    if (cfg){ S.cfg = normCfg(cfg); applyBrand(); applyTheme(); scheduleRender(true); }
+    else if (isAdmin()){ if (!cfgSeeded){ cfgSeeded = true; BE.db.set('config/app', defaultCfg()).catch(e => dataErr('config', e)); } }
+    else { S.cfg = null; scheduleRender(true); }
+  }, e => dataErr('config', e)));
+  if (isAdmin()){
+    unsubs.push(BE.db.listenQuery('users', null, d => { S.users = d; scheduleRender(); }, e => dataErr('users', e)));
+    unsubs.push(BE.db.listenQuery('convites', null, d => { S.convites = d; scheduleRender(); }, e => dataErr('convites', e)));
+  } else {
+    unsubs.push(BE.db.listenDoc('users/' + AU.uid, d => {
+      if (!d){ stopAll(); phase = 'sem-acesso'; S.userId = null; render(); return; }
+      S.users = [Object.assign({id:AU.uid}, d)];
+      if (JSON.stringify(d.perm || {}) !== permKey){ startData(); scheduleRender(true); return; }
+      scheduleRender();
+    }, e => dataErr('users', e)));
+  }
+  unsubs.push(BE.db.listenQuery('edicoes', null, d => { edDocs = d; mergeEd(); scheduleRender(); }, e => dataErr('edicoes', e)));
+  if (planKeys(['financeiro', 'relatorios']) === 'all') unsubs.push(BE.db.listenQuery('edicoes_fin', null, d => { edFin = {}; d.forEach(x => { edFin[x.id] = x; }); mergeEd(); scheduleRender(); }, e => dataErr('edicoes_fin', e)));
+  watch('lancamentos', 'lanc', ['financeiro', 'relatorios'], 'chave');
+  watch('itens', 'items', ['estoque', 'relatorios'], 'setor');
+  watch('movimentos', 'movs', ['estoque', 'relatorios'], 'setor');
+  watch('arquivos', 'files', ['organizacional'], 'chave');
+  watch('equipe', 'team', ['equipe'], 'chave');
+}
+
+/* ---------- login: descobrir o que cada pessoa pode acessar ---------- */
+let accTok = 0;
+async function resolveAccess(){
+  const tok = ++accTok;
+  stopAll();
+  S = Object.assign(emptyState(), {theme:S.theme, selEd:S.selEd});
+  if (!AU){ phase = 'login'; U = mkUI(); render(); return; }
+  if (!AU.emailVerified){ phase = 'verify'; render(); return; }
+  phase = 'checando'; render();
+  try {
+    const mail = AU.email.toLowerCase();
+    let ud = await BE.db.get('users/' + AU.uid);
+    if (!ud){
+      const inv = await BE.db.get('convites/' + mail);
+      if (inv){
+        ud = {nome:inv.nome || mail.split('@')[0], email:mail, papel:'visitante', perm:inv.perm || {}};
+        await BE.db.set('users/' + AU.uid, ud);
+      } else {
+        const adm = {nome:AU.displayName || mail.split('@')[0], email:mail, papel:'admin', perm:{}};
+        try { await BE.db.set('users/' + AU.uid, adm); ud = adm; } catch (e) { ud = null; }
+      }
+    }
+    if (tok !== accTok) return;
+    if (!ud){ phase = 'sem-acesso'; render(); return; }
+    S.userId = AU.uid; S.users = [Object.assign({id:AU.uid}, ud)]; U = mkUI();
+    phase = 'app'; startData(); render();
+  } catch (e) {
+    if (tok !== accTok) return;
+    console.error(e); fatalMsg = (e && e.code) ? e.code : String(e); phase = 'erro'; render();
+  }
+}
+function startApp(backend, configOk){
+  clearTimeout(window.__vvWatch);
+  BE = backend; S = emptyState(); U = mkUI(); selPref = false; loadPrefs(); applyTheme();
+  if (!backend || configOk === false){ phase = 'sem-config'; render(); return; }
+  phase = 'boot'; render();
+  BE.auth.onChange(u => { AU = u; resolveAccess(); });
+}
+function authMsg(e){
+  const c = (e && e.code) || '';
+  const m = {
+    'auth/invalid-credential':'E-mail ou senha incorretos.', 'auth/wrong-password':'E-mail ou senha incorretos.', 'auth/invalid-login-credentials':'E-mail ou senha incorretos.',
+    'auth/user-not-found':'Não encontramos essa conta. Use “Primeiro acesso”.', 'auth/invalid-email':'E-mail inválido.',
+    'auth/email-already-in-use':'Esse e-mail já tem conta. Use “Entrar” ou “Esqueci a senha”.', 'auth/weak-password':'Escolha uma senha com pelo menos 6 caracteres.',
+    'auth/too-many-requests':'Muitas tentativas. Aguarde um pouco e tente de novo.', 'auth/network-request-failed':'Sem conexão. Tente de novo.',
+    'auth/operation-not-allowed':'Ative o login por e-mail e senha no Firebase (Authentication).', 'auth/unauthorized-domain':'Este endereço não está autorizado no Firebase (Authentication > Configurações > Domínios autorizados).'
+  };
+  return m[c] || ('Não foi possível concluir (' + (c || 'erro') + ').');
+}
+
+/* ---------- configuração: nomes, áreas e setores vêm dos dados ---------- */
+const lab = k => (S && S.cfg && S.cfg.menu && S.cfg.menu[k]) || DEF_MENU[k];
+const allSetores = () => S.cfg.areas.reduce((a, x) => a.concat(x.setores), []);
+const setorArea = s => { const a = S.cfg.areas.find(x => x.setores.indexOf(s) >= 0); return a ? a.nome : ''; };
+const setoresDe = a => { const x = S.cfg.areas.find(y => y.nome === a); return x ? x.setores : []; };
+function applyBrand(){
+  const c = S.cfg.cor, l = mixHex(c, 0.38);
+  let el = $('#brand');
+  if (!el){ el = document.createElement('style'); el.id = 'brand'; document.head.appendChild(el); }
+  el.textContent = ':root{--accent:' + c + ';--k-brown:' + c + ';--link:' + c + ';--c0:' + c + ';--accent2:' + l + '}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--link:' + l + ';--c0:' + l + '}}:root[data-theme="dark"]{--link:' + l + ';--c0:' + l + '}';
+  document.title = S.cfg.nome;
+}
+
+/* ---------- acesso: administrador vê e edita tudo; visitante vê só o que foi liberado, por área e por setor ---------- */
+const ME = () => S.users.find(u => u.id === S.userId);
+const isAdmin = () => { const u = ME(); return !!u && u.papel === 'admin'; };
+const pOf = m => { const u = ME(); if (!u) return null; if (u.papel === 'admin') return 'ALL'; return (u.perm && u.perm[m]) || null; };
+const okS = (m, s) => { const p = pOf(m); if (p === 'ALL') return true; if (!p) return false; if (p === true) return true; return !!p.all || p.s.indexOf(s) >= 0; };
+const okArea = m => { const p = pOf(m); if (p === 'ALL' || p === true) return true; return !!p && !!p.all; };
+const can = m => { const p = pOf(m); if (p === 'ALL' || p === true) return true; if (!p) return false; return !!p.all || p.s.length > 0; };
+const full = ms => isAdmin() || ms.some(m => { const p = pOf(m); return p && p !== true && p.all; });
+const moneyFull = () => full(['financeiro', 'relatorios']);
+const stockFull = () => full(['estoque', 'relatorios']);
+const canMoney = () => can('financeiro') || can('relatorios');
+const canStock = () => can('estoque') || can('relatorios');
+const ctxMods = kind => {
+  const v = U.view;
+  if (kind === 'money') return v === 'financeiro' ? ['financeiro'] : v === 'relatorios' ? ['relatorios'] : ['financeiro', 'relatorios'];
+  return v === 'estoque' ? ['estoque'] : v === 'relatorios' ? ['relatorios'] : ['estoque', 'relatorios'];
+};
+const okCtx = (kind, s) => ctxMods(kind).some(m => okS(m, s));
+const needAdmin = () => { if (!isAdmin()){ toast('Somente administradores fazem isso.'); return true; } return false; };
+const edById = id => S.ed.find(e => e.id === id);
+const edName = id => (edById(id) || {}).nome || '—';
+const itemById = id => S.items.find(i => i.id === id);
+const openEds = () => S.ed.filter(e => e.status === 'aberta').sort((a, b) => a.ini.localeCompare(b.ini));
+const inSel = x => S.selEd === 'all' || x.ed === S.selEd;
+const pastaOk = k => k === 'geral' ? okS('organizacional', GERAL) : k.indexOf('area:') === 0 ? okArea('organizacional', k.slice(5)) : okS('organizacional', k.slice(6));
+const teamOk = t => t.alvo === GERAL ? okS('equipe', GERAL) : t.alvo.indexOf('area:') === 0 ? okArea('equipe', t.alvo.slice(5)) : okS('equipe', t.alvo.slice(6));
+const visLanc = () => S.lanc.filter(l => okCtx('money', l.setor || GERAL));
+const visItems = () => S.items.filter(i => okCtx('stock', i.setor));
+const visMovs = () => S.movs.filter(m => { const it = itemById(m.item); return it && okCtx('stock', it.setor); });
+const visFiles = () => S.files.filter(f => pastaOk(f.pasta));
+const visTeam = () => S.team.filter(teamOk);
+const entradas = L => sum(L.filter(l => l.tipo === 'receita'), l => l.valor);
+const saidas = L => sum(L.filter(l => l.tipo === 'despesa'), l => l.valor);
+const saldoGeral = () => entradas(S.lanc) - saidas(S.lanc);
+const sit = it => (it.min <= 0 || it.qtd >= it.min) ? 'ok' : (it.qtd / it.min <= 0.30 ? 'crit' : 'low');
+const edTot = e => { const L = S.lanc.filter(l => l.ed === e.id); const en = entradas(L), sa = saidas(L); return {ent:en, sai:sa, res:en - sa}; };
+const edTxt = () => S.selEd === 'all' ? 'Todas as edições' : edName(S.selEd);
+function porSetor(L){
+  const m = {};
+  L.filter(l => l.tipo === 'despesa').forEach(l => { m[l.setor] = (m[l.setor] || 0) + l.valor; });
+  return Object.keys(m).map(k => ({label:k, value:m[k]})).sort((a, b) => b.value - a.value);
+}
+function porArea(L){
+  const m = {};
+  L.filter(l => l.tipo === 'despesa').forEach(l => { const a = setorArea(l.setor) || 'Outros'; m[a] = (m[a] || 0) + l.valor; });
+  return Object.keys(m).map(k => ({label:k, value:m[k]})).sort((a, b) => b.value - a.value);
+}
+
+/* ---------- ícones ---------- */
+const ICON = {
+  home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>',
+  cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  wallet:'<path d="M3 7h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 7l12-3v3"/><circle cx="17" cy="13.5" r="1"/>',
+  boxes:'<path d="M21 8l-9-5-9 5 9 5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/>',
+  folder:'<path d="M3 6a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  chart:'<path d="M4 20V11M10 20V5M16 20v-7M22 20H2"/>',
+  users:'<circle cx="9" cy="8" r="4"/><path d="M1.5 21a7.5 7.5 0 0 1 15 0"/><path d="M16 4.2a4 4 0 0 1 0 7.6M18.5 14.2A7.5 7.5 0 0 1 22.5 21"/>',
+  key:'<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3"/>',
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>',
+  edit:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  moon:'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+  lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  minus:'<path d="M5 12h14"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/>',
+  upload:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/>',
+  trash:'<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/>',
+  file:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',
+  table:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/>',
+  image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M21 16l-5-5-8 8"/>',
+  down:'<path d="M7 7l10 10"/><path d="M17 8v9H8"/>',
+  up:'<path d="M17 7L7 17"/><path d="M7 8v9h9"/>',
+  warn:'<path d="M12 3l10 18H2z"/><path d="M12 10v5"/><path d="M12 18v.5"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  chevR:'<path d="M9 6l6 6-6 6"/>',
+  chevD:'<path d="M6 9l6 6 6-6"/>',
+  swap:'<path d="M7 4v14"/><path d="M3 14l4 4 4-4"/><path d="M17 20V6"/><path d="M13 10l4-4 4 4"/>'
+};
+const icon = (n, s) => '<svg class="ic" width="' + (s || 18) + '" height="' + (s || 18) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[n] + '</svg>';
+
+/* ---------- peças de interface ---------- */
+const kpi = (cls, label, value, sub, ic) => '<div class="kpi ' + cls + '"><div><div class="k-l">' + label + '</div><div class="k-v">' + value + '</div><div class="k-s">' + sub + '</div></div><div class="k-i">' + icon(ic, 28) + '</div></div>';
+const card = (title, body, o) => { o = o || {}; return '<section class="card ' + (o.cls || '') + '">' + (title ? '<div class="card-h"><h2>' + title + '</h2>' + (o.right || '') + '</div>' : '') + (o.sub ? '<p class="muted small mb">' + o.sub + '</p>' : '') + body + '</section>'; };
+const badge = (k, t) => '<span class="badge b-' + k + '">' + esc(t) + '</span>';
+const sitBadge = s => s === 'ok' ? badge('ok', 'Em dia') : s === 'low' ? badge('warn', 'Baixo') : badge('bad', 'Crítico');
+const statusBadge = s => s === 'aberta' ? badge('ok', 'Aberta') : s === 'planejada' ? badge('warn', 'Planejada') : badge('info', 'Fechada');
+const pageHead = (t, sub, actions) => '<div class="ph"><div><h1>' + t + '</h1><div class="muted">' + sub + '</div></div><div class="ph-a">' + (actions || '') + '</div></div>';
+const opt = (v, label, sel) => '<option value="' + esc(v) + '"' + (sel ? ' selected' : '') + '>' + esc(label) + '</option>';
+const table = (head, rows, o) => { o = o || {}; return '<div class="scroll"><table class="tbl"' + (o.min ? ' style="min-width:' + o.min + 'px"' : '') + '><thead><tr>' + head.map(h => '<th' + (h[1] ? ' class="num"' : '') + '>' + h[0] + '</th>').join('') + '</tr></thead><tbody>' + rows + '</tbody></table></div>'; };
+const iconBtn = (act, id, ic, label) => '<button class="icon-btn" data-act="' + act + '" data-id="' + esc(id) + '" aria-label="' + esc(label) + '">' + icon(ic) + '</button>';
+
+/* ---------- gráficos ---------- */
+function barH(items, label){
+  if (!items.length) return '<div class="empty">Sem despesas para mostrar.</div>';
+  const max = Math.max.apply(null, items.map(i => i.value)), rowH = 46, h = items.length * rowH + 14;
+  let g = '';
+  items.forEach((it, i) => {
+    const y = 16 + i * rowH, w = Math.max(4, Math.round(it.value / max * 360));
+    g += '<text class="lbl" x="0" y="' + (y + 17) + '">' + esc(it.label) + '</text><rect class="bar" x="170" y="' + y + '" width="' + w + '" height="24" rx="6"/><text class="val" x="' + (180 + w) + '" y="' + (y + 17) + '">' + brl0(it.value) + '</text>';
+  });
+  return '<svg viewBox="0 0 620 ' + h + '" class="chart" role="img" aria-label="' + esc(label) + '">' + g + '</svg>';
+}
+function donut(segs, centro){
+  const total = sum(segs, s => s.value);
+  if (!total) return '<div class="empty">Sem despesas para mostrar.</div>';
+  const C = 2 * Math.PI * 70; let off = 0, circ = '', leg = '';
+  segs.forEach((s, i) => {
+    const len = s.value / total * C;
+    circ += '<circle class="dn c' + (i % 4) + '" cx="100" cy="100" r="70" stroke-dasharray="' + len.toFixed(2) + ' ' + (C - len).toFixed(2) + '" stroke-dashoffset="' + (-off).toFixed(2) + '"/>';
+    off += len;
+    leg += '<div class="lg"><span class="sw c' + (i % 4) + 'b"></span><span>' + esc(s.label) + '</span><b>' + Math.round(s.value / total * 100) + '% · ' + brl0(s.value) + '</b></div>';
+  });
+  return '<svg viewBox="0 0 200 200" class="donut" role="img" aria-label="Gráfico de rosca dos gastos por área"><g transform="rotate(-90 100 100)" fill="none" stroke-width="28"><circle class="dn-track" cx="100" cy="100" r="70"/>' + circ + '</g><text class="dn-v" x="100" y="101" text-anchor="middle">' + brl0(total) + '</text><text class="dn-s" x="100" y="120" text-anchor="middle">' + esc(centro) + '</text></svg><div class="lgs">' + leg + '</div>';
+}
+function groupedBars(data){
+  const max = Math.max(1, Math.max.apply(null, data.map(d => Math.max(d.e, d.s))));
+  const steps = [500, 1000, 2000, 5000, 10000, 20000, 50000, 100000];
+  let step = steps.find(s => max / s <= 3) || 100000, grid = '';
+  for (let k = 1; k * step <= max; k++){
+    const y = 240 - k * step / max * 200;
+    grid += '<line class="grid" x1="50" y1="' + y.toFixed(1) + '" x2="890" y2="' + y.toFixed(1) + '"/><text class="ax" x="0" y="' + (y + 4).toFixed(1) + '">' + (step >= 1000 ? (k * step / 1000) + ' mil' : k * step) + '</text>';
+  }
+  let bars = '', labs = '';
+  data.forEach((d, i) => {
+    const x0 = 60 + i * 68;
+    if (d.e > 0){ const h = d.e / max * 200; bars += '<rect class="ge" x="' + x0 + '" y="' + (240 - h).toFixed(1) + '" width="24" height="' + h.toFixed(1) + '" rx="4"/>'; }
+    if (d.s > 0){ const h = d.s / max * 200; bars += '<rect class="gs" x="' + (x0 + 28) + '" y="' + (240 - h).toFixed(1) + '" width="24" height="' + h.toFixed(1) + '" rx="4"/>'; }
+    labs += '<text class="' + (d.future ? 'ax' : 'axb') + '" x="' + (x0 + 26) + '" y="262" text-anchor="middle">' + d.lbl + '</text>';
+  });
+  return '<div class="scroll"><svg viewBox="0 0 900 280" class="chart" style="min-width:640px" role="img" aria-label="Gráfico de barras com as entradas e saídas de cada mês">' + grid + '<line class="base" x1="50" y1="240" x2="890" y2="240"/>' + bars + labs + '</svg></div>';
+}
+
+/* ---------- avisos e janelas ---------- */
+let toastT = null;
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.hidden = false;
+  clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 3400);
+}
+function openModal(o){
+  const acts = (o.actions || []).map(a => '<button type="button" class="btn ' + (a.primary ? 'btn-primary' : '') + '" data-act="' + a.act + '"' + (a.id ? ' data-id="' + esc(a.id) + '"' : '') + '>' + (a.icon ? icon(a.icon, 16) : '') + esc(a.label) + '</button>').join('');
+  $('#modal').innerHTML = '<div class="ov" data-act="close-bg"><div class="dlg' + (o.wide ? ' wide' : '') + '" role="dialog" aria-modal="true" aria-labelledby="dlg-t"><h2 id="dlg-t">' + esc(o.title) + '</h2>' + o.body + (acts ? '<div class="dlg-a">' + acts + '</div>' : '') + '</div></div>';
+  const f = $('#modal .dlg input:not([type=hidden]), #modal .dlg select, #modal .dlg button');
+  if (f) f.focus();
+}
+const closeModal = () => { $('#modal').innerHTML = ''; };
+const modalBtns = ok => '<div class="dlg-a"><button type="button" class="btn" data-act="close">Cancelar</button><button type="submit" class="btn btn-primary">' + esc(ok || 'Salvar') + '</button></div>';
+
+/* ---------- login e estrutura da página ---------- */
+const gateView = (t, body) => '<div class="gate"><div class="card gate-card form"><div class="brand" style="justify-content:center"><div class="logo">' + esc((S && S.cfg && S.cfg.sigla) || 'V') + '</div></div><h1 style="font-size:26px;text-align:center">' + t + '</h1>' + body + '</div></div>';
+function loginView(){
+  const m = U.login.modo;
+  const head = m === 'entrar' ? ['Entrar', 'Acesso restrito a administradores e visitantes autorizados.'] : m === 'criar' ? ['Primeiro acesso', 'Use o mesmo e-mail que o administrador cadastrou para você.'] : ['Recuperar senha', 'Enviaremos um link para você criar uma nova senha.'];
+  let fields = '<div class="fg"><label class="fl" for="lg-email">E-mail</label><input class="inp" id="lg-email" name="email" type="email" autocomplete="email" placeholder="voce@exemplo.com"></div>';
+  if (m !== 'reset') fields += '<div class="fg"><label class="fl" for="lg-senha">Senha</label><input class="inp" id="lg-senha" name="senha" type="password" autocomplete="' + (m === 'criar' ? 'new-password' : 'current-password') + '" placeholder="' + (m === 'criar' ? 'Crie uma senha (mínimo 6 caracteres)' : 'Sua senha') + '"></div>';
+  if (m === 'criar') fields += '<div class="fg"><label class="fl" for="lg-senha2">Repita a senha</label><input class="inp" id="lg-senha2" name="senha2" type="password" autocomplete="new-password"></div>';
+  const btn = m === 'entrar' ? 'Entrar' : m === 'criar' ? 'Criar conta' : 'Enviar link';
+  const links = m === 'entrar'
+    ? '<div class="two" style="justify-content:space-between"><button type="button" class="link" data-act="login-modo" data-id="criar">Primeiro acesso</button><button type="button" class="link" data-act="login-modo" data-id="reset">Esqueci a senha</button></div>'
+    : '<button type="button" class="link" data-act="login-modo" data-id="entrar">Voltar para entrar</button>';
+  return '<div class="login"><section class="login-photo" aria-hidden="true"></section><section class="login-wrap"><form class="card login-card form" data-form="' + (m === 'entrar' ? 'login' : m === 'criar' ? 'signup' : 'reset') + '" novalidate><div><h1>' + head[0] + '</h1><p class="muted small" style="margin-top:6px">' + head[1] + '</p></div>' + fields + '<button class="btn btn-primary btn-block" type="submit">' + btn + '</button>' + links + '</form></section></div>';
+}
+const isDark = () => S.theme === 'dark' || (S.theme !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+function shell(content){
+  const u = ME(), c = S.cfg;
+  const eds = S.ed.slice().sort((a, b) => { const o = {aberta:0, planejada:1, fechada:2}; return o[a.status] - o[b.status] || (a.status === 'fechada' ? b.ini.localeCompare(a.ini) : a.ini.localeCompare(b.ini)); });
+  const tabs = [['inicio', 'home']].concat(MODS.filter(can).map(m => [m, MOD_ICON[m]])).concat(isAdmin() ? [['acessos', 'key'], ['config', 'gear']] : []);
+  return '<header class="top"><div class="top-in"><div class="brand"><div class="logo">' + esc(c.sigla) + '</div><div class="brand-n"><b>' + esc(c.nome) + '</b><small>' + esc(c.sub) + '</small></div></div>'
+    + '<form class="search" data-form="search" role="search">' + icon('search') + '<label class="sr" for="gs">Buscar</label><input id="gs" name="q" type="search" placeholder="Buscar lançamentos, itens, arquivos e pessoas" value="' + esc(U.search) + '"></form>'
+    + '<div class="top-right"><label class="ed-sel"><span>Edição</span><select data-chg="ed" aria-label="Edição selecionada">' + opt('all', 'Todas as edições', S.selEd === 'all') + eds.map(e => opt(e.id, e.nome + ' · ' + e.status, S.selEd === e.id)).join('') + '</select></label>'
+    + '<button class="icon-btn" data-act="theme" aria-label="Alternar entre tema claro e escuro">' + icon(isDark() ? 'sun' : 'moon', 20) + '</button>'
+    + '<button class="user" data-act="user-menu" aria-label="Menu do usuário"><span class="avatar">' + esc(initials(u.nome)) + '</span><span class="user-t"><b>' + esc(u.nome) + '</b><small>' + (u.papel === 'admin' ? 'Administrador' : 'Visitante') + '</small></span></button></div></div></header>'
+    + '<nav class="nav" aria-label="Áreas da plataforma"><div class="nav-in">' + tabs.map(t => '<button class="tab' + (U.view === t[0] ? ' on' : '') + '" data-act="nav" data-v="' + t[0] + '"' + (U.view === t[0] ? ' aria-current="page"' : '') + '>' + icon(t[1]) + esc(lab(t[0])) + '</button>').join('') + '</div></nav>'
+    + '<main id="main" tabindex="-1">' + content + '</main>';
+}
+
+/* ---------- Início ---------- */
+function activity(){
+  const a = [];
+  visLanc().filter(inSel).forEach(l => a.push({d:l.data, ic:l.tipo === 'despesa' ? 'down' : 'up', k:l.tipo === 'despesa' ? 'bad' : 'ok', t:(l.tipo === 'despesa' ? 'Despesa lançada · ' + l.setor : 'Receita lançada') + ' · ' + brl(l.valor), s:l.por + ' · ' + dmy(l.data)}));
+  visMovs().filter(inSel).forEach(m => { const it = itemById(m.item); a.push({d:m.data, ic:m.tipo === 'uso' ? 'minus' : 'plus', k:'info', t:(m.tipo === 'uso' ? 'Uso registrado · ' : 'Reposição registrada · ') + it.nome + ' ' + (m.tipo === 'uso' ? '−' : '+') + fmtQ(m.qtd) + ' ' + it.un, s:m.por + ' · ' + dmy(m.data)}); });
+  visFiles().forEach(f => a.push({d:f.data, ic:'file', k:'warn', t:'Arquivo enviado · ' + f.nome, s:f.por + ' · ' + dmy(f.data)}));
+  return a.sort((x, y) => y.d.localeCompare(x.d)).slice(0, 5);
+}
+function lancRow(l, o){
+  o = o || {};
+  const neg = l.tipo === 'despesa', e = edById(l.ed), open = e && e.status === 'aberta';
+  return '<tr><td>' + dmy(l.data) + '</td><td><b>' + esc(l.desc) + '</b>' + (l.ajusteDe ? ' <span class="badge b-info">Ajuste de ' + esc(edName(l.ajusteDe)) + '</span>' : '') + '</td>'
+    + (o.ed ? '<td>' + esc(edName(l.ed)) + '</td>' : '') + '<td>' + (l.setor ? esc(l.setor) : '—') + '</td><td>' + esc(l.cat) + '</td>'
+    + '<td class="num ' + (neg ? 'neg' : 'pos') + '">' + (neg ? '− ' : '+ ') + brl(l.valor) + '</td>'
+    + '<td>' + (l.comp ? '<button class="link" data-act="comp" data-id="' + l.id + '">Ver anexo</button>' : (neg ? '<span class="muted">Sem anexo</span>' : '—')) + '</td>'
+    + (o.del ? '<td>' + (open ? '<div class="acts-c">' + iconBtn('lanc-edit', l.id, 'edit', 'Editar lançamento ' + l.desc) + iconBtn('del-lanc', l.id, 'trash', 'Excluir lançamento ' + l.desc) + '</div>' : '<span class="muted" title="Edição fechada">' + icon('lock', 16) + '</span>') + '</td>' : '') + '</tr>';
+}
+function viewInicio(){
+  const money = canMoney(), stock = canStock(), org = can('organizacional'), adm = isAdmin();
+  const L = visLanc().filter(inSel), ent = entradas(L), sai = saidas(L);
+  const low = visItems().filter(i => sit(i) !== 'ok').sort((a, b) => a.qtd / a.min - b.qtd / b.min);
+  const novos = visFiles().filter(f => f.data >= addDays(today(), -7)).length;
+  const sc = S.selEd === 'all' ? 'de todas as edições' : 'da edição';
+  const ks = [];
+  if (money){
+    ks.push(kpi('k-sage', 'Resultado ' + sc, brl(ent - sai), moneyFull() ? 'Saldo geral: ' + brl(saldoGeral()) : 'Nas áreas liberadas', 'wallet'));
+    ks.push(kpi('k-terra', 'Total gasto', brl(sai), 'Em ' + porSetor(L).length + ' setor(es)', 'down'));
+  }
+  if (stock) ks.push(kpi('k-brown', 'Estoque baixo', low.length + (low.length === 1 ? ' item' : ' itens'), 'Abaixo do mínimo definido', 'boxes'));
+  if (can('edicoes')) ks.push(kpi('k-slate', 'Edições abertas', String(openEds().length), 'Recebendo lançamentos', 'cal'));
+  if (org) ks.push(kpi('k-sage', 'Arquivos novos', String(novos), 'Enviados nos últimos 7 dias', 'folder'));
+  if (can('equipe')) ks.push(kpi('k-terra', 'Pessoas na equipe', String(visTeam().length), 'Nas áreas liberadas', 'users'));
+  const lowRows = low.slice(0, 5).map(i => '<tr><td><b>' + esc(i.nome) + '</b></td><td>' + esc(i.setor) + '</td><td>' + fmtQ(i.qtd) + ' ' + esc(i.un) + '</td><td>' + fmtQ(i.min) + ' ' + esc(i.un) + '</td><td>' + sitBadge(sit(i)) + '</td></tr>').join('');
+  const act = activity().map(a => '<div class="act"><div class="act-i b-' + a.k + '">' + icon(a.ic, 20) + '</div><div><div class="act-t">' + esc(a.t) + '</div><div class="muted small">' + esc(a.s) + '</div></div></div>').join('') || '<div class="empty">Sem atividade ainda.</div>';
+  const last = L.slice().sort((x, y) => y.data.localeCompare(x.data)).slice(0, 5).map(l => lancRow(l)).join('');
+  let acts = '';
+  if (can('relatorios')) acts += '<button class="btn" data-act="nav" data-v="relatorios">Ver ' + esc(lab('relatorios').toLowerCase()) + '</button>';
+  if (adm) acts += '<button class="btn btn-primary" data-act="nav" data-v="financeiro">' + icon('plus', 16) + 'Novo lançamento</button>';
+  const out = [pageHead('Visão geral', esc(edTxt()) + ' · resumo do que você pode ver', acts), '<div class="kpis">' + ks.join('') + '</div>'];
+  if (!ks.length) out.push('<div class="empty">Nenhuma área liberada para você ainda. Fale com um administrador.</div>');
+  if (money) out.push('<div class="row"><div class="r2">' + card('Gastos por setor', barH(porSetor(L), 'Gráfico de barras com os gastos por setor'), {sub:'Cada despesa fica ligada a um setor'}) + '</div><div class="r1">' + card('Gastos por área', donut(porArea(L), 'total gasto'), {sub:'Participação no total'}) + '</div></div>');
+  const actCard = card('Atividade recente', '<div class="acts">' + act + '</div>');
+  if (stock) out.push('<div class="row"><div class="r2">' + card('Itens com estoque baixo', low.length ? table([['Item'], ['Setor'], ['Atual'], ['Mínimo'], ['Situação']], lowRows, {min:520}) : '<div class="empty">Nenhum item abaixo do mínimo.</div>', {right:can('estoque') ? '<button class="link" data-act="nav" data-v="estoque">Ver ' + esc(lab('estoque').toLowerCase()) + ' completo</button>' : ''}) + '</div><div class="r1">' + actCard + '</div></div>');
+  else if (ks.length) out.push(actCard);
+  if (money) out.push(card('Últimos lançamentos', L.length ? table([['Data'], ['Descrição'], ['Setor'], ['Categoria'], ['Valor', 1], ['Comprovante']], last, {min:720}) : '<div class="empty">Nenhum lançamento nesta edição.</div>', {right:can('financeiro') ? '<button class="link" data-act="nav" data-v="financeiro">Ver ' + esc(lab('financeiro').toLowerCase()) + ' completo</button>' : ''}));
+  return out.join('');
+}
+
+/* ---------- Edições ---------- */
+function timeline(){
+  const rec = S.ed.filter(e => e.status === 'fechada').sort((a, b) => b.fechadaEm.localeCompare(a.fechadaEm)).slice(0, 1);
+  const list = S.ed.filter(e => e.status !== 'fechada').concat(rec);
+  if (!list.length) return '<div class="empty">Nenhuma edição cadastrada.</div>';
+  const t = today();
+  const w = list.map(e => {
+    let s, en;
+    if (e.status === 'fechada'){ s = e.abertaEm; en = e.fechadaEm; }
+    else if (e.status === 'aberta'){ s = e.abertaEm; en = addDays(e.fim, 7); if (en < t) en = addDays(t, 3); }
+    else { s = addDays(e.ini, -14); en = addDays(e.fim, 7); }
+    return {e, s, en};
+  }).sort((a, b) => a.s.localeCompare(b.s));
+  let mn = w.reduce((m, x) => x.s < m ? x.s : m, w[0].s), mx = w.reduce((m, x) => x.en > m ? x.en : m, w[0].en);
+  mn = addDays(mn, -1); mx = addDays(mx, 2);
+  const span = Math.max(1, days(mn, mx));
+  const pct = d => Math.max(0, Math.min(100, days(mn, d) / span * 100));
+  let c = parseISO(mn); c = new Date(c.getFullYear(), c.getMonth(), 1);
+  if (isoOf(c) < mn) c = new Date(c.getFullYear(), c.getMonth() + 1, 1);
+  let mon = '';
+  while (isoOf(c) <= mx){ mon += '<span style="left:' + pct(isoOf(c)).toFixed(1) + '%">' + MES3[c.getMonth()] + '</span>'; c = new Date(c.getFullYear(), c.getMonth() + 1, 1); }
+  const showT = t >= mn && t <= mx, tp = pct(t).toFixed(1);
+  let openIdx = 0;
+  const rows = w.map(x => {
+    const e = x.e, l = pct(x.s), wd = Math.max(3, pct(x.en) - l);
+    let cls, txt;
+    if (e.status === 'aberta'){ cls = (openIdx++ % 2 ? 'tl-b' : 'tl-a'); txt = 'Aberta · retiro ' + retiroLabel(e); }
+    else if (e.status === 'planejada'){ cls = 'tl-p'; txt = 'Planejada · retiro ' + retiroLabel(e); }
+    else { cls = 'tl-c'; txt = 'Fechada em ' + dmy(e.fechadaEm); }
+    return '<div class="tl-row"><div class="tl-n">' + esc(e.nome) + '</div><div class="tl-track"><div class="tl-bar ' + cls + '" style="left:' + l.toFixed(1) + '%;width:' + wd.toFixed(1) + '%" title="' + esc(txt) + '">' + esc(txt) + '</div></div></div>';
+  }).join('');
+  return '<div class="scroll"><div class="tl"><div class="tl-row tl-head"><div></div><div class="tl-track">' + mon + (showT ? '<span class="tl-pill" style="left:' + tp + '%">Hoje</span>' : '') + '</div></div>' + rows + (showT ? '<div class="tl-ov"><div class="tl-today" style="left:' + tp + '%"></div></div>' : '') + '</div></div>';
+}
+const adminOpts = sel => S.users.filter(u => u.papel === 'admin').map(u => opt(u.nome, u.nome, u.nome === sel)).join('');
+function viewEdicoes(){
+  const adm = isAdmin(), mf = moneyFull(), stock = canStock();
+  const eds = S.ed.slice().sort((a, b) => a.ini.localeCompare(b.ini));
+  const t = today();
+  const prox = eds.filter(e => e.status === 'planejada').sort((a, b) => (a.ini >= t ? 0 : 1) - (b.ini >= t ? 0 : 1) || a.ini.localeCompare(b.ini))[0];
+  const k = (mf ? kpi('k-sage', 'Saldo geral do caixa', brl(saldoGeral()), 'Soma de todas as edições', 'wallet') : '')
+    + kpi('k-brown', 'Edições abertas', String(openEds().length), 'Recebendo lançamentos', 'cal')
+    + (stock ? kpi('k-slate', 'Itens no estoque geral', String(visItems().length), 'Compartilhado entre as edições', 'boxes') : '')
+    + kpi('k-terra', 'Próxima edição', prox ? esc(prox.nome) : '—', prox ? 'Retiro em ' + dmy(prox.ini) : 'Nenhuma planejada', 'clock');
+  const rows = eds.map(e => {
+    const tt = edTot(e), np = e.status === 'planejada';
+    const mv = visMovs().filter(m => m.ed === e.id).length;
+    let a = '';
+    if (!np) a += '<button class="btn btn-sm" data-act="ed-rel" data-id="' + e.id + '">' + icon('chart', 16) + 'Relatório</button>';
+    if (adm && e.status === 'planejada') a += '<button class="btn btn-sm btn-primary" data-act="ed-abrir" data-id="' + e.id + '">Abrir edição</button>';
+    if (adm && e.status === 'aberta') a += '<button class="btn btn-sm" data-act="ed-fechar" data-id="' + e.id + '">' + icon('lock', 16) + 'Fechar edição</button>';
+    if (adm) a += iconBtn('ed-edit', e.id, 'edit', 'Editar ' + e.nome) + iconBtn('ed-del', e.id, 'trash', 'Excluir ' + e.nome);
+    return '<tr><td><b>' + esc(e.nome) + '</b></td><td>' + retiroLabel(e) + '</td><td>' + statusBadge(e.status) + '</td><td class="num">' + (np ? '—' : mf ? brl(e.saldoInicial) : 'Restrito') + '</td><td class="num ' + (np || !mf ? '' : tt.res >= 0 ? 'pos' : 'neg') + '">' + (np ? '—' : mf ? signed(tt.res) : 'Restrito') + '</td><td>' + (np ? '—' : stock ? mv + ' mov.' : 'Restrito') + '</td><td><div class="ph-a" style="gap:8px">' + a + '</div></td></tr>';
+  }).join('');
+  const form = adm
+    ? '<form class="form" data-form="ed-nova" novalidate><div class="fg"><label class="fl" for="ed-nome">Nome da edição</label><input class="inp" id="ed-nome" name="nome" type="text" placeholder="Ex.: Vida 14"></div>'
+      + '<div class="two"><div class="fg"><label class="fl" for="ed-ini">Início do retiro</label><input class="inp" id="ed-ini" name="ini" type="date"></div><div class="fg"><label class="fl" for="ed-fim">Fim do retiro</label><input class="inp" id="ed-fim" name="fim" type="date"></div></div>'
+      + '<div class="fg"><label class="fl" for="ed-loc">Local <small>(opcional)</small></label><input class="inp" id="ed-loc" name="local" type="text" placeholder="Onde será o retiro"></div>'
+      + '<div class="fg"><label class="fl" for="ed-resp">Responsável</label><select class="inp" id="ed-resp" name="resp">' + adminOpts('') + '</select></div>'
+      + '<div class="note">O saldo inicial do caixa e do estoque é calculado sozinho, a partir dos valores gerais no dia em que a edição é aberta.</div>'
+      + '<button class="btn btn-primary btn-block" type="submit">Criar edição</button></form>'
+    : '<div class="note">Somente administradores criam, abrem, fecham e editam edições. Você acompanha o andamento delas.</div>';
+  return [
+    pageHead(esc(lab('edicoes')), 'Cada retiro é uma edição. Dados separados por edição, com caixa e estoque num fluxo contínuo'),
+    '<div class="kpis">' + k + '</div>',
+    card('Linha do tempo', timeline() + '<div class="note" style="margin-top:16px">Enquanto duas edições estão abertas ao mesmo tempo, as duas usam o mesmo caixa e o mesmo estoque. Cada uma mostra só os próprios lançamentos e movimentos.</div>', {sub:'Uma edição fica aberta da preparação até o fechamento, e duas podem se sobrepor'}),
+    '<div class="row"><div class="r2">' + card('Todas as edições', table([['Edição'], ['Retiro'], ['Status'], ['Saldo inicial', 1], ['Resultado', 1], ['Material'], ['Ação']], rows, {min:860})) + '</div>'
+      + '<div class="r1 stack">' + card('Nova edição', form)
+      + card('Ao fechar uma edição', '<div class="acts" style="gap:8px;font-size:14px"><div>Os números dela ficam congelados e o relatório da edição é gerado.</div><div>O que sobrou de caixa e de material segue no fluxo geral para as próximas.</div><div>Correções posteriores entram como ajuste, com registro de quem fez.</div></div>') + '</div></div>'
+  ].join('');
+}
+
+/* ---------- Financeiro ---------- */
+function setorOptions(sel){
+  return S.cfg.areas.map(a => '<optgroup label="' + esc(a.nome) + '">' + a.setores.map(s => opt(s, s, s === sel)).join('') + '</optgroup>').join('');
+}
+const catList = () => Array.from(new Set(S.cfg.cats.concat(S.lanc.map(l => l.cat)))).sort();
+function defaultOpenEd(){ const o = openEds(); return (S.selEd !== 'all' && o.some(e => e.id === S.selEd)) ? S.selEd : (o[0] ? o[0].id : ''); }
+function viewFinanceiro(){
+  const adm = isAdmin(), F = U.fin, L = visLanc().filter(inSel), ent = entradas(L), sai = saidas(L);
+  const q = (F.q || '').toLowerCase();
+  const rows = L.filter(l => (F.tipo === 'all' || l.tipo === F.tipo) && (F.setor === 'all' || l.setor === F.setor) && (F.cat === 'all' || l.cat === F.cat) && (!q || (l.desc + ' ' + l.cat + ' ' + l.setor).toLowerCase().indexOf(q) >= 0)).sort((a, b) => b.data.localeCompare(a.data));
+  const shown = rows.slice(0, F.lim);
+  const cats = adm ? catList() : Array.from(new Set(visLanc().map(l => l.cat))).sort();
+  const sc = S.selEd === 'all' ? 'Todas as edições' : edName(S.selEd);
+  const k = kpi('k-sage', 'Entradas', brl(ent), 'Receitas lançadas', 'up') + kpi('k-terra', 'Saídas', brl(sai), 'Despesas lançadas', 'down') + kpi('k-brown', 'Resultado da edição', brl(ent - sai), moneyFull() ? 'Saldo geral: ' + brl(saldoGeral()) : 'Nas áreas liberadas', 'wallet');
+  const oe = openEds(), de = defaultOpenEd();
+  const closed = S.ed.filter(e => e.status === 'fechada').sort((a, b) => b.fechadaEm.localeCompare(a.fechadaEm)).slice(0, 12);
+  const noOpen = !oe.length;
+  const form = '<form class="form" data-form="lanc" novalidate>'
+    + (noOpen ? '<div class="note">Não há edição aberta. Abra uma edição em “' + esc(lab('edicoes')) + '” para lançar.</div>' : '')
+    + '<div class="seg" role="radiogroup" aria-label="Tipo de lançamento"><input type="radio" id="t-d" name="tipo" value="despesa" checked data-chg="lanc-tipo"><label for="t-d">Despesa</label><input type="radio" id="t-r" name="tipo" value="receita" data-chg="lanc-tipo"><label for="t-r">Receita</label></div>'
+    + '<div class="fg"><label class="fl" for="ln-ed">Edição</label><select class="inp" id="ln-ed" name="ed">' + oe.map(e => opt(e.id, e.nome, e.id === de)).join('') + '</select></div>'
+    + '<div class="fg" id="fg-setor"><label class="fl" for="ln-setor">Setor <small>(obrigatório em despesas)</small></label><select class="inp" id="ln-setor" name="setor">' + opt('', 'Escolha o setor') + setorOptions('') + '</select></div>'
+    + '<div class="fg"><label class="fl" for="ln-cat">Categoria</label><input class="inp" id="ln-cat" name="cat" type="text" list="cats" placeholder="Ex.: Material, Serviços, Alimentação" autocomplete="off"><datalist id="cats">' + cats.map(c => '<option value="' + esc(c) + '">').join('') + '</datalist></div>'
+    + '<div class="two"><div class="fg"><label class="fl" for="ln-valor">Valor (R$)</label><input class="inp" id="ln-valor" name="valor" type="text" inputmode="decimal" placeholder="0,00"></div><div class="fg"><label class="fl" for="ln-data">Data</label><input class="inp" id="ln-data" name="data" type="date" value="' + today() + '"></div></div>'
+    + '<div class="fg"><label class="fl" for="ln-desc">Descrição</label><textarea class="inp" id="ln-desc" name="desc" placeholder="O que foi comprado ou recebido"></textarea></div>'
+    + '<div class="fg"><label class="fl" for="ln-comp">Comprovante <small>(foto da nota ou recibo)</small></label><input class="inp" id="ln-comp" name="comp" type="file" accept="image/*,application/pdf"></div>'
+    + '<div class="fg"><label class="fl" for="ln-aj">Ajuste de edição fechada <small>(opcional)</small></label><select class="inp" id="ln-aj" name="ajuste">' + opt('', 'Não é ajuste') + closed.map(e => opt(e.id, 'Referente a ' + e.nome)).join('') + '</select></div>'
+    + '<button class="btn btn-primary btn-block" type="submit"' + (noOpen ? ' disabled' : '') + '>Salvar lançamento</button></form>';
+  const setF = allSetores().filter(s => okCtx('money', s));
+  const filt = '<div class="filters"><div class="fg"><label class="fl-s" for="f-tipo">Tipo</label><select class="inp sm" id="f-tipo" data-chg="fin-tipo">' + opt('all', 'Todos', F.tipo === 'all') + opt('receita', 'Receitas', F.tipo === 'receita') + opt('despesa', 'Despesas', F.tipo === 'despesa') + '</select></div>'
+    + '<div class="fg"><label class="fl-s" for="f-setor">Setor</label><select class="inp sm" id="f-setor" data-chg="fin-setor">' + opt('all', 'Todos os setores', F.setor === 'all') + setF.map(s => opt(s, s, F.setor === s)).join('') + '</select></div>'
+    + '<div class="fg"><label class="fl-s" for="f-cat">Categoria</label><select class="inp sm" id="f-cat" data-chg="fin-cat">' + opt('all', 'Todas', F.cat === 'all') + cats.map(c => opt(c, c, F.cat === c)).join('') + '</select></div>'
+    + '<div class="fg"><label class="fl-s" for="f-q">Buscar</label><input class="inp sm" id="f-q" type="search" data-chg="fin-q" placeholder="Descrição ou categoria" value="' + esc(F.q) + '"></div></div>';
+  const withEd = S.selEd === 'all';
+  const head = [['Data'], ['Descrição']].concat(withEd ? [['Edição']] : []).concat([['Setor'], ['Categoria'], ['Valor', 1], ['Comprovante']]).concat(adm ? [['Ações']] : []);
+  const list = rows.length ? table(head, shown.map(l => lancRow(l, {ed:withEd, del:adm})).join(''), {min:withEd ? 860 : 780}) + '<div class="ph" style="margin-top:14px"><span class="muted small">Mostrando ' + shown.length + ' de ' + rows.length + ' lançamentos</span>' + (rows.length > shown.length ? '<button class="btn btn-sm" data-act="fin-more">Ver mais</button>' : '') + '</div>' : '<div class="empty">Nenhum lançamento encontrado com esses filtros.</div>';
+  return [
+    pageHead(esc(lab('financeiro')), esc(sc) + ' · caixa do evento: receitas e despesas', '<button class="btn" data-act="export-csv" data-id="fin">' + icon('download', 16) + 'Exportar planilha</button>'),
+    '<div class="kpis">' + k + '</div>',
+    '<div class="row"><div class="r2">' + card('Lançamentos', filt + list) + '</div>' + (adm ? '<div class="r1">' + card('Novo lançamento', form) + '</div>' : '') + '</div>'
+  ].join('');
+}
+
+/* ---------- Estoque ---------- */
+function viewEstoque(){
+  const adm = isAdmin(), F = U.est, items = visItems();
+  const low = items.filter(i => sit(i) !== 'ok'), crit = items.filter(i => sit(i) === 'crit');
+  const M = visMovs().filter(inSel);
+  const rows = items.filter(i => (F.setor === 'all' || i.setor === F.setor) && (F.sit === 'all' || sit(i) === F.sit)).sort((a, b) => (a.min > 0 ? a.qtd / a.min : 99) - (b.min > 0 ? b.qtd / b.min : 99) || a.nome.localeCompare(b.nome));
+  const setoresComItem = Array.from(new Set(items.map(i => i.setor)));
+  const setF = allSetores().filter(s => okCtx('stock', s));
+  const stSetor = setoresComItem[0] || allSetores()[0] || '';
+  const oe = openEds(), de = defaultOpenEd(), noOpen = !oe.length;
+  const trows = rows.map(i => {
+    const s = sit(i), pc = i.min > 0 ? Math.min(100, Math.round(i.qtd / i.min * 100)) : 100;
+    return '<tr><td><b>' + esc(i.nome) + '</b></td><td>' + esc(i.setor) + '</td><td><div style="font-weight:700">' + fmtQ(i.qtd) + ' ' + esc(i.un) + '</div><div class="bar-t"><i class="bar-f ' + (s === 'ok' ? 'bf-ok' : s === 'low' ? 'bf-low' : 'bf-crit') + '" style="width:' + pc + '%"></i></div></td><td>' + fmtQ(i.min) + ' ' + esc(i.un) + '</td><td>' + sitBadge(s) + '</td>' + (adm ? '<td><div class="acts-c">' + iconBtn('item-edit', i.id, 'edit', 'Editar ' + i.nome) + iconBtn('item-del', i.id, 'trash', 'Excluir ' + i.nome) + '</div></td>' : '') + '</tr>';
+  }).join('');
+  const hist = M.slice().sort((a, b) => b.data.localeCompare(a.data)).slice(0, 15).map(m => { const it = itemById(m.item); return '<tr><td>' + dmy(m.data) + '</td><td><b>' + esc(it.nome) + '</b></td><td>' + (m.tipo === 'uso' ? badge('info', 'Uso') : badge('ok', 'Reposição')) + '</td><td class="num"><b>' + (m.tipo === 'uso' ? '− ' : '+ ') + fmtQ(m.qtd) + ' ' + esc(it.un) + '</b></td><td>' + esc(it.setor) + '</td><td>' + esc(edName(m.ed)) + '</td><td>' + esc(m.por) + '</td></tr>'; }).join('');
+  const itemOpts = s => { const l = items.filter(i => i.setor === s); return l.length ? l.map(i => opt(i.id, i.nome + ' (' + fmtQ(i.qtd) + ' ' + i.un + ')')).join('') : opt('', 'Cadastre um item primeiro'); };
+  const form = '<form class="form" data-form="mov" novalidate>' + (noOpen ? '<div class="note">Não há edição aberta. Abra uma edição em “' + esc(lab('edicoes')) + '” para registrar.</div>' : '')
+    + '<div class="seg" role="radiogroup" aria-label="Tipo de movimentação"><input type="radio" id="mv-u" name="tipo" value="uso" checked><label for="mv-u">Usamos</label><input type="radio" id="mv-r" name="tipo" value="rep"><label for="mv-r">Repomos</label></div>'
+    + '<div class="fg"><label class="fl" for="mv-ed">Edição</label><select class="inp" id="mv-ed" name="ed">' + oe.map(e => opt(e.id, e.nome, e.id === de)).join('') + '</select></div>'
+    + '<div class="fg"><label class="fl" for="mv-setor">Setor</label><select class="inp" id="mv-setor" name="setor" data-chg="mov-setor">' + allSetores().map(s => opt(s, s, s === stSetor)).join('') + '</select></div>'
+    + '<div class="fg"><label class="fl" for="mv-item">Item</label><select class="inp" id="mv-item" name="item">' + itemOpts(stSetor) + '</select></div>'
+    + '<div class="fg"><label class="fl" for="mv-qtd">Quantidade</label><input class="inp" id="mv-qtd" name="qtd" type="text" inputmode="decimal" placeholder="Ex.: 4"></div>'
+    + '<div class="fg"><label class="fl" for="mv-obs">Observação <small>(opcional)</small></label><textarea class="inp" id="mv-obs" name="obs" style="min-height:80px" placeholder="Ex.: usado no cenário da abertura"></textarea></div>'
+    + '<button class="btn btn-primary btn-block" type="submit"' + (noOpen ? ' disabled' : '') + '>Registrar</button></form>';
+  const k = kpi('k-slate', 'Itens cadastrados', String(items.length), 'Em ' + setoresComItem.length + ' setor(es)', 'boxes') + kpi('k-terra', 'Abaixo do mínimo', low.length + (low.length === 1 ? ' item' : ' itens'), crit.length + ' em situação crítica', 'warn') + kpi('k-sage', 'Movimentações', String(M.length), (S.selEd === 'all' ? 'Em todas as edições' : 'Na ' + edName(S.selEd)), 'swap');
+  const filt = '<div class="filters"><div class="fg"><label class="fl-s" for="e-setor">Setor</label><select class="inp sm" id="e-setor" data-chg="est-setor">' + opt('all', 'Todos os setores', F.setor === 'all') + setF.map(s => opt(s, s, F.setor === s)).join('') + '</select></div><div class="fg"><label class="fl-s" for="e-sit">Situação</label><select class="inp sm" id="e-sit" data-chg="est-sit">' + opt('all', 'Todas', F.sit === 'all') + opt('crit', 'Crítico', F.sit === 'crit') + opt('low', 'Baixo', F.sit === 'low') + opt('ok', 'Em dia', F.sit === 'ok') + '</select></div></div>';
+  return [
+    pageHead(esc(lab('estoque')), 'Materiais por setor, com quantidade mínima. O estoque é contínuo entre as edições', adm ? '<button class="btn btn-primary" data-act="item-novo">' + icon('plus', 16) + 'Novo item</button>' : ''),
+    '<div class="kpis">' + k + '</div>',
+    '<div class="row"><div class="r2">' + card('Itens em estoque', filt + (rows.length ? table([['Item'], ['Setor'], ['Atual'], ['Mínimo'], ['Situação']].concat(adm ? [['Ações']] : []), trows, {min:680}) : '<div class="empty">Nenhum item com esses filtros.</div>')) + '</div>' + (adm ? '<div class="r1">' + card('Registrar movimentação', form) + '</div>' : '') + '</div>',
+    card('Histórico de movimentações', M.length ? table([['Data'], ['Item'], ['Tipo'], ['Quantidade', 1], ['Setor'], ['Edição'], ['Registrado por']], hist, {min:760}) : '<div class="empty">Nenhuma movimentação nesta edição.</div>', {sub:esc(edTxt()) + ' · últimas 15 movimentações'})
+  ].join('');
+}
+
+/* ---------- Organizacional ---------- */
+const FK = {pdf:['PDF', 'bad', 'file'], xls:['Planilha', 'ok', 'table'], xlsx:['Planilha', 'ok', 'table'], csv:['Planilha', 'ok', 'table'], doc:['Documento', 'info', 'file'], docx:['Documento', 'info', 'file'], txt:['Documento', 'info', 'file'], md:['Documento', 'info', 'file'], png:['Imagem', 'warn', 'image'], jpg:['Imagem', 'warn', 'image'], jpeg:['Imagem', 'warn', 'image'], gif:['Imagem', 'warn', 'image'], webp:['Imagem', 'warn', 'image'], ppt:['Apresentação', 'info', 'file'], pptx:['Apresentação', 'info', 'file']};
+const fkind = ext => FK[(ext || '').toLowerCase()] || ['Arquivo', 'info', 'file'];
+const pastaLabel = k => k === 'geral' ? 'Geral' : k.indexOf('area:') === 0 ? k.slice(5) : k.slice(6);
+const pastaPath = k => { const o = lab('organizacional'); if (k === 'geral') return o + ' / Geral'; if (k.indexOf('area:') === 0) return o + ' / ' + k.slice(5); const s = k.slice(6); return o + ' / ' + (setorArea(s) || '—') + ' / ' + s; };
+function firstPasta(){
+  if (pastaOk('geral')) return 'geral';
+  for (const a of S.cfg.areas){ if (pastaOk('area:' + a.nome)) return 'area:' + a.nome; const s = a.setores.find(x => pastaOk('setor:' + x)); if (s) return 'setor:' + s; }
+  return 'geral';
+}
+function viewOrg(){
+  const O = U.org, adm = isAdmin();
+  if (!pastaOk(O.pasta)) O.pasta = firstPasta();
+  const cnt = k => S.files.filter(f => f.pasta === k).length;
+  let tree = pastaOk('geral') ? '<button class="tr' + (O.pasta === 'geral' ? ' on' : '') + '" data-act="org-sel" data-id="geral">' + icon('folder') + '<span>Geral</span><small>' + cnt('geral') + '</small></button>' : '';
+  S.cfg.areas.forEach(a => {
+    const ak = 'area:' + a.nome, areaOk = pastaOk(ak), vset = a.setores.filter(s => pastaOk('setor:' + s));
+    if (!areaOk && !vset.length) return;
+    const open = O.open[a.nome] || O.pasta === ak || (O.pasta.indexOf('setor:') === 0 && setorArea(O.pasta.slice(6)) === a.nome);
+    const total = (areaOk ? cnt(ak) : 0) + sum(vset, s => cnt('setor:' + s));
+    tree += '<div style="display:flex;gap:4px"><button class="icon-btn" style="background:transparent;width:36px;height:44px" data-act="org-toggle" data-id="' + esc(a.nome) + '" aria-label="' + (open ? 'Recolher ' : 'Expandir ') + esc(a.nome) + '" aria-expanded="' + (open ? 'true' : 'false') + '">' + icon(open ? 'chevD' : 'chevR') + '</button><button class="tr' + (O.pasta === ak ? ' on' : '') + '" data-act="' + (areaOk ? 'org-sel' : 'org-toggle') + '" data-id="' + esc(areaOk ? ak : a.nome) + '"><span>' + esc(a.nome) + '</span><small>' + total + '</small></button></div>';
+    if (open) vset.forEach(s => { tree += '<button class="tr l1' + (O.pasta === 'setor:' + s ? ' on' : '') + '" data-act="org-sel" data-id="' + esc('setor:' + s) + '">' + icon('folder') + '<span>' + esc(s) + '</span><small>' + cnt('setor:' + s) + '</small></button>'; });
+  });
+  const q = (O.q || '').toLowerCase();
+  let files = S.files.filter(f => f.pasta === O.pasta && (!q || (f.nome + ' ' + (f.desc || '')).toLowerCase().indexOf(q) >= 0));
+  files = files.slice().sort((a, b) => O.ord === 'nome' ? a.nome.localeCompare(b.nome) : b.data.localeCompare(a.data));
+  const rows = files.map(f => { const kd = fkind(f.ext); return '<tr><td><div class="fcell"><div class="fi b-' + kd[1] + '">' + icon(kd[2], 20) + '</div><div><div style="font-weight:700">' + esc(f.nome) + '</div><div class="muted small">' + kd[0] + (f.desc ? ' · ' + esc(f.desc) : '') + '</div></div></div></td><td>' + esc(f.por) + '</td><td>' + dmy(f.data) + '</td><td>' + esc(f.tam) + '</td><td><div class="acts-c">' + iconBtn('file-dl', f.id, 'download', 'Baixar ' + f.nome) + (adm ? iconBtn('file-edit', f.id, 'edit', 'Renomear ' + f.nome) + iconBtn('file-del', f.id, 'trash', 'Excluir ' + f.nome) : '') + '</div></td></tr>'; }).join('');
+  const up = adm
+    ? '<div class="fg" style="margin-top:20px"><label class="fl" for="org-desc">Descrição do próximo envio <small>(opcional)</small></label><input class="inp sm" id="org-desc" type="text" placeholder="Ex.: versão final do roteiro"></div><button type="button" class="dropzone" data-act="org-up" style="margin-top:12px">' + icon('upload', 28) + '<b>Arraste arquivos para esta pasta</b><span class="muted small">ou toque para escolher no computador ou no celular</span></button><input type="file" id="org-file" multiple class="sr" data-chg="org-file" tabindex="-1" aria-label="Escolher arquivos para enviar">'
+    : '<div class="note" style="margin-top:20px">Somente administradores enviam, renomeiam e excluem arquivos.</div>';
+  return [
+    pageHead(esc(lab('organizacional')), 'Pastas, roteiros e documentos por área. Arquivos guardados com segurança no Firebase', adm ? '<button class="btn btn-primary" data-act="org-up">' + icon('upload', 16) + 'Enviar arquivo</button>' : ''),
+    '<div class="org"><aside class="card org-side" aria-label="Pastas"><h2 style="margin:4px 8px 12px">Pastas</h2><div class="stack" style="gap:4px">' + tree + '</div></aside>'
+      + '<section class="card org-main"><div class="card-h"><div><h2>' + esc(pastaLabel(O.pasta)) + '</h2><div class="muted small">' + esc(pastaPath(O.pasta)) + '</div></div><div class="vis">' + icon('lock', 16) + 'Visível para administradores e visitantes com esta pasta liberada</div></div>'
+      + '<div class="filters"><div class="fg" style="flex:2 1 240px"><label class="sr" for="o-q">Buscar nesta pasta</label><input class="inp sm" id="o-q" type="search" data-chg="org-q" placeholder="Buscar nesta pasta" value="' + esc(O.q) + '"></div><div class="fg" style="flex:1 1 160px"><label class="sr" for="o-ord">Ordenar por</label><select class="inp sm" id="o-ord" data-chg="org-ord">' + opt('recentes', 'Mais recentes', O.ord === 'recentes') + opt('nome', 'Nome (A a Z)', O.ord === 'nome') + '</select></div></div>'
+      + (files.length ? table([['Nome'], ['Enviado por'], ['Data'], ['Tamanho'], ['Ação']], rows, {min:680}) : '<div class="empty">Nenhum arquivo nesta pasta ainda.</div>') + up + '</section></div>'
+  ].join('');
+}
+
+/* ---------- Equipe (organograma com cargos editáveis) ---------- */
+const alvoLabel = a => a === GERAL ? 'Direção' : a.indexOf('area:') === 0 ? a.slice(5) + ' (área)' : a.slice(6);
+function alvoOptions(sel, only){
+  const ok = a => !only || only(a);
+  let h = '';
+  if (ok(GERAL)) h += '<optgroup label="Direção">' + opt(GERAL, 'Direção (presidência e gestores)', sel === GERAL) + '</optgroup>';
+  S.cfg.areas.forEach(a => {
+    const ak = 'area:' + a.nome, opts = [];
+    if (ok(ak)) opts.push(opt(ak, 'Gestão de ' + a.nome, sel === ak));
+    a.setores.forEach(s => { if (ok('setor:' + s)) opts.push(opt('setor:' + s, s, sel === 'setor:' + s)); });
+    if (opts.length) h += '<optgroup label="' + esc(a.nome) + '">' + opts.join('') + '</optgroup>';
+  });
+  return h;
+}
+function viewEquipe(){
+  const adm = isAdmin(), E = U.eq;
+  const vis = visTeam();
+  const q = (E.q || '').toLowerCase();
+  const rows = vis.filter(t => (E.alvo === 'all' || t.alvo === E.alvo) && (!q || (t.nome + ' ' + t.cargo).toLowerCase().indexOf(q) >= 0)).sort((a, b) => S.cfg.cargos.indexOf(a.cargo) - S.cfg.cargos.indexOf(b.cargo) || a.nome.localeCompare(b.nome));
+  const chips = S.cfg.cargos.map(c => '<span class="badge b-info">' + esc(c) + ': ' + rows.filter(t => t.cargo === c).length + '</span>').join(' ');
+  const trows = rows.map(t => '<tr><td><b>' + esc(t.nome) + '</b></td><td>' + badge('ok', t.cargo) + '</td><td>' + esc(alvoLabel(t.alvo)) + '</td>' + (adm ? '<td><div class="acts-c">' + iconBtn('team-edit', t.id, 'edit', 'Editar ' + t.nome) + iconBtn('team-del', t.id, 'trash', 'Remover ' + t.nome) + '</div></td>' : '') + '</tr>').join('');
+  const filt = '<div class="filters"><div class="fg" style="flex:2 1 220px"><label class="fl-s" for="q-alvo">Onde</label><select class="inp sm" id="q-alvo" data-chg="eq-alvo">' + opt('all', 'Todas as equipes', E.alvo === 'all') + alvoOptions(E.alvo, a => vis.some(t => t.alvo === a)) + '</select></div><div class="fg" style="flex:2 1 200px"><label class="fl-s" for="q-q">Buscar</label><input class="inp sm" id="q-q" type="search" data-chg="eq-q" placeholder="Nome ou cargo" value="' + esc(E.q) + '"></div></div>';
+  const form = '<form class="form" data-form="team-add" novalidate><div class="fg"><label class="fl" for="tm-nome">Nome</label><input class="inp" id="tm-nome" name="nome" type="text" placeholder="Nome da pessoa" autocomplete="off"></div><div class="fg"><label class="fl" for="tm-cargo">Cargo</label><select class="inp" id="tm-cargo" name="cargo">' + S.cfg.cargos.map(c => opt(c, c)).join('') + '</select></div><div class="fg"><label class="fl" for="tm-alvo">Onde atua</label><select class="inp" id="tm-alvo" name="alvo">' + alvoOptions(U.eq.alvo !== 'all' ? U.eq.alvo : '') + '</select></div><div class="note">Os cargos e os setores são editados em “' + esc(lab('config')) + '”.</div><button class="btn btn-primary btn-block" type="submit">Adicionar pessoa</button></form>';
+  return [
+    pageHead(esc(lab('equipe')), 'Organograma: quem atua em cada área e setor, e com qual cargo'),
+    '<div class="kpis">' + kpi('k-sage', 'Pessoas', String(rows.length), E.alvo === 'all' && !q ? 'Nas equipes liberadas' : 'Com os filtros atuais', 'users') + kpi('k-slate', 'Cargos', String(S.cfg.cargos.length), S.cfg.cargos.join(', '), 'key') + '</div>',
+    '<div class="row"><div class="r2">' + card('Pessoas', filt + '<div class="chips mb">' + chips + '</div>' + (rows.length ? table([['Nome'], ['Cargo'], ['Onde atua']].concat(adm ? [['Ações']] : []), trows, {min:520}) : '<div class="empty">Nenhuma pessoa encontrada.</div>')) + '</div>' + (adm ? '<div class="r1">' + card('Nova pessoa', form) + '</div>' : '') + '</div>'
+  ].join('');
+}
+
+/* ---------- Relatórios ---------- */
+function monthsList(){ const s = new Set([curYM()]); visLanc().forEach(l => s.add(l.data.slice(0, 7))); visMovs().forEach(m => s.add(m.data.slice(0, 7))); return Array.from(s).sort().reverse(); }
+function yearsList(){ const s = new Set([String(new Date().getFullYear())]); visLanc().forEach(l => s.add(l.data.slice(0, 4))); visMovs().forEach(m => s.add(m.data.slice(0, 4))); return Array.from(s).sort().reverse(); }
+function matRows(M){
+  const m = {};
+  M.forEach(x => { const o = m[x.item] || (m[x.item] = {uso:0, rep:0}); o[x.tipo] += x.qtd; });
+  return Object.keys(m).map(id => ({it:itemById(id), uso:m[id].uso, rep:m[id].rep})).filter(x => x.it).sort((a, b) => b.uso - a.uso || b.rep - a.rep);
+}
+const matTable = M => { const r = matRows(M); return r.length ? table([['Item'], ['Setor'], ['Usado', 1], ['Reposto', 1], ['Saldo atual', 1]], r.map(x => '<tr><td><b>' + esc(x.it.nome) + '</b></td><td>' + esc(x.it.setor) + '</td><td class="num">' + (x.uso ? fmtQ(x.uso) + ' ' + esc(x.it.un) : '—') + '</td><td class="num">' + (x.rep ? fmtQ(x.rep) + ' ' + esc(x.it.un) : '—') + '</td><td class="num"><b>' + fmtQ(x.it.qtd) + ' ' + esc(x.it.un) + '</b></td></tr>').join(''), {min:560}) : '<div class="empty">Sem movimentação de material no período.</div>'; };
+function viewRel(){
+  const R = U.rel, months = monthsList(), years = yearsList();
+  if (!R.mes || months.indexOf(R.mes) < 0) R.mes = months.indexOf(curYM()) >= 0 ? curYM() : months[0];
+  if (!R.ano || years.indexOf(R.ano) < 0) R.ano = years.indexOf(String(new Date().getFullYear())) >= 0 ? String(new Date().getFullYear()) : years[0];
+  const mensal = R.modo === 'mensal';
+  const per = mensal ? R.mes : R.ano;
+  const L = visLanc().filter(l => l.data.indexOf(per) === 0), M = visMovs().filter(m => m.data.indexOf(per) === 0);
+  const ent = entradas(L), sai = saidas(L);
+  const lowN = visItems().filter(i => sit(i) !== 'ok').length;
+  const head = pageHead(esc(lab('relatorios')), 'Mensal e anual, com exportação em planilha e em página para imprimir',
+      '<button class="btn" data-act="export-csv" data-id="rel">' + icon('download', 16) + 'Baixar planilha</button><button class="btn btn-primary" data-act="export-html" data-id="rel">' + icon('download', 16) + 'Baixar relatório</button>');
+  const ctrl = '<div class="ph-a" style="align-items:flex-end;gap:16px"><div class="tabs-seg" role="tablist" aria-label="Período do relatório"><button role="tab" aria-selected="' + mensal + '" class="' + (mensal ? 'on' : '') + '" data-act="rel-modo" data-id="mensal">Mensal</button><button role="tab" aria-selected="' + !mensal + '" class="' + (!mensal ? 'on' : '') + '" data-act="rel-modo" data-id="anual">Anual</button></div>'
+    + '<div class="fg" style="min-width:200px"><label class="fl-s" for="r-per">' + (mensal ? 'Mês' : 'Ano') + '</label><select class="inp sm" id="r-per" data-chg="' + (mensal ? 'rel-mes' : 'rel-ano') + '">' + (mensal ? months.map(m => opt(m, mesLabel(m), m === R.mes)).join('') : years.map(y => opt(y, y, y === R.ano)).join('')) + '</select></div></div>';
+  if (mensal){
+    const byEd = {};
+    L.forEach(l => { const o = byEd[l.ed] || (byEd[l.ed] = {e:0, s:0}); if (l.tipo === 'receita') o.e += l.valor; else o.s += l.valor; });
+    const edRows = Object.keys(byEd).map(id => ({ed:edById(id), o:byEd[id]})).filter(x => x.ed).sort((a, b) => a.ed.ini.localeCompare(b.ed.ini));
+    const tEd = edRows.length
+      ? table([['Edição'], ['Entradas', 1], ['Saídas', 1], ['Resultado', 1]], edRows.map(x => '<tr><td><b>' + esc(x.ed.nome) + '</b></td><td class="num">' + brl(x.o.e) + '</td><td class="num">' + brl(x.o.s) + '</td><td class="num ' + (x.o.e - x.o.s >= 0 ? 'pos' : 'neg') + '">' + signed(x.o.e - x.o.s) + '</td></tr>').join('') + '<tr><td><b>Total</b></td><td class="num"><b>' + brl(ent) + '</b></td><td class="num"><b>' + brl(sai) + '</b></td><td class="num ' + (ent - sai >= 0 ? 'pos' : 'neg') + '">' + signed(ent - sai) + '</td></tr>', {min:420})
+      : '<div class="empty">Sem lançamentos no mês.</div>';
+    const k = kpi('k-sage', 'Entradas', brl(ent), 'Receitas do mês', 'up') + kpi('k-terra', 'Saídas', brl(sai), 'Despesas do mês', 'down') + kpi('k-brown', 'Resultado do mês', brl(ent - sai), 'Entradas menos saídas', 'wallet') + kpi('k-slate', 'Estoque abaixo do mínimo', lowN + (lowN === 1 ? ' item' : ' itens'), 'Situação atual', 'boxes');
+    return [head, ctrl,
+      '<h2 style="font-size:26px">Relatório mensal · ' + esc(mesLabel(R.mes)) + '</h2>', '<div class="kpis">' + k + '</div>',
+      '<div class="row"><div class="r2">' + card('Gastos por setor no mês', barH(porSetor(L), 'Gráfico de barras com os gastos por setor no mês'), {sub:'Total de ' + brl(sai)}) + '</div><div class="r1">' + card('Resultado por edição', tEd) + '</div></div>',
+      card('Movimentação de material no mês', matTable(M))].join('');
+  }
+  const data = [];
+  const now = new Date(), nowY = String(now.getFullYear()), nowM = now.getMonth();
+  for (let m = 0; m < 12; m++){
+    const key = R.ano + '-' + pad(m + 1), Lm = L.filter(l => l.data.indexOf(key) === 0);
+    data.push({lbl:MES3[m], e:entradas(Lm), s:saidas(Lm), future:(R.ano > nowY) || (R.ano === nowY && m > nowM)});
+  }
+  const withSai = data.filter(d => d.s > 0).length;
+  const setores = porSetor(L), maxS = setores.length ? setores[0].value : 1;
+  const sRows = setores.map(s => '<tr><td><b>' + esc(s.label) + '</b></td><td class="num">' + brl(s.value) + '</td><td class="num"><b>' + Math.round(s.value / (sai || 1) * 100) + '%</b></td><td><div class="bar-t" style="width:160px"><i class="bar-f bf-acc" style="width:' + Math.round(s.value / maxS * 100) + '%"></i></div></td></tr>').join('');
+  const top = matRows(M).filter(x => x.uso > 0).slice(0, 5).map((x, i) => '<div class="act"><div class="act-i b-info" style="font-weight:800">' + (i + 1) + '</div><div style="flex:1;font-weight:700">' + esc(x.it.nome) + '</div><b>' + fmtQ(x.uso) + ' ' + esc(x.it.un) + '</b></div>').join('') || '<div class="empty">Sem consumo de material no ano.</div>';
+  const k = kpi('k-sage', 'Entradas no ano', brl(ent), 'Receitas acumuladas', 'up') + kpi('k-terra', 'Saídas no ano', brl(sai), 'Despesas acumuladas', 'down') + kpi('k-brown', 'Resultado do ano', brl(ent - sai), 'Entradas menos saídas', 'wallet') + kpi('k-slate', 'Gasto médio por mês', brl(withSai ? sai / withSai : 0), 'Média de ' + withSai + ' ' + (withSai === 1 ? 'mês' : 'meses') + ' com gasto', 'chart');
+  return [head, ctrl,
+    '<h2 style="font-size:26px">Relatório anual · ' + esc(R.ano) + '</h2>', '<div class="kpis">' + k + '</div>',
+    card('Entradas e saídas por mês', '<div class="legend"><div><span class="sw c1b"></span>Entradas</div><div><span class="sw" style="background:var(--bad)"></span>Saídas</div></div>' + groupedBars(data)),
+    '<div class="row"><div class="r2">' + card('Gastos por setor no ano', setores.length ? table([['Setor'], ['Total', 1], ['% do total', 1], ['Proporção']], sRows, {min:520}) : '<div class="empty">Sem despesas no ano.</div>') + '</div><div class="r1">' + card('Materiais mais consumidos no ano', '<div class="acts">' + top + '</div>') + '</div></div>'].join('');
+}
+
+/* ---------- Acessos: administradores e visitantes, com permissão por área e por setor ---------- */
+const specialLabel = m => (m === 'financeiro' || m === 'relatorios') ? 'Receitas e lançamentos sem setor' : m === 'organizacional' ? 'Pasta Geral' : m === 'equipe' ? 'Direção (presidência e gestores)' : '';
+const specialShort = m => m === 'organizacional' ? 'Geral' : m === 'equipe' ? 'Direção' : 'Sem setor';
+function permForm(perm, idp){
+  perm = perm || {};
+  let h = '<div class="perm" data-perm="' + idp + '">';
+  MODS.forEach(m => {
+    const p = perm[m], on = !!p, all = on && (p === true || !!p.all);
+    h += '<fieldset class="perm-m" data-mod="' + m + '"><legend class="sr">' + esc(lab(m)) + '</legend><label class="chk-i" for="' + idp + m + '"><input type="checkbox" id="' + idp + m + '" name="pm-' + m + '" data-chg="perm-ui"' + (on ? ' checked' : '') + '>' + icon(MOD_ICON[m]) + esc(lab(m)) + '</label>';
+    if (m !== 'edicoes'){
+      const chk = (val, label) => '<label class="chk-s"><input type="checkbox" name="pl-' + m + '" value="' + esc(val) + '"' + (on && p !== true && !p.all && p.s.indexOf(val) >= 0 ? ' checked' : '') + '>' + esc(label) + '</label>';
+      h += '<div class="perm-s"' + (on ? '' : ' hidden') + '><div class="seg" role="radiogroup" aria-label="Alcance de ' + esc(lab(m)) + '"><input type="radio" id="' + idp + m + '-a" name="ps-' + m + '" value="all" data-chg="perm-ui"' + (all ? ' checked' : '') + '><label for="' + idp + m + '-a">Todos os setores</label><input type="radio" id="' + idp + m + '-s" name="ps-' + m + '" value="some" data-chg="perm-ui"' + (!all ? ' checked' : '') + '><label for="' + idp + m + '-s">Só alguns setores</label></div>'
+        + '<div class="perm-l"' + (on && !all ? '' : ' hidden') + '>' + (specialLabel(m) ? chk(GERAL, specialLabel(m)) : '') + S.cfg.areas.map(a => '<div class="perm-g"><div class="fl-s">' + esc(a.nome) + '</div>' + a.setores.map(s => chk(s, s)).join('') + '</div>').join('') + '</div></div>';
+    }
+    h += '</fieldset>';
+  });
+  return h + '</div>';
+}
+function readPerm(f){
+  const perm = {};
+  MODS.forEach(m => {
+    const box = f.querySelector('input[name="pm-' + m + '"]'); if (!box || !box.checked) return;
+    if (m === 'edicoes'){ perm.edicoes = true; return; }
+    const mode = (f.querySelector('input[name="ps-' + m + '"]:checked') || {}).value;
+    perm[m] = mode === 'all' ? {all:true, s:[]} : {all:false, s:Array.from(f.querySelectorAll('input[name="pl-' + m + '"]:checked')).map(i => i.value)};
+  });
+  return perm;
+}
+function permError(perm){
+  if (!Object.keys(perm).length) return 'Marque pelo menos uma área.';
+  for (const m of Object.keys(perm)){ const p = perm[m]; if (p !== true && !p.all && !p.s.length) return 'Escolha pelo menos um setor em “' + lab(m) + '”.'; }
+  return '';
+}
+function permChips(u){
+  const ps = MODS.filter(m => u.perm && u.perm[m]);
+  if (!ps.length) return '<span class="muted">Nenhuma</span>';
+  return '<div class="chips">' + ps.map(m => { const p = u.perm[m]; if (p === true || p.all) return badge('info', lab(m)); const n = p.s.map(s => s === GERAL ? specialShort(m) : s); return badge('info', lab(m) + ' · ' + (n.length > 3 ? n.slice(0, 3).join(', ') + ' +' + (n.length - 3) : n.join(', '))); }).join('') + '</div>';
+}
+function viewAcessos(){
+  const pend = S.convites.filter(c => !S.users.some(u => (u.email || '').toLowerCase() === c.id));
+  const rows = S.users.map(u => '<tr><td><b>' + esc(u.nome) + '</b></td><td>' + esc(u.email) + '</td><td>' + (u.papel === 'admin' ? badge('ok', 'Administrador · tudo') : permChips(u)) + '</td><td><div class="acts-c">' + iconBtn('user-edit', u.id, 'edit', 'Editar ' + u.nome) + (u.papel === 'admin' ? '' : iconBtn('vis-del', u.id, 'trash', 'Remover ' + u.nome)) + '</div></td></tr>').join('')
+    + pend.map(c => '<tr><td><b>' + esc(c.nome) + '</b></td><td>' + esc(c.id) + '</td><td><div class="chips">' + badge('warn', 'Convite · aguardando o primeiro acesso') + '</div>' + permChips(c) + '</td><td><div class="acts-c">' + iconBtn('user-edit', 'c:' + c.id, 'edit', 'Editar convite de ' + c.nome) + iconBtn('vis-del', 'c:' + c.id, 'trash', 'Cancelar convite de ' + c.nome) + '</div></td></tr>').join('');
+  return [
+    pageHead(esc(lab('acessos')), 'Administradores veem e editam tudo. Cada visitante vê só o que você liberar, por área e por setor', '<button class="btn btn-primary" data-act="vis-novo">' + icon('plus', 16) + 'Novo visitante</button>'),
+    card('Pessoas com acesso', table([['Nome'], ['E-mail'], ['O que pode ver'], ['Ação']], rows, {min:700}), {sub:'Os administradores são definidos nas regras do Firebase. Para um visitante, você cadastra o e-mail e as áreas aqui; a pessoa cria a conta em “Primeiro acesso” com esse e-mail.'})
+  ].join('');
+}
+function userForm(rec, idp, kind){
+  const admin = !!rec && rec.papel === 'admin';
+  const idv = kind === 'new' ? '' : kind === 'invite' ? 'c:' + rec.id : rec.id;
+  const email = kind === 'invite' ? rec.id : rec ? rec.email : '';
+  return '<form class="form" data-form="user-save" novalidate><input type="hidden" name="id" value="' + esc(idv) + '">'
+    + '<div class="fg"><label class="fl" for="' + idp + 'nome">Nome</label><input class="inp" id="' + idp + 'nome" name="nome" type="text" value="' + esc(rec ? rec.nome : '') + '" placeholder="Nome" autocomplete="off"></div>'
+    + '<div class="fg"><label class="fl" for="' + idp + 'email">E-mail' + (kind === 'user' ? ' <small>(não muda depois que a pessoa entrou)</small>' : '') + '</label><input class="inp" id="' + idp + 'email" name="email" type="email" value="' + esc(email) + '" placeholder="pessoa@exemplo.com" autocomplete="off"' + (kind === 'user' ? ' readonly' : '') + '></div>'
+    + (!admin ? '<div><div class="fl" style="margin-bottom:8px">O que esta pessoa pode ver</div>' + permForm(rec ? rec.perm : {}, idp) + '</div><div class="note">Pastas de área (Organizacional) e equipes de área só aparecem para quem recebe “Todos os setores”. Visitantes só visualizam.</div>' : '<div class="note">Administradores veem e editam todas as áreas e setores.</div>')
+    + modalBtns(kind === 'new' ? 'Criar convite' : 'Salvar') + '</form>';
+}
+
+/* ---------- Configurações ---------- */
+function listEditor(kind, title, sub, items){
+  const rows = items.map(x => '<div class="li"><b>' + esc(x) + '</b><button class="btn btn-sm" data-act="cfg-ren" data-id="' + esc(kind + '|' + x) + '">Renomear</button>' + iconBtn('cfg-del', kind + '|' + x, 'trash', 'Excluir ' + x) + '</div>').join('') || '<div class="empty">Nada cadastrado.</div>';
+  return card(title, rows + '<form class="add-row" data-form="cfg-add" novalidate><input type="hidden" name="kind" value="' + kind + '"><label class="sr" for="add-' + kind + '">Adicionar</label><input class="inp sm" id="add-' + kind + '" name="nome" type="text" placeholder="Adicionar novo" autocomplete="off"><button class="btn btn-sm btn-primary" type="submit">Adicionar</button></form>', {sub:sub});
+}
+function viewConfig(){
+  const c = S.cfg;
+  const brand = '<form class="form" data-form="cfg-brand" novalidate><div class="two"><div class="fg" style="flex:2 1 200px"><label class="fl" for="cb-nome">Nome da plataforma</label><input class="inp" id="cb-nome" name="nome" type="text" value="' + esc(c.nome) + '" maxlength="40"></div><div class="fg"><label class="fl" for="cb-sigla">Sigla do logo</label><input class="inp" id="cb-sigla" name="sigla" type="text" value="' + esc(c.sigla) + '" maxlength="2"></div></div>'
+    + '<div class="fg"><label class="fl" for="cb-sub">Subtítulo</label><input class="inp" id="cb-sub" name="sub" type="text" value="' + esc(c.sub) + '" maxlength="40"></div>'
+    + '<fieldset class="chk"><legend class="fl">Cor principal</legend><div class="sw-row">' + PRESETS.map((p, i) => '<label class="sw-pick"><input type="radio" name="cor" value="' + p[0] + '"' + (c.cor === p[0] ? ' checked' : '') + '><span class="dot" style="background:' + p[0] + '"></span>' + p[1] + '</label>').join('') + '</div></fieldset>'
+    + '<button class="btn btn-primary" type="submit">Salvar identidade</button></form>';
+  const menu = '<form class="form" data-form="cfg-menu" novalidate><div class="cfg-g">' + Object.keys(DEF_MENU).map(k => '<div class="fg"><label class="fl" for="cm-' + k + '">' + esc(DEF_MENU[k]) + ' <small>(nome original)</small></label><input class="inp sm" id="cm-' + k + '" name="' + k + '" type="text" value="' + esc(lab(k)) + '" maxlength="24"></div>').join('') + '</div><button class="btn btn-primary" type="submit">Salvar nomes do menu</button></form>';
+  const areas = c.areas.map(a => '<div class="cfg-area"><div class="li"><b>' + esc(a.nome) + '</b><span class="muted small">área</span><button class="btn btn-sm" data-act="cfg-ren" data-id="' + esc('area|' + a.nome) + '">Renomear</button>' + iconBtn('cfg-del', 'area|' + a.nome, 'trash', 'Excluir área ' + a.nome) + '</div>'
+    + a.setores.map(s => '<div class="li" style="padding-left:18px"><b>' + esc(s) + '</b><button class="btn btn-sm" data-act="cfg-ren" data-id="' + esc('setor|' + s) + '">Renomear</button>' + iconBtn('cfg-del', 'setor|' + s, 'trash', 'Excluir setor ' + s) + '</div>').join('')
+    + '<form class="add-row" data-form="cfg-add" novalidate><input type="hidden" name="kind" value="setor"><input type="hidden" name="area" value="' + esc(a.nome) + '"><label class="sr" for="as-' + esc(a.nome) + '">Novo setor em ' + esc(a.nome) + '</label><input class="inp sm" id="as-' + esc(a.nome) + '" name="nome" type="text" placeholder="Novo setor em ' + esc(a.nome) + '" autocomplete="off"><button class="btn btn-sm btn-primary" type="submit">Adicionar setor</button></form></div>').join('')
+    + '<form class="add-row" data-form="cfg-add" novalidate><input type="hidden" name="kind" value="area"><label class="sr" for="add-area">Nova área</label><input class="inp sm" id="add-area" name="nome" type="text" placeholder="Nova área" autocomplete="off"><button class="btn btn-sm btn-primary" type="submit">Adicionar área</button></form>';
+  return [
+    pageHead(esc(lab('config')), 'Tudo aqui é editável: nomes, áreas, setores, cargos, unidades e categorias. Renomear atualiza todo o histórico'),
+    '<div class="row"><div class="r1 stack">' + card('Identidade da plataforma', brand) + card('Nomes do menu', menu, {sub:'Os nomes das áreas do site e as telas passam a usar o que você escrever.'}) + '</div>'
+      + '<div class="r2 stack">' + card('Áreas e setores', areas, {sub:'O organograma da organização. Os setores aparecem nos lançamentos, no estoque, nas pastas, na equipe e nas permissões.'}) + '</div></div>',
+    '<div class="row"><div class="r1">' + listEditor('cargo', 'Cargos', 'Usados na equipe (líder, vice, gestor...).', c.cargos) + '</div><div class="r1">' + listEditor('unidade', 'Unidades de medida', 'Usadas nos itens de estoque.', c.unidades) + '</div><div class="r1">' + listEditor('cat', 'Categorias de lançamento', 'Sugestões ao lançar despesas e receitas.', c.cats) + '</div></div>'
+  ].join('');
+}
+
+/* ---------- Busca ---------- */
+function viewBusca(){
+  const q = (U.search || '').trim().toLowerCase();
+  if (!q) return pageHead('Busca', 'Digite algo no campo de busca do topo') + '<div class="empty">Nada para buscar ainda.</div>';
+  const none = '<div class="empty">Nada encontrado.</div>';
+  const out = [pageHead('Busca', 'Resultados para “' + esc(U.search.trim()) + '”')];
+  if (canMoney()){
+    const L = visLanc().filter(l => (l.desc + ' ' + l.cat + ' ' + l.setor + ' ' + edName(l.ed)).toLowerCase().indexOf(q) >= 0).sort((a, b) => b.data.localeCompare(a.data)).slice(0, 8);
+    out.push(card('Lançamentos', L.length ? table([['Data'], ['Descrição'], ['Setor'], ['Categoria'], ['Valor', 1], ['Comprovante']], L.map(l => lancRow(l)).join(''), {min:720}) : none, {right:can('financeiro') ? '<button class="link" data-act="nav" data-v="financeiro">Abrir ' + esc(lab('financeiro').toLowerCase()) + '</button>' : ''}));
+  }
+  if (canStock()){
+    const I = visItems().filter(i => (i.nome + ' ' + i.setor).toLowerCase().indexOf(q) >= 0).slice(0, 8);
+    out.push(card('Itens de estoque', I.length ? table([['Item'], ['Setor'], ['Atual'], ['Situação']], I.map(i => '<tr><td><b>' + esc(i.nome) + '</b></td><td>' + esc(i.setor) + '</td><td>' + fmtQ(i.qtd) + ' ' + esc(i.un) + '</td><td>' + sitBadge(sit(i)) + '</td></tr>').join(''), {min:480}) : none, {right:can('estoque') ? '<button class="link" data-act="nav" data-v="estoque">Abrir ' + esc(lab('estoque').toLowerCase()) + '</button>' : ''}));
+  }
+  if (can('organizacional')){
+    const Fi = visFiles().filter(f => (f.nome + ' ' + (f.desc || '')).toLowerCase().indexOf(q) >= 0).slice(0, 8);
+    out.push(card('Arquivos', Fi.length ? table([['Nome'], ['Pasta'], ['Enviado por'], ['Data']], Fi.map(f => '<tr><td><b>' + esc(f.nome) + '</b></td><td>' + esc(pastaLabel(f.pasta)) + '</td><td>' + esc(f.por) + '</td><td>' + dmy(f.data) + '</td></tr>').join(''), {min:520}) : none, {right:'<button class="link" data-act="nav" data-v="organizacional">Abrir ' + esc(lab('organizacional').toLowerCase()) + '</button>'}));
+  }
+  if (can('equipe')){
+    const T = visTeam().filter(t => (t.nome + ' ' + t.cargo + ' ' + alvoLabel(t.alvo)).toLowerCase().indexOf(q) >= 0).slice(0, 8);
+    out.push(card('Pessoas', T.length ? table([['Nome'], ['Cargo'], ['Onde atua']], T.map(t => '<tr><td><b>' + esc(t.nome) + '</b></td><td>' + esc(t.cargo) + '</td><td>' + esc(alvoLabel(t.alvo)) + '</td></tr>').join(''), {min:480}) : none, {right:'<button class="link" data-act="nav" data-v="equipe">Abrir ' + esc(lab('equipe').toLowerCase()) + '</button>'}));
+  }
+  if (out.length === 1) out.push('<div class="empty">Você não tem áreas liberadas para buscar.</div>');
+  return out.join('');
+}
+
+function render(){
+  const app = $('#app'); if (!app) return;
+  if (phase === 'app' && !ME()) phase = 'sem-acesso';
+  if (phase === 'sem-config'){ app.innerHTML = gateView('Falta ligar ao seu Firebase', '<p>Abra o arquivo <b>index.html</b>, procure o bloco <b>“PASSO 1”</b> e cole ali o <b>firebaseConfig</b> do seu projeto (Firebase Console &gt; Configurações do projeto &gt; Seus apps &gt; Web).</p><p class="muted small">Se você já colou e esta mensagem continua, confira se não sobrou nenhum “COLE_AQUI”.</p>'); return; }
+  if (phase === 'pre' || phase === 'boot' || phase === 'checando'){ app.innerHTML = gateView('Carregando…', '<p class="muted" style="text-align:center">Um instante.</p>'); return; }
+  if (phase === 'login'){ app.innerHTML = loginView(); return; }
+  if (phase === 'verify'){ app.innerHTML = gateView('Confirme seu e-mail', '<p>Enviamos uma mensagem de confirmação para <b>' + esc(AU ? AU.email : '') + '</b>. Abra o e-mail, toque no link e depois volte aqui.</p><button class="btn btn-primary btn-block" data-act="verify-check">Já confirmei</button><button class="btn btn-block" data-act="verify-resend">Reenviar e-mail</button><button class="link" data-act="logout">Sair</button>'); return; }
+  if (phase === 'sem-acesso'){ app.innerHTML = gateView('Sem acesso por enquanto', '<p>O e-mail <b>' + esc(AU ? AU.email : '') + '</b> ainda não foi liberado. Peça a um administrador para cadastrar esse e-mail e tente de novo.</p><button class="btn btn-primary btn-block" data-act="retry-access">Tentar de novo</button><button class="link" data-act="logout">Sair</button>'); return; }
+  if (phase === 'erro'){ app.innerHTML = gateView('Algo deu errado', '<p>Não consegui verificar seu acesso. Confira a conexão e se as regras do Firebase foram publicadas.</p><p class="muted small">Detalhe técnico: ' + esc(fatalMsg) + '</p><button class="btn btn-primary btn-block" data-act="retry-access">Tentar de novo</button><button class="link" data-act="logout">Sair</button>'); return; }
+  if (!S.cfg){ app.innerHTML = gateView('Aguardando configuração', '<p>' + (isAdmin() ? 'Criando a configuração inicial…' : 'O administrador ainda está preparando a plataforma. Tente de novo em instantes.') + '</p><button class="link" data-act="logout">Sair</button>'); return; }
+  if (selInit && S.selEd !== 'all' && !edById(S.selEd)) S.selEd = 'all';
+  if (U.view === 'acessos' || U.view === 'config'){ if (!isAdmin()) U.view = 'inicio'; }
+  else if (U.view !== 'inicio' && U.view !== 'busca' && !can(U.view)) U.view = 'inicio';
+  const V = {inicio:viewInicio, edicoes:viewEdicoes, financeiro:viewFinanceiro, estoque:viewEstoque, organizacional:viewOrg, equipe:viewEquipe, relatorios:viewRel, acessos:viewAcessos, config:viewConfig, busca:viewBusca};
+  app.innerHTML = shell((V[U.view] || viewInicio)());
+}
+function go(v){ U.view = v; render(); window.scrollTo(0, 0); const m = $('#main'); if (m) m.focus({preventScroll:true}); }
+
+/* ---------- exportações ---------- */
+function saveFile(filename, data){
+  const blob = new Blob([data], {type: filename.slice(-4) === '.csv' ? 'text/csv;charset=utf-8' : 'text/html;charset=utf-8'});
+  toast(downloadBlob(blob, filename) ? 'Arquivo baixado.' : 'Não foi possível baixar o arquivo.');
+}
+const csvCell = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+function csvFor(L){
+  const head = ['Data', 'Edição', 'Tipo', 'Setor', 'Categoria', 'Descrição', 'Valor (R$)', 'Comprovante', 'Lançado por'];
+  const rows = L.slice().sort((a, b) => a.data.localeCompare(b.data)).map(l => [l.data, edName(l.ed), l.tipo === 'receita' ? 'Receita' : 'Despesa', l.setor, l.cat, l.desc, (l.tipo === 'receita' ? '' : '-') + l.valor.toFixed(2).replace('.', ','), l.comp, l.por]);
+  return '\ufeff' + [head].concat(rows).map(r => r.map(csvCell).join(';')).join('\r\n');
+}
+function htmlDoc(title, blocks){
+  return '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>' + esc(title) + '</title><style>body{font-family:Arial,Helvetica,sans-serif;color:#2e3138;max-width:900px;margin:32px auto;padding:0 20px}h1{font-size:24px}h2{font-size:18px;margin-top:28px}table{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}th,td{text-align:left;padding:8px;border-bottom:1px solid #d9dce1}td.n,th.n{text-align:right}small{color:#5f6672}</style></head><body><h1>' + esc(title) + '</h1><small>' + esc(S.cfg.nome) + ' · gerado em ' + dmy(today()) + '/' + today().slice(0, 4) + ' · por ' + esc(ME().nome) + '</small>' + blocks + '</body></html>';
+}
+const hTable = (head, rows) => '<table><thead><tr>' + head.map(h => '<th' + (h[1] ? ' class="n"' : '') + '>' + esc(h[0]) + '</th>').join('') + '</tr></thead><tbody>' + rows.map(r => '<tr>' + r.map((c, i) => '<td' + (head[i][1] ? ' class="n"' : '') + '>' + esc(c) + '</td>').join('') + '</tr>').join('') + '</tbody></table>';
+function relDoc(titulo, L, M){
+  const ent = entradas(L), sai = saidas(L), money = canMoney(), stock = canStock();
+  let b = '';
+  if (money){
+    b += '<h2>Resumo</h2>' + hTable([['Item'], ['Valor', 1]], [['Entradas', brl(ent)], ['Saídas', brl(sai)], ['Resultado', signed(ent - sai)]]);
+    b += '<h2>Gastos por setor</h2>' + (porSetor(L).length ? hTable([['Setor'], ['Total', 1]], porSetor(L).map(s => [s.label, brl(s.value)])) : '<p>Sem despesas.</p>');
+  }
+  if (stock) b += '<h2>Movimentação de material</h2>' + (matRows(M).length ? hTable([['Item'], ['Setor'], ['Usado', 1], ['Reposto', 1], ['Saldo atual', 1]], matRows(M).map(x => [x.it.nome, x.it.setor, x.uso ? fmtQ(x.uso) + ' ' + x.it.un : '—', x.rep ? fmtQ(x.rep) + ' ' + x.it.un : '—', fmtQ(x.it.qtd) + ' ' + x.it.un])) : '<p>Sem movimentação.</p>');
+  if (money) b += '<h2>Lançamentos</h2>' + (L.length ? hTable([['Data'], ['Edição'], ['Setor'], ['Categoria'], ['Descrição'], ['Valor', 1]], L.slice().sort((a, c) => a.data.localeCompare(c.data)).map(l => [dmy(l.data), edName(l.ed), l.setor || '—', l.cat, l.desc, (l.tipo === 'receita' ? '+ ' : '− ') + brl(l.valor)])) : '<p>Sem lançamentos.</p>');
+  return htmlDoc(titulo, b || '<p>Você não tem áreas liberadas com dados para este relatório.</p>');
+}
+function edReportBody(e){
+  const mf = moneyFull(), L = visLanc().filter(l => l.ed === e.id), tt = edTot(e);
+  const rows = [['Retiro', retiroLabel(e)], ['Status', e.status === 'aberta' ? 'Aberta' : e.status === 'planejada' ? 'Planejada' : 'Fechada']];
+  if (mf){
+    rows.push(['Saldo inicial do caixa', brl(e.saldoInicial || 0)], ['Entradas', brl(tt.ent)], ['Saídas', brl(tt.sai)], ['Resultado da edição', signed(tt.res)]);
+    rows.push(['Saldo final do caixa', e.snap ? brl(e.snap.saldoFinal) : 'Em aberto']);
+  } else if (canMoney()) rows.push(['Saídas nas áreas liberadas', brl(saidas(L))]);
+  const st = porSetor(L).slice(0, 5);
+  return '<table class="kv"><tbody>' + rows.map(r => '<tr><td>' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td></tr>').join('') + '</tbody></table>'
+    + (canMoney() ? '<h3 style="font-size:17px;margin:18px 0 6px">Maiores gastos por setor</h3>' + (st.length ? '<table class="kv"><tbody>' + st.map(s => '<tr><td>' + esc(s.label) + '</td><td>' + brl(s.value) + '</td></tr>').join('') + '</tbody></table>' : '<p class="muted">Sem despesas.</p>') : '');
+}
+
+/* ---------- edições em cascata: renomear atualiza todo o histórico ---------- */
+const nameTaken = (list, nome, except) => list.some(x => x !== except && x.toLowerCase() === nome.toLowerCase());
+const upd = (path, data) => ({t:'update', path, data});
+function resetFilters(){ const o = mkUI(); U.fin = o.fin; U.est = o.est; U.eq = o.eq; }
+function permOps(from, to){
+  const ops = [];
+  const fix = perm => {
+    let ch = false; const np = {};
+    Object.keys(perm || {}).forEach(m => { const p = perm[m]; if (p && Array.isArray(p.s) && p.s.indexOf(from) >= 0){ ch = true; np[m] = {all:!!p.all, s:p.s.map(x => x === from ? to : x).filter(x => x !== null)}; } else np[m] = p; });
+    return ch ? np : null;
+  };
+  S.users.filter(u => u.papel !== 'admin').forEach(u => { const np = fix(u.perm); if (np) ops.push(upd('users/' + u.id, {perm:np})); });
+  S.convites.forEach(c => { const np = fix(c.perm); if (np) ops.push(upd('convites/' + c.id, {perm:np})); });
+  return ops;
+}
+function renameOps(kind, a, b){
+  const c = S.cfg;
+  if (kind === 'setor'){
+    const ops = [upd('config/app', {areas:c.areas.map(x => ({nome:x.nome, setores:x.setores.map(s => s === a ? b : s)}))})];
+    S.lanc.filter(l => l.setor === a).forEach(l => ops.push(upd('lancamentos/' + l.id, {setor:b, chave:b})));
+    S.items.filter(i => i.setor === a).forEach(i => ops.push(upd('itens/' + i.id, {setor:b})));
+    S.movs.filter(m => m.setor === a).forEach(m => ops.push(upd('movimentos/' + m.id, {setor:b})));
+    S.files.filter(f => f.pasta === 'setor:' + a).forEach(f => ops.push(upd('arquivos/' + f.id, {pasta:'setor:' + b, chave:b})));
+    S.team.filter(t => t.alvo === 'setor:' + a).forEach(t => ops.push(upd('equipe/' + t.id, {alvo:'setor:' + b, chave:b})));
+    return ops.concat(permOps(a, b));
+  }
+  if (kind === 'area'){
+    const ops = [upd('config/app', {areas:c.areas.map(x => ({nome:x.nome === a ? b : x.nome, setores:x.setores}))})];
+    S.files.filter(f => f.pasta === 'area:' + a).forEach(f => ops.push(upd('arquivos/' + f.id, {pasta:'area:' + b})));
+    S.team.filter(t => t.alvo === 'area:' + a).forEach(t => ops.push(upd('equipe/' + t.id, {alvo:'area:' + b})));
+    return ops;
+  }
+  if (kind === 'cargo') return [upd('config/app', {cargos:c.cargos.map(x => x === a ? b : x)})].concat(S.team.filter(t => t.cargo === a).map(t => upd('equipe/' + t.id, {cargo:b})));
+  if (kind === 'unidade') return [upd('config/app', {unidades:c.unidades.map(x => x === a ? b : x)})].concat(S.items.filter(i => i.un === a).map(i => upd('itens/' + i.id, {un:b})));
+  if (kind === 'cat') return [upd('config/app', {cats:c.cats.map(x => x === a ? b : x)})].concat(S.lanc.filter(l => l.cat === a).map(l => upd('lancamentos/' + l.id, {cat:b})));
+  return [];
+}
+function removeOps(kind, key){
+  const c = S.cfg;
+  if (kind === 'area') return [upd('config/app', {areas:c.areas.filter(a => a.nome !== key)})];
+  if (kind === 'setor') return [upd('config/app', {areas:c.areas.map(a => ({nome:a.nome, setores:a.setores.filter(s => s !== key)}))})].concat(permOps(key, null));
+  if (kind === 'cargo') return [upd('config/app', {cargos:c.cargos.filter(x => x !== key)})];
+  if (kind === 'unidade') return [upd('config/app', {unidades:c.unidades.filter(x => x !== key)})];
+  if (kind === 'cat') return [upd('config/app', {cats:c.cats.filter(x => x !== key)})];
+  return [];
+}
+function usedCount(kind, key){
+  if (kind === 'setor') return S.lanc.filter(l => l.setor === key).length + S.items.filter(i => i.setor === key).length + S.files.filter(f => f.pasta === 'setor:' + key).length + S.team.filter(t => t.alvo === 'setor:' + key).length;
+  if (kind === 'area') return setoresDe(key).length + S.files.filter(f => f.pasta === 'area:' + key).length + S.team.filter(t => t.alvo === 'area:' + key).length;
+  if (kind === 'cargo') return S.team.filter(t => t.cargo === key).length;
+  if (kind === 'unidade') return S.items.filter(i => i.un === key).length;
+  if (kind === 'cat') return S.lanc.filter(l => l.cat === key).length;
+  return 0;
+}
+const KIND_NOME = {area:'a área', setor:'o setor', cargo:'o cargo', unidade:'a unidade', cat:'a categoria'};
+
+/* ---------- gravação ---------- */
+const safeName = n => String(n).replace(/[^\w.\-]+/g, '_').slice(-80) || 'arquivo';
+const chaveEq = a => a === GERAL ? GERAL : a.indexOf('area:') === 0 ? '*area' : a.slice(6);
+const chavePasta = p => p === 'geral' ? GERAL : p.indexOf('area:') === 0 ? '*area' : p.slice(6);
+function fail(e){
+  console.error(e);
+  toast(e && e.code === 'permission-denied' ? 'Sem permissão para essa ação. Confira se as regras do Firebase foram publicadas.' : 'Não foi possível salvar. Confira a conexão e tente de novo.');
+}
+const W = async fn => { try { await fn(); return true; } catch (e) { fail(e); return false; } };
+function downloadBlob(blob, filename){
+  try { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); return true; } catch (e) { return false; }
+}
+async function abrirEdicao(id){
+  if (needAdmin()) return;
+  const e = edById(id); if (!e || e.status !== 'planejada') return;
+  const saldo = saldoGeral(), d = today();
+  if (await W(() => BE.db.batch([upd('edicoes/' + id, {status:'aberta', abertaEm:d}), {t:'set', path:'edicoes_fin/' + id, data:{saldoInicial:saldo}}]))) toast(e.nome + ' aberta. Saldo inicial: ' + brl(saldo));
+}
+async function fecharEdicao(id){
+  if (needAdmin()) return;
+  const e = edById(id); if (!e || e.status !== 'aberta') return;
+  const tt = edTot(e), d = today(), saldo = saldoGeral();
+  const ok = await W(() => BE.db.batch([upd('edicoes/' + id, {status:'fechada', fechadaEm:d}), {t:'set', path:'edicoes_fin/' + id, data:{saldoInicial:e.saldoInicial || 0, snap:{entradas:tt.ent, saidas:tt.sai, resultado:tt.res, saldoFinal:saldo}}}]));
+  if (ok){ closeModal(); toast(e.nome + ' fechada. O saldo segue no fluxo geral.'); }
+}
+const edForm = e => '<form class="form" data-form="ed-edit" novalidate><input type="hidden" name="id" value="' + esc(e.id) + '"><div class="fg"><label class="fl" for="ee-nome">Nome da edição</label><input class="inp" id="ee-nome" name="nome" type="text" value="' + esc(e.nome) + '"></div><div class="two"><div class="fg"><label class="fl" for="ee-ini">Início do retiro</label><input class="inp" id="ee-ini" name="ini" type="date" value="' + esc(e.ini) + '"></div><div class="fg"><label class="fl" for="ee-fim">Fim do retiro</label><input class="inp" id="ee-fim" name="fim" type="date" value="' + esc(e.fim) + '"></div></div><div class="fg"><label class="fl" for="ee-loc">Local</label><input class="inp" id="ee-loc" name="local" type="text" value="' + esc(e.local || '') + '"></div><div class="fg"><label class="fl" for="ee-resp">Responsável</label><select class="inp" id="ee-resp" name="resp">' + adminOpts(e.resp) + '</select></div>' + modalBtns('Salvar') + '</form>';
+function itemForm(i){
+  return '<form class="form" data-form="item-save" id="item-form" novalidate><input type="hidden" name="id" value="' + esc(i ? i.id : '') + '"><div class="fg"><label class="fl" for="it-nome">Nome do item</label><input class="inp" id="it-nome" name="nome" type="text" value="' + esc(i ? i.nome : '') + '" placeholder="Ex.: Fita crepe"></div><div class="fg"><label class="fl" for="it-setor">Setor</label><select class="inp" id="it-setor" name="setor">' + setorOptions(i ? i.setor : '') + '</select></div>'
+    + '<div class="two"><div class="fg"><label class="fl" for="it-un">Unidade</label><select class="inp" id="it-un" name="un">' + S.cfg.unidades.map(u => opt(u, u, i && i.un === u)).join('') + '</select></div>' + (i ? '' : '<div class="fg"><label class="fl" for="it-qtd">Quantidade atual</label><input class="inp" id="it-qtd" name="qtd" type="text" inputmode="decimal" value="0"></div>') + '<div class="fg"><label class="fl" for="it-min">Mínimo</label><input class="inp" id="it-min" name="min" type="text" inputmode="decimal" value="' + (i ? String(i.min).replace('.', ',') : '0') + '"></div></div>'
+    + (i ? '<div class="note">Para corrigir a quantidade, registre um uso ou uma reposição. Assim o histórico fica certo.</div>' : '') + modalBtns(i ? 'Salvar' : 'Cadastrar') + '</form>';
+}
+const findRec = id => id.indexOf('c:') === 0 ? S.convites.find(c => c.id === id.slice(2)) : S.users.find(u => u.id === id);
+const ACTS = {
+  nav: el => go(el.dataset.v),
+  theme: () => { S.theme = isDark() ? 'light' : 'dark'; applyTheme(); save(); render(); },
+  'login-modo': el => { U.login.modo = el.dataset.id; render(); },
+  'verify-check': async () => {
+    try { AU = await BE.auth.refresh(); } catch (e) { toast(authMsg(e)); return; }
+    if (AU && AU.emailVerified) resolveAccess(); else toast('Ainda não vimos a confirmação. Abra o e-mail, toque no link e tente de novo.');
+  },
+  'verify-resend': async () => { try { await BE.auth.verifyMail(); toast('E-mail reenviado. Confira também a caixa de spam.'); } catch (e) { toast(authMsg(e)); } },
+  'retry-access': () => resolveAccess(),
+  logout: async () => { closeModal(); try { await BE.auth.signOut(); } catch (e) {} },
+  'user-menu': () => {
+    const u = ME();
+    const info = u.papel === 'admin' ? '<p class="muted">Você é <b>administrador</b>: vê e edita todas as áreas e gerencia os visitantes e as configurações.</p>' : '<p class="muted" style="margin-bottom:10px">Você é <b>visitante</b> e vê:</p>' + permChips(u);
+    openModal({title:u.nome, body:'<p class="muted small" style="margin-bottom:12px">' + esc(u.email) + '</p>' + info, actions:[{label:'Sair', act:'logout'}, {label:'Fechar', act:'close', primary:true}]});
+  },
+  close: () => closeModal(),
+  'close-bg': (el, ev) => { if (ev.target === el) closeModal(); },
+  'ed-abrir': el => abrirEdicao(el.dataset.id),
+  'ed-fechar': el => { if (needAdmin()) return; const e = edById(el.dataset.id), tt = edTot(e); openModal({title:'Fechar ' + e.nome + '?', body:'<p style="margin-bottom:12px">Ao fechar, os números da edição ficam congelados e ninguém lança mais nada nela. Correções entram como ajuste.</p><table class="kv"><tbody><tr><td>Entradas</td><td>' + brl(tt.ent) + '</td></tr><tr><td>Saídas</td><td>' + brl(tt.sai) + '</td></tr><tr><td>Resultado</td><td>' + signed(tt.res) + '</td></tr><tr><td>Saldo geral do caixa</td><td>' + brl(saldoGeral()) + '</td></tr></tbody></table>', actions:[{label:'Cancelar', act:'close'}, {label:'Fechar edição', act:'ed-fechar-ok', id:e.id, primary:true, icon:'lock'}]}); },
+  'ed-fechar-ok': el => fecharEdicao(el.dataset.id),
+  'ed-edit': el => { if (needAdmin()) return; const e = edById(el.dataset.id); if (e) openModal({title:'Editar ' + e.nome, body:edForm(e)}); },
+  'ed-del': el => {
+    if (needAdmin()) return; const e = edById(el.dataset.id); if (!e) return;
+    if (S.lanc.some(l => l.ed === e.id || l.ajusteDe === e.id) || S.movs.some(m => m.ed === e.id)){ toast(e.nome + ' tem lançamentos ou movimentos e não pode ser excluída.'); return; }
+    openModal({title:'Excluir ' + e.nome + '?', body:'<p>A edição será removida da lista.</p>', actions:[{label:'Cancelar', act:'close'}, {label:'Excluir', act:'ed-del-ok', id:e.id, primary:true}]});
+  },
+  'ed-del-ok': async el => { if (needAdmin()) return; const id = el.dataset.id; if (await W(() => BE.db.batch([{t:'del', path:'edicoes/' + id}, {t:'del', path:'edicoes_fin/' + id}]))){ if (S.selEd === id) S.selEd = 'all'; closeModal(); toast('Edição excluída.'); } },
+  'ed-rel': el => { const e = edById(el.dataset.id); const acts = []; if (canMoney()) acts.push({label:'Baixar planilha', act:'export-csv', id:'ed:' + e.id, icon:'download'}); if (canMoney() || canStock()) acts.push({label:'Baixar relatório', act:'export-html', id:'ed:' + e.id, icon:'download'}); acts.push({label:'Fechar', act:'close', primary:true}); openModal({title:'Relatório · ' + e.nome, body:edReportBody(e), actions:acts}); },
+  'lanc-edit': el => {
+    if (needAdmin()) return; const l = S.lanc.find(x => x.id === el.dataset.id); if (!l) return;
+    const e = edById(l.ed); if (!e || e.status !== 'aberta'){ toast('Edição fechada: faça um ajuste em uma edição aberta.'); return; }
+    openModal({title:'Editar lançamento', body:'<form class="form" data-form="lanc-edit" novalidate><input type="hidden" name="id" value="' + esc(l.id) + '"><div>' + badge(l.tipo === 'despesa' ? 'bad' : 'ok', l.tipo === 'despesa' ? 'Despesa' : 'Receita') + ' <span class="muted small">' + esc(e.nome) + '</span></div>'
+      + (l.tipo === 'despesa' ? '<div class="fg"><label class="fl" for="le-setor">Setor</label><select class="inp" id="le-setor" name="setor">' + setorOptions(l.setor) + '</select></div>' : '')
+      + '<div class="fg"><label class="fl" for="le-cat">Categoria</label><input class="inp" id="le-cat" name="cat" type="text" list="cats2" value="' + esc(l.cat) + '" autocomplete="off"><datalist id="cats2">' + catList().map(c => '<option value="' + esc(c) + '">').join('') + '</datalist></div>'
+      + '<div class="two"><div class="fg"><label class="fl" for="le-valor">Valor (R$)</label><input class="inp" id="le-valor" name="valor" type="text" inputmode="decimal" value="' + String(l.valor).replace('.', ',') + '"></div><div class="fg"><label class="fl" for="le-data">Data</label><input class="inp" id="le-data" name="data" type="date" value="' + esc(l.data) + '"></div></div>'
+      + '<div class="fg"><label class="fl" for="le-desc">Descrição</label><textarea class="inp" id="le-desc" name="desc">' + esc(l.desc) + '</textarea></div>'
+      + '<div class="fg"><label class="fl" for="le-comp">Comprovante <small>(atual: ' + esc(l.comp || 'nenhum') + ')</small></label><input class="inp" id="le-comp" name="comp" type="file" accept="image/*,application/pdf"></div>' + modalBtns('Salvar') + '</form>'});
+  },
+  'del-lanc': el => { if (needAdmin()) return; const l = S.lanc.find(x => x.id === el.dataset.id); if (!l) return; openModal({title:'Excluir lançamento?', body:'<p><b>' + esc(l.desc) + '</b> · ' + brl(l.valor) + '</p>', actions:[{label:'Cancelar', act:'close'}, {label:'Excluir', act:'del-lanc-ok', id:l.id, primary:true}]}); },
+  'del-lanc-ok': async el => { if (needAdmin()) return; const l = S.lanc.find(x => x.id === el.dataset.id); if (!l) return; if (await W(() => BE.db.del('lancamentos/' + l.id))){ if (l.compPath) BE.storage.rm(l.compPath).catch(() => {}); closeModal(); toast('Lançamento excluído.'); } },
+  comp: async el => {
+    const l = S.lanc.find(x => x.id === el.dataset.id); if (!l) return;
+    if (!l.compPath){ toast('Este lançamento não tem o arquivo guardado (' + (l.comp || 'sem anexo') + ').'); return; }
+    try { const b = await BE.storage.blob(l.compPath); if (!downloadBlob(b, l.comp || 'comprovante')) toast('Não foi possível abrir o anexo.'); }
+    catch (e) { toast('Não consegui abrir o anexo. Confira se o Storage está ativado e as regras publicadas.'); }
+  },
+  'fin-more': () => { U.fin.lim += 12; render(); },
+  'item-novo': () => { if (needAdmin()) return; openModal({title:'Novo item de estoque', body:itemForm(null)}); },
+  'item-edit': el => { if (needAdmin()) return; const i = itemById(el.dataset.id); if (i) openModal({title:'Editar ' + i.nome, body:itemForm(i)}); },
+  'item-del': el => {
+    if (needAdmin()) return; const i = itemById(el.dataset.id); if (!i) return;
+    if (S.movs.some(m => m.item === i.id)){ toast(i.nome + ' tem movimentações registradas e não pode ser excluído.'); return; }
+    openModal({title:'Excluir ' + i.nome + '?', body:'<p>O item será removido do estoque de ' + esc(i.setor) + '.</p>', actions:[{label:'Cancelar', act:'close'}, {label:'Excluir', act:'item-del-ok', id:i.id, primary:true}]});
+  },
+  'item-del-ok': async el => { if (needAdmin()) return; if (await W(() => BE.db.del('itens/' + el.dataset.id))){ closeModal(); toast('Item excluído.'); } },
+  'org-sel': el => { U.org.pasta = el.dataset.id; U.org.q = ''; render(); },
+  'org-toggle': el => { const a = el.dataset.id; U.org.open[a] = !U.org.open[a]; render(); },
+  'org-up': () => { const f = $('#org-file'); if (f) f.click(); },
+  'file-dl': async el => {
+    const f = S.files.find(x => x.id === el.dataset.id); if (!f) return;
+    if (!f.storagePath){ toast('Este arquivo foi registrado sem o conteúdo.'); return; }
+    try { const b = await BE.storage.blob(f.storagePath); if (!downloadBlob(b, f.nome)) toast('Não foi possível baixar o arquivo.'); }
+    catch (e) { toast('Não consegui baixar. Confira se o Storage está ativado e as regras publicadas.'); }
+  },
+  'file-edit': el => { if (needAdmin()) return; const f = S.files.find(x => x.id === el.dataset.id); if (!f) return; openModal({title:'Renomear arquivo', body:'<form class="form" data-form="file-edit" novalidate><input type="hidden" name="id" value="' + esc(f.id) + '"><div class="fg"><label class="fl" for="fe-nome">Nome</label><input class="inp" id="fe-nome" name="nome" type="text" value="' + esc(f.nome) + '"></div><div class="fg"><label class="fl" for="fe-desc">Descrição</label><input class="inp" id="fe-desc" name="desc" type="text" value="' + esc(f.desc || '') + '"></div>' + modalBtns('Salvar') + '</form>'}); },
+  'file-del': el => { if (needAdmin()) return; const f = S.files.find(x => x.id === el.dataset.id); if (!f) return; openModal({title:'Excluir arquivo?', body:'<p><b>' + esc(f.nome) + '</b></p>', actions:[{label:'Cancelar', act:'close'}, {label:'Excluir', act:'file-del-ok', id:f.id, primary:true}]}); },
+  'file-del-ok': async el => { if (needAdmin()) return; const f = S.files.find(x => x.id === el.dataset.id); if (!f) return; if (await W(() => BE.db.del('arquivos/' + f.id))){ if (f.storagePath) BE.storage.rm(f.storagePath).catch(() => {}); closeModal(); toast('Arquivo excluído.'); } },
+  'team-edit': el => {
+    if (needAdmin()) return; const t = S.team.find(x => x.id === el.dataset.id); if (!t) return;
+    openModal({title:'Editar ' + t.nome, body:'<form class="form" data-form="team-edit" novalidate><input type="hidden" name="id" value="' + esc(t.id) + '"><div class="fg"><label class="fl" for="te-nome">Nome</label><input class="inp" id="te-nome" name="nome" type="text" value="' + esc(t.nome) + '"></div><div class="fg"><label class="fl" for="te-cargo">Cargo</label><select class="inp" id="te-cargo" name="cargo">' + S.cfg.cargos.map(c => opt(c, c, c === t.cargo)).join('') + '</select></div><div class="fg"><label class="fl" for="te-alvo">Onde atua</label><select class="inp" id="te-alvo" name="alvo">' + alvoOptions(t.alvo) + '</select></div>' + modalBtns('Salvar') + '</form>'});
+  },
+  'team-del': el => { if (needAdmin()) return; const t = S.team.find(x => x.id === el.dataset.id); if (!t) return; openModal({title:'Remover pessoa?', body:'<p><b>' + esc(t.nome) + '</b> (' + esc(t.cargo) + ') sai da equipe.</p>', actions:[{label:'Cancelar', act:'close'}, {label:'Remover', act:'team-del-ok', id:t.id, primary:true}]}); },
+  'team-del-ok': async el => { if (needAdmin()) return; if (await W(() => BE.db.del('equipe/' + el.dataset.id))){ closeModal(); toast('Pessoa removida.'); } },
+  'rel-modo': el => { U.rel.modo = el.dataset.id; render(); },
+  'vis-novo': () => { if (needAdmin()) return; openModal({title:'Novo visitante', body:userForm(null, 'vn-', 'new'), wide:true}); },
+  'user-edit': el => {
+    if (needAdmin()) return; const rec = findRec(el.dataset.id); if (!rec) return;
+    openModal({title:'Editar ' + rec.nome, body:userForm(rec, 've-', el.dataset.id.indexOf('c:') === 0 ? 'invite' : 'user'), wide:true});
+  },
+  'vis-del': el => {
+    if (needAdmin()) return; const rec = findRec(el.dataset.id); if (!rec || rec.papel === 'admin') return;
+    const mail = el.dataset.id.indexOf('c:') === 0 ? rec.id : rec.email;
+    openModal({title:'Remover acesso?', body:'<p><b>' + esc(rec.nome) + '</b> (' + esc(mail) + ') perde o acesso à plataforma.</p>', actions:[{label:'Cancelar', act:'close'}, {label:'Remover', act:'vis-del-ok', id:el.dataset.id, primary:true}]});
+  },
+  'vis-del-ok': async el => {
+    if (needAdmin()) return; const rec = findRec(el.dataset.id); if (!rec || rec.papel === 'admin') return;
+    const isInv = el.dataset.id.indexOf('c:') === 0, mail = (isInv ? rec.id : rec.email).toLowerCase();
+    const ops = [{t:'del', path:'convites/' + mail}]; if (!isInv) ops.push({t:'del', path:'users/' + rec.id});
+    if (await W(() => BE.db.batch(ops))){ closeModal(); toast('Acesso removido.'); }
+  },
+  'cfg-ren': el => {
+    if (needAdmin()) return; const i = el.dataset.id.indexOf('|'), kind = el.dataset.id.slice(0, i), key = el.dataset.id.slice(i + 1);
+    openModal({title:'Renomear', body:'<form class="form" data-form="cfg-ren" novalidate><input type="hidden" name="kind" value="' + esc(kind) + '"><input type="hidden" name="key" value="' + esc(key) + '"><div class="fg"><label class="fl" for="rn-nome">Novo nome para ' + esc(key) + '</label><input class="inp" id="rn-nome" name="nome" type="text" value="' + esc(key) + '" autocomplete="off"></div><div class="note">O novo nome é aplicado em todos os registros que usam o antigo.</div>' + modalBtns('Renomear') + '</form>'});
+  },
+  'cfg-del': el => {
+    if (needAdmin()) return; const i = el.dataset.id.indexOf('|'), kind = el.dataset.id.slice(0, i), key = el.dataset.id.slice(i + 1);
+    const n = usedCount(kind, key);
+    if (n > 0){ toast('Há ' + n + ' registro(s) ligados a “' + key + '”. Renomeie em vez de excluir, ou apague os registros antes.'); return; }
+    openModal({title:'Excluir ' + key + '?', body:'<p>Vai excluir ' + KIND_NOME[kind] + ' <b>' + esc(key) + '</b>.</p>', actions:[{label:'Cancelar', act:'close'}, {label:'Excluir', act:'cfg-del-ok', id:kind + '|' + key, primary:true}]});
+  },
+  'cfg-del-ok': async el => {
+    if (needAdmin()) return; const i = el.dataset.id.indexOf('|'), kind = el.dataset.id.slice(0, i), key = el.dataset.id.slice(i + 1);
+    if (usedCount(kind, key) > 0) return;
+    if (await W(() => BE.db.batch(removeOps(kind, key)))){ if (kind === 'setor') resetFilters(); closeModal(); toast('Excluído.'); }
+  },
+  'export-csv': el => {
+    const id = el.dataset.id; let L, name;
+    if (id === 'fin'){ L = visLanc().filter(inSel); name = 'lancamentos-' + (S.selEd === 'all' ? 'todas-as-edicoes' : S.selEd) + '.csv'; }
+    else if (id === 'rel'){ const per = U.rel.modo === 'mensal' ? U.rel.mes : U.rel.ano; L = visLanc().filter(l => l.data.indexOf(per) === 0); name = 'lancamentos-' + per + '.csv'; }
+    else { const eid = id.slice(3); L = visLanc().filter(l => l.ed === eid); name = 'lancamentos-' + eid + '.csv'; }
+    saveFile(name, csvFor(L));
+  },
+  'export-html': el => {
+    const id = el.dataset.id;
+    if (id === 'rel'){ const per = U.rel.modo === 'mensal' ? U.rel.mes : U.rel.ano; const L = visLanc().filter(l => l.data.indexOf(per) === 0), M = visMovs().filter(m => m.data.indexOf(per) === 0); saveFile('relatorio-' + per + '.html', relDoc('Relatório ' + (U.rel.modo === 'mensal' ? 'mensal · ' + mesLabel(per) : 'anual · ' + per), L, M)); }
+    else { const e = edById(id.slice(3)); saveFile('relatorio-' + e.id + '.html', relDoc('Relatório da edição · ' + e.nome, visLanc().filter(l => l.ed === e.id), visMovs().filter(m => m.ed === e.id))); }
+  }
+};
+const CHG = {
+  ed: el => { S.selEd = el.value; selPref = true; save(); render(); },
+  'fin-tipo': el => { U.fin.tipo = el.value; U.fin.lim = 12; render(); },
+  'fin-setor': el => { U.fin.setor = el.value; U.fin.lim = 12; render(); },
+  'fin-cat': el => { U.fin.cat = el.value; U.fin.lim = 12; render(); },
+  'fin-q': el => { U.fin.q = el.value; U.fin.lim = 12; render(); },
+  'est-setor': el => { U.est.setor = el.value; render(); },
+  'est-sit': el => { U.est.sit = el.value; render(); },
+  'org-q': el => { U.org.q = el.value; render(); },
+  'org-ord': el => { U.org.ord = el.value; render(); },
+  'eq-alvo': el => { U.eq.alvo = el.value; render(); },
+  'eq-q': el => { U.eq.q = el.value; render(); },
+  'rel-mes': el => { U.rel.mes = el.value; render(); },
+  'rel-ano': el => { U.rel.ano = el.value; render(); },
+  'lanc-tipo': el => { const f = el.form, rec = f.elements.tipo.value === 'receita'; const g = $('#fg-setor'); if (g) g.hidden = rec; },
+  'mov-setor': el => { const s = el.value, l = S.items.filter(i => i.setor === s); $('#mv-item').innerHTML = l.length ? l.map(i => opt(i.id, i.nome + ' (' + fmtQ(i.qtd) + ' ' + i.un + ')')).join('') : opt('', 'Cadastre um item primeiro'); },
+  'perm-ui': el => {
+    const f = el.closest('fieldset.perm-m'); if (!f) return;
+    const box = f.querySelector('input[name^="pm-"]'), on = box.checked, s = f.querySelector('.perm-s');
+    if (s){ s.hidden = !on; const mode = (f.querySelector('input[name^="ps-"]:checked') || {}).value, l = f.querySelector('.perm-l'); if (l) l.hidden = !(on && mode === 'some'); }
+  },
+  'org-file': el => { const list = Array.from(el.files || []); if (!list.length) return; addFiles(list); el.value = ''; }
+};
+async function addFiles(list){
+  if (needAdmin()) return;
+  const d = $('#org-desc'), desc = d ? d.value.trim() : '', pasta = U.org.pasta;
+  let semConteudo = 0, ok = 0;
+  for (const f of list){
+    const id = BE.db.newId('arquivos'), ext = (f.name.split('.').pop() || '').toLowerCase(), sp = 'arquivos/' + id + '/' + safeName(f.name);
+    const rec = {pasta, chave:chavePasta(pasta), nome:f.name, ext, desc, por:ME().nome, data:today(), tam:fmtSize(f.size), storagePath:sp};
+    if (!(await W(() => BE.db.set('arquivos/' + id, rec)))) continue;
+    ok++;
+    try { await BE.storage.put(sp, f); } catch (e) { console.error(e); semConteudo++; await W(() => BE.db.update('arquivos/' + id, {storagePath:{__del:true}, semArquivo:true})); }
+  }
+  if (!ok) return;
+  toast(semConteudo ? ok + ' registrado(s), mas ' + semConteudo + ' sem o conteúdo: confira se o Storage está ativado e as regras publicadas.' : ok + (ok === 1 ? ' arquivo enviado.' : ' arquivos enviados.'));
+}
+const fv = (f, n) => f.elements[n] ? f.elements[n].value : '';
+const checkedFile = (f, n) => f.elements[n] && f.elements[n].files && f.elements[n].files[0];
+const FORMS = {
+  login: async f => {
+    const email = fv(f, 'email').trim(), senha = fv(f, 'senha');
+    if (email.indexOf('@') < 1){ toast('Informe um e-mail válido.'); return; }
+    if (!senha){ toast('Informe a senha.'); return; }
+    try { await BE.auth.signIn(email, senha); } catch (e) { toast(authMsg(e)); }
+  },
+  signup: async f => {
+    const email = fv(f, 'email').trim(), senha = fv(f, 'senha');
+    if (email.indexOf('@') < 1){ toast('Informe um e-mail válido.'); return; }
+    if (senha.length < 6){ toast('Escolha uma senha com pelo menos 6 caracteres.'); return; }
+    if (senha !== fv(f, 'senha2')){ toast('As duas senhas não são iguais.'); return; }
+    try { await BE.auth.signUp(email, senha); toast('Conta criada. Confirme seu e-mail para continuar.'); } catch (e) { toast(authMsg(e)); }
+  },
+  reset: async f => {
+    const email = fv(f, 'email').trim(); if (email.indexOf('@') < 1){ toast('Informe um e-mail válido.'); return; }
+    try { await BE.auth.reset(email); } catch (e) { if (e && e.code !== 'auth/user-not-found') { toast(authMsg(e)); return; } }
+    toast('Se esse e-mail tiver conta, enviamos o link para criar uma nova senha.'); U.login.modo = 'entrar'; render();
+  },
+  search: f => { U.search = fv(f, 'q'); go('busca'); },
+  'ed-nova': async f => {
+    if (needAdmin()) return;
+    const nome = fv(f, 'nome').trim(), ini = fv(f, 'ini'), fim = fv(f, 'fim');
+    if (!nome){ toast('Dê um nome para a edição.'); return; }
+    if (S.ed.some(e => e.nome.toLowerCase() === nome.toLowerCase())){ toast('Já existe uma edição com esse nome.'); return; }
+    if (!ini || !fim){ toast('Informe o início e o fim do retiro.'); return; }
+    if (fim < ini){ toast('O fim do retiro não pode ser antes do início.'); return; }
+    if (await W(() => BE.db.set('edicoes/' + BE.db.newId('edicoes'), {nome, ini, fim, local:fv(f, 'local').trim(), resp:fv(f, 'resp'), status:'planejada'}))) toast(nome + ' criada como planejada.');
+  },
+  'ed-edit': async f => {
+    if (needAdmin()) return;
+    const e = edById(fv(f, 'id')); if (!e) return;
+    const nome = fv(f, 'nome').trim(), ini = fv(f, 'ini'), fim = fv(f, 'fim');
+    if (!nome){ toast('Dê um nome para a edição.'); return; }
+    if (S.ed.some(x => x !== e && x.nome.toLowerCase() === nome.toLowerCase())){ toast('Já existe uma edição com esse nome.'); return; }
+    if (!ini || !fim || fim < ini){ toast('Confira as datas do retiro.'); return; }
+    if (await W(() => BE.db.update('edicoes/' + e.id, {nome, ini, fim, local:fv(f, 'local').trim(), resp:fv(f, 'resp')}))){ closeModal(); toast('Edição atualizada.'); }
+  },
+  lanc: async f => {
+    if (needAdmin()) return;
+    const tipo = fv(f, 'tipo') || 'despesa', ed = fv(f, 'ed'), setor = tipo === 'despesa' ? fv(f, 'setor') : '';
+    const valor = parseMoney(fv(f, 'valor')), data = fv(f, 'data'), desc = fv(f, 'desc').trim(), e = edById(ed);
+    if (!e || e.status !== 'aberta'){ toast('Escolha uma edição aberta.'); return; }
+    if (tipo === 'despesa' && !setor){ toast('Escolha o setor da despesa.'); return; }
+    if (!(valor > 0)){ toast('Informe um valor maior que zero.'); return; }
+    if (!data){ toast('Informe a data.'); return; }
+    if (!desc){ toast('Descreva o lançamento.'); return; }
+    const file = checkedFile(f, 'comp'), id = BE.db.newId('lancamentos');
+    const rec = {ed, data, tipo, setor, chave:tipo === 'receita' ? GERAL : setor, cat:fv(f, 'cat').trim() || (tipo === 'receita' ? 'Receita' : 'Outros'), valor:Math.round(valor * 100) / 100, desc, comp:file ? file.name : '', por:ME().nome};
+    if (fv(f, 'ajuste')) rec.ajusteDe = fv(f, 'ajuste');
+    if (file) rec.compPath = 'comprovantes/' + id + '/' + safeName(file.name);
+    if (!(await W(() => BE.db.set('lancamentos/' + id, rec)))) return;
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    let aviso = '';
+    if (file){ try { await BE.storage.put(rec.compPath, file); } catch (er) { console.error(er); aviso = ' O comprovante não foi enviado: confira o Storage e as regras.'; await W(() => BE.db.update('lancamentos/' + id, {compPath:{__del:true}})); } }
+    toast('Lançamento salvo.' + aviso); scheduleRender(true);
+  },
+  'lanc-edit': async f => {
+    if (needAdmin()) return;
+    const l = S.lanc.find(x => x.id === fv(f, 'id')); if (!l) return;
+    const e = edById(l.ed); if (!e || e.status !== 'aberta'){ toast('Edição fechada: faça um ajuste em uma edição aberta.'); return; }
+    const valor = parseMoney(fv(f, 'valor')), data = fv(f, 'data'), desc = fv(f, 'desc').trim();
+    if (l.tipo === 'despesa' && !fv(f, 'setor')){ toast('Escolha o setor da despesa.'); return; }
+    if (!(valor > 0)){ toast('Informe um valor maior que zero.'); return; }
+    if (!data){ toast('Informe a data.'); return; }
+    if (!desc){ toast('Descreva o lançamento.'); return; }
+    const patch = {cat:fv(f, 'cat').trim() || (l.tipo === 'receita' ? 'Receita' : 'Outros'), valor:Math.round(valor * 100) / 100, data, desc};
+    if (l.tipo === 'despesa'){ patch.setor = fv(f, 'setor'); patch.chave = patch.setor; }
+    const file = checkedFile(f, 'comp'); let novoPath = '';
+    if (file){ novoPath = 'comprovantes/' + l.id + '/' + safeName(file.name); patch.comp = file.name; patch.compPath = novoPath; }
+    if (!(await W(() => BE.db.update('lancamentos/' + l.id, patch)))) return;
+    let aviso = '';
+    if (file){ try { await BE.storage.put(novoPath, file); if (l.compPath && l.compPath !== novoPath) BE.storage.rm(l.compPath).catch(() => {}); } catch (er) { console.error(er); aviso = ' O novo comprovante não foi enviado: confira o Storage e as regras.'; await W(() => BE.db.update('lancamentos/' + l.id, {compPath:l.compPath ? l.compPath : {__del:true}, comp:l.comp || ''})); } }
+    closeModal(); toast('Lançamento atualizado.' + aviso);
+  },
+  mov: async f => {
+    if (needAdmin()) return;
+    const tipo = fv(f, 'tipo') || 'uso', ed = fv(f, 'ed'), it = itemById(fv(f, 'item')), qtd = parseMoney(fv(f, 'qtd')), e = edById(ed);
+    if (!e || e.status !== 'aberta'){ toast('Escolha uma edição aberta.'); return; }
+    if (!it){ toast('Escolha um item.'); return; }
+    if (!(qtd > 0)){ toast('Informe uma quantidade maior que zero.'); return; }
+    if (tipo === 'uso' && qtd > it.qtd){ toast('Só há ' + fmtQ(it.qtd) + ' ' + it.un + ' em estoque.'); return; }
+    const mid = BE.db.newId('movimentos');
+    const ok = await W(() => BE.db.batch([{t:'set', path:'movimentos/' + mid, data:{ed, item:it.id, setor:it.setor, tipo, qtd, data:today(), obs:fv(f, 'obs').trim(), por:ME().nome}}, upd('itens/' + it.id, {qtd:{__inc:tipo === 'rep' ? qtd : -qtd}})]));
+    if (ok){ if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); toast((tipo === 'uso' ? 'Uso' : 'Reposição') + ' registrado.'); scheduleRender(true); }
+  },
+  'item-save': async f => {
+    if (needAdmin()) return;
+    const id = fv(f, 'id'), it = id ? itemById(id) : null;
+    const nome = fv(f, 'nome').trim(), setor = fv(f, 'setor'), min = parseMoney(fv(f, 'min')), qtd = it ? it.qtd : parseMoney(fv(f, 'qtd'));
+    if (!nome){ toast('Dê um nome para o item.'); return; }
+    if (!setor){ toast('Escolha o setor.'); return; }
+    if (isNaN(qtd) || qtd < 0 || isNaN(min) || min < 0){ toast('Quantidade e mínimo precisam ser números.'); return; }
+    if (S.items.some(i => i !== it && i.setor === setor && i.nome.toLowerCase() === nome.toLowerCase())){ toast('Esse item já existe nesse setor.'); return; }
+    let ok;
+    if (it){ const ops = [upd('itens/' + it.id, {nome, setor, un:fv(f, 'un'), min})]; if (setor !== it.setor) S.movs.filter(m => m.item === it.id).forEach(m => ops.push(upd('movimentos/' + m.id, {setor}))); ok = await W(() => BE.db.batch(ops)); }
+    else ok = await W(() => BE.db.set('itens/' + BE.db.newId('itens'), {nome, setor, un:fv(f, 'un'), qtd, min}));
+    if (ok){ closeModal(); toast(it ? 'Item atualizado.' : 'Item cadastrado.'); }
+  },
+  'file-edit': async f => {
+    if (needAdmin()) return;
+    const x = S.files.find(y => y.id === fv(f, 'id')), nome = fv(f, 'nome').trim();
+    if (!x) return; if (!nome){ toast('Dê um nome para o arquivo.'); return; }
+    if (await W(() => BE.db.update('arquivos/' + x.id, {nome, desc:fv(f, 'desc').trim(), ext:(nome.split('.').pop() || x.ext || '').toLowerCase()}))){ closeModal(); toast('Arquivo atualizado.'); }
+  },
+  'team-add': async f => {
+    if (needAdmin()) return;
+    const nome = fv(f, 'nome').trim(); if (!nome){ toast('Informe o nome.'); return; }
+    if (!fv(f, 'cargo')){ toast('Cadastre um cargo em Configurações primeiro.'); return; }
+    const alvo = fv(f, 'alvo');
+    if (await W(() => BE.db.set('equipe/' + BE.db.newId('equipe'), {nome, cargo:fv(f, 'cargo'), alvo, chave:chaveEq(alvo)}))){ if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); toast('Pessoa adicionada.'); scheduleRender(true); }
+  },
+  'team-edit': async f => {
+    if (needAdmin()) return;
+    const t = S.team.find(x => x.id === fv(f, 'id')), nome = fv(f, 'nome').trim(); if (!t) return;
+    if (!nome){ toast('Informe o nome.'); return; }
+    const alvo = fv(f, 'alvo');
+    if (await W(() => BE.db.update('equipe/' + t.id, {nome, cargo:fv(f, 'cargo'), alvo, chave:chaveEq(alvo)}))){ closeModal(); toast('Pessoa atualizada.'); }
+  },
+  'user-save': async f => {
+    if (needAdmin()) return;
+    const id = fv(f, 'id'), rec = id ? findRec(id) : null, isInv = id.indexOf('c:') === 0;
+    const nome = fv(f, 'nome').trim(), email = fv(f, 'email').trim().toLowerCase();
+    if (!nome){ toast('Informe o nome.'); return; }
+    if (email.indexOf('@') < 1){ toast('Informe um e-mail válido.'); return; }
+    const admin = !!rec && rec.papel === 'admin';
+    let perm = {};
+    if (!admin){ perm = readPerm(f); const err = permError(perm); if (err){ toast(err); return; } }
+    if (!rec){
+      if (S.users.some(u => (u.email || '').toLowerCase() === email) || S.convites.some(c => c.id === email)){ toast('Já existe alguém com esse e-mail.'); return; }
+      if (await W(() => BE.db.set('convites/' + email, {nome, perm, por:ME().nome}))){
+        closeModal();
+        openModal({title:'Convite criado', body:'<p>Peça para <b>' + esc(nome) + '</b> abrir o endereço abaixo, tocar em <b>“Primeiro acesso”</b> e criar a conta com o e-mail <b>' + esc(email) + '</b>. Depois é só confirmar o e-mail.</p><p class="note" style="margin-top:12px;overflow-wrap:anywhere">' + esc(location.origin + location.pathname) + '</p>', actions:[{label:'Fechar', act:'close', primary:true}]});
+      }
+      return;
+    }
+    if (isInv){
+      const old = rec.id; const ops = [];
+      if (email !== old){ if (S.users.some(u => (u.email || '').toLowerCase() === email) || S.convites.some(c => c.id === email)){ toast('Já existe alguém com esse e-mail.'); return; } ops.push({t:'del', path:'convites/' + old}, {t:'set', path:'convites/' + email, data:{nome, perm, por:rec.por || ME().nome}}); }
+      else ops.push(upd('convites/' + old, {nome, perm}));
+      if (await W(() => BE.db.batch(ops))){ closeModal(); toast('Convite atualizado.'); }
+      return;
+    }
+    const ops = [upd('users/' + rec.id, admin ? {nome} : {nome, perm})];
+    if (!admin && S.convites.some(c => c.id === (rec.email || '').toLowerCase())) ops.push(upd('convites/' + rec.email.toLowerCase(), {nome, perm}));
+    if (await W(() => BE.db.batch(ops))){ closeModal(); toast('Acesso atualizado.'); }
+  },
+  'cfg-add': async f => {
+    if (needAdmin()) return;
+    const kind = fv(f, 'kind'), nome = fv(f, 'nome').trim(); if (!nome){ toast('Escreva um nome.'); return; }
+    const c = S.cfg; let patch;
+    if (kind === 'area'){ if (nameTaken(c.areas.map(a => a.nome), nome)){ toast('Já existe uma área com esse nome.'); return; } patch = {areas:c.areas.concat([{nome, setores:[]}])}; }
+    else if (kind === 'setor'){ if (nameTaken(allSetores(), nome)){ toast('Já existe um setor com esse nome.'); return; } const an = fv(f, 'area'); if (!c.areas.some(a => a.nome === an)) return; patch = {areas:c.areas.map(a => a.nome === an ? {nome:a.nome, setores:a.setores.concat([nome])} : a)}; }
+    else { const key = kind === 'cargo' ? 'cargos' : kind === 'unidade' ? 'unidades' : 'cats'; if (nameTaken(c[key], nome)){ toast('Esse nome já existe na lista.'); return; } patch = {}; patch[key] = c[key].concat([nome]); }
+    if (await W(() => BE.db.update('config/app', patch))){ if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); toast('Adicionado.'); scheduleRender(true); }
+  },
+  'cfg-ren': async f => {
+    if (needAdmin()) return;
+    const kind = fv(f, 'kind'), key = fv(f, 'key'), nome = fv(f, 'nome').trim(), c = S.cfg;
+    if (!nome){ toast('Escreva um nome.'); return; }
+    if (nome === key){ closeModal(); return; }
+    const lista = kind === 'area' ? c.areas.map(a => a.nome) : kind === 'setor' ? allSetores() : kind === 'cargo' ? c.cargos : kind === 'unidade' ? c.unidades : c.cats;
+    if (nameTaken(lista, nome, key)){ toast('Esse nome já existe.'); return; }
+    if (await W(() => BE.db.batch(renameOps(kind, key, nome)))){ if (kind === 'setor' || kind === 'area') { if (U.org.pasta === kind + ':' + key) U.org.pasta = kind + ':' + nome; } resetFilters(); closeModal(); toast('Renomeado em todos os registros.'); }
+  },
+  'cfg-brand': async f => {
+    if (needAdmin()) return;
+    const nome = fv(f, 'nome').trim(), sigla = fv(f, 'sigla').trim().toUpperCase(), sub = fv(f, 'sub').trim(), cor = (f.querySelector('input[name=cor]:checked') || {}).value;
+    if (!nome){ toast('Dê um nome para a plataforma.'); return; }
+    if (!sigla){ toast('Escreva a sigla do logo (1 ou 2 letras).'); return; }
+    const patch = {nome, sigla:sigla.slice(0, 2), sub}; if (cor) patch.cor = cor;
+    if (await W(() => BE.db.update('config/app', patch))) toast('Identidade salva.');
+  },
+  'cfg-menu': async f => {
+    if (needAdmin()) return;
+    const m = {};
+    for (const k of Object.keys(DEF_MENU)){ const v = fv(f, k).trim(); if (!v){ toast('Nenhum nome do menu pode ficar vazio.'); return; } m[k] = v.slice(0, 24); }
+    if (await W(() => BE.db.update('config/app', {menu:m}))) toast('Nomes do menu salvos.');
+  }
+};
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const h = ACTS[el.dataset.act]; if (h){ h(el, e); }
+});
+document.addEventListener('change', e => {
+  const c = e.target.dataset && e.target.dataset.chg; if (c && CHG[c]) CHG[c](e.target);
+});
+document.addEventListener('submit', e => {
+  const f = e.target.closest('form[data-form]'); if (!f) return;
+  e.preventDefault(); const h = FORMS[f.dataset.form]; if (h) h(f);
+});
+document.addEventListener('focusout', () => { if (pend) setTimeout(() => scheduleRender(), 80); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#modal .ov')) closeModal(); });
+document.addEventListener('dragover', e => { const z = e.target.closest && e.target.closest('.dropzone'); if (z){ e.preventDefault(); z.classList.add('over'); } });
+document.addEventListener('dragleave', e => { const z = e.target.closest && e.target.closest('.dropzone'); if (z) z.classList.remove('over'); });
+document.addEventListener('drop', e => { const z = e.target.closest && e.target.closest('.dropzone'); if (z){ e.preventDefault(); z.classList.remove('over'); const l = Array.from((e.dataTransfer && e.dataTransfer.files) || []); if (l.length) addFiles(l); } });
+
+function applyTheme(){
+  const r = document.documentElement;
+  if (S && (S.theme === 'light' || S.theme === 'dark')) r.setAttribute('data-theme', S.theme); else r.removeAttribute('data-theme');
+}
+
+/* ---------- partida ---------- */
+S = emptyState(); U = mkUI(); render();
+window.__vvWatch = setTimeout(() => { if (phase === 'pre'){ phase = 'erro'; fatalMsg = 'o Firebase não carregou (confira a internet)'; render(); } }, 10000);
+window.VVApp = {start:startApp, fail:msg => { clearTimeout(window.__vvWatch); phase = 'erro'; fatalMsg = msg; render(); }, get S(){ return S; }, get U(){ return U; }, get phase(){ return phase; }, render, go};
+})();
+</script>
+<script type="module">
+/* =====================================================================
+   PASSO 1 — COLE AQUI o firebaseConfig do seu projeto.
+   Onde pegar: Firebase Console > Configurações do projeto (engrenagem)
+   > Seus apps > Web (</>) > "Configuração do SDK" (opção Config).
+   Estes dados são públicos por natureza: quem protege os dados são as
+   regras do Firestore e do Storage (arquivos firestore.rules e storage.rules).
+   ===================================================================== */
+const firebaseConfig = {
+  apiKey: "COLE_AQUI",
+  authDomain: "COLE_AQUI",
+  projectId: "COLE_AQUI",
+  storageBucket: "COLE_AQUI",
+  messagingSenderId: "COLE_AQUI",
+  appId: "COLE_AQUI"
+};
+/* ===================================================================== */
+
+const V = '10.14.1';
+const base = 'https://www.gstatic.com/firebasejs/' + V + '/';
+try {
+  const configOk = !!firebaseConfig.apiKey && !!firebaseConfig.projectId && JSON.stringify(firebaseConfig).indexOf('COLE_AQUI') < 0;
+  if (!configOk) {
+    window.VVApp.start(null, false);
+  } else {
+    const [{ initializeApp }, A, F, ST] = await Promise.all([
+      import(base + 'firebase-app.js'), import(base + 'firebase-auth.js'),
+      import(base + 'firebase-firestore.js'), import(base + 'firebase-storage.js')
+    ]);
+    const app = initializeApp(firebaseConfig);
+    const auth = A.getAuth(app);
+    let db;
+    try { db = F.initializeFirestore(app, { localCache: F.persistentLocalCache({ tabManager: F.persistentMultipleTabManager() }) }); }
+    catch (e) { db = F.initializeFirestore(app, {}); }
+    const storage = ST.getStorage(app);
+    const who = u => ({ uid: u.uid, email: u.email || '', emailVerified: !!u.emailVerified, displayName: u.displayName || '' });
+    const dec = data => {
+      const o = {};
+      Object.keys(data).forEach(k => {
+        const v = data[k];
+        if (v && typeof v === 'object' && !Array.isArray(v) && v.__inc !== undefined) o[k] = F.increment(v.__inc);
+        else if (v && typeof v === 'object' && !Array.isArray(v) && v.__del) o[k] = F.deleteField();
+        else o[k] = v;
+      });
+      return o;
+    };
+    const backend = {
+      auth: {
+        onChange: cb => A.onAuthStateChanged(auth, u => cb(u ? who(u) : null)),
+        signIn: (e, p) => A.signInWithEmailAndPassword(auth, e, p),
+        signUp: async (e, p) => { const c = await A.createUserWithEmailAndPassword(auth, e, p); try { await A.sendEmailVerification(c.user); } catch (x) {} return c; },
+        signOut: () => A.signOut(auth),
+        verifyMail: () => A.sendEmailVerification(auth.currentUser),
+        reset: e => A.sendPasswordResetEmail(auth, e),
+        refresh: async () => { const u = auth.currentUser; await A.reload(u); await u.getIdToken(true); return who(u); }
+      },
+      db: {
+        newId: coll => F.doc(F.collection(db, coll)).id,
+        get: async path => { const s = await F.getDoc(F.doc(db, path)); return s.exists() ? s.data() : null; },
+        set: (path, data) => F.setDoc(F.doc(db, path), data),
+        update: (path, patch) => F.updateDoc(F.doc(db, path), dec(patch)),
+        del: path => F.deleteDoc(F.doc(db, path)),
+        batch: async ops => {
+          for (let i = 0; i < ops.length; i += 400) {
+            const b = F.writeBatch(db);
+            ops.slice(i, i + 400).forEach(o => {
+              const r = F.doc(db, o.path);
+              if (o.t === 'set') b.set(r, o.data); else if (o.t === 'update') b.update(r, dec(o.data)); else b.delete(r);
+            });
+            await b.commit();
+          }
+        },
+        listenDoc: (path, cb, err) => F.onSnapshot(F.doc(db, path), s => cb(s.exists() ? s.data() : null), err),
+        listenQuery: (coll, flt, cb, err) => F.onSnapshot(
+          flt ? F.query(F.collection(db, coll), F.where(flt.field, '==', flt.eq)) : F.collection(db, coll),
+          s => cb(s.docs.map(d => Object.assign({ id: d.id }, d.data()))), err)
+      },
+      storage: {
+        put: (path, file) => ST.uploadBytes(ST.ref(storage, path), file),
+        blob: path => ST.getBlob(ST.ref(storage, path)),
+        rm: path => ST.deleteObject(ST.ref(storage, path))
+      }
+    };
+    window.VVApp.start(backend, true);
+  }
+} catch (e) {
+  console.error(e);
+  window.VVApp.fail(String(e && e.message ? e.message : e));
+}
+</script>
+</body>
+</html>
