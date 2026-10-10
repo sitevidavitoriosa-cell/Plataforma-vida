@@ -337,7 +337,7 @@ function defaultCfg(){
 const normCfg = c => { const o = Object.assign(defaultCfg(), c || {}); o.menu = Object.assign({}, DEF_MENU, (c && c.menu) || {}); return o; };
 
 /* ---------- dados em tempo real (cada pessoa só recebe o que as regras deixam) ---------- */
-let unsubs = [], parts = {}, rT = null, pend = false, permKey = '', seeding = false, edDocs = [], edFin = {}, selInit = false, errT = 0;
+let unsubs = [], parts = {}, rT = null, pend = false, forceNext = false, permKey = '', seeding = false, edDocs = [], edFin = {}, selInit = false, errT = 0;
 function stopAll(){
   unsubs.splice(0).forEach(u => { try { u(); } catch (e) {} });
   parts = {}; edDocs = []; edFin = {}; selInit = false; seeding = false;
@@ -357,6 +357,7 @@ function mergeEd(){
 }
 const typing = () => { const a = document.activeElement; return !!(a && a.closest && a.closest('#app') && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && !/^(button|submit|checkbox|radio|file)$/.test(a.type || '')); };
 function scheduleRender(force){
+  if (force) forceNext = true;
   if (rT) return;
   rT = setTimeout(() => { rT = null; if (!force && typing()){ pend = true; return; } pend = false; render(); }, 30);
 }
@@ -766,6 +767,13 @@ function setorOptions(sel){
   return S.cfg.areas.map(a => '<optgroup label="' + esc(a.nome) + '">' + a.setores.map(s => opt(s, s, s === sel)).join('') + '</optgroup>').join('');
 }
 const catList = () => Array.from(new Set(S.cfg.cats.concat(S.lanc.map(l => l.cat)))).sort();
+function edLanc(){
+  const e = S.selEd === 'all' ? null : edById(S.selEd);
+  if (e && e.status === 'aberta') return {id:e.id, nome:e.nome, msg:''};
+  if (!e) return {id:'', nome:'', msg:'Escolha uma edição no seletor “Edição”, no topo da tela, para poder lançar.'};
+  return {id:'', nome:e.nome, msg:e.nome + (e.status === 'planejada' ? ' ainda está planejada. Abra a edição em “' + lab('edicoes') + '” para lançar nela.' : ' está fechada e não recebe lançamentos. Para corrigir algo, escolha uma edição aberta e use o campo “Ajuste”.')};
+}
+function edLancBox(EL){ return EL.id ? '<div class="note">Lançando em: <b>' + esc(EL.nome) + '</b> <span class="muted">(troque no seletor “Edição” do topo)</span></div><input type="hidden" name="ed" value="' + esc(EL.id) + '">' : '<div class="note">' + esc(EL.msg) + '</div>'; }
 function defaultOpenEd(){ const o = openEds(); return (S.selEd !== 'all' && o.some(e => e.id === S.selEd)) ? S.selEd : (o[0] ? o[0].id : ''); }
 function viewFinanceiro(){
   const adm = isAdmin(), F = U.fin, L = visLanc().filter(inSel), ent = entradas(L), sai = saidas(L);
@@ -775,13 +783,12 @@ function viewFinanceiro(){
   const cats = adm ? catList() : Array.from(new Set(visLanc().map(l => l.cat))).sort();
   const sc = S.selEd === 'all' ? 'Todas as edições' : edName(S.selEd);
   const k = kpi('k-sage', 'Entradas', brl(ent), 'Receitas lançadas', 'up') + kpi('k-terra', 'Saídas', brl(sai), 'Despesas lançadas', 'down') + kpi('k-brown', 'Resultado da edição', brl(ent - sai), moneyFull() ? 'Saldo geral: ' + brl(saldoGeral()) : 'Nas áreas liberadas', 'wallet');
-  const oe = openEds(), de = defaultOpenEd();
+  const EL = edLanc();
   const closed = S.ed.filter(e => e.status === 'fechada').sort((a, b) => b.fechadaEm.localeCompare(a.fechadaEm)).slice(0, 12);
-  const noOpen = !oe.length;
+  const noOpen = !EL.id;
   const form = '<form class="form" data-form="lanc" novalidate>'
-    + (noOpen ? '<div class="note">Não há edição aberta. Abra uma edição em “' + esc(lab('edicoes')) + '” para lançar.</div>' : '')
+    + edLancBox(EL)
     + '<div class="seg" role="radiogroup" aria-label="Tipo de lançamento"><input type="radio" id="t-d" name="tipo" value="despesa" checked data-chg="lanc-tipo"><label for="t-d">Despesa</label><input type="radio" id="t-r" name="tipo" value="receita" data-chg="lanc-tipo"><label for="t-r">Receita</label></div>'
-    + '<div class="fg"><label class="fl" for="ln-ed">Edição</label><select class="inp" id="ln-ed" name="ed">' + oe.map(e => opt(e.id, e.nome, e.id === de)).join('') + '</select></div>'
     + '<div class="fg" id="fg-setor"><label class="fl" for="ln-setor">Setor <small>(obrigatório em despesas)</small></label><select class="inp" id="ln-setor" name="setor">' + opt('', 'Escolha o setor') + setorOptions('') + '</select></div>'
     + '<div class="fg"><label class="fl" for="ln-cat">Categoria</label><input class="inp" id="ln-cat" name="cat" type="text" list="cats" placeholder="Ex.: Material, Serviços, Alimentação" autocomplete="off"><datalist id="cats">' + cats.map(c => '<option value="' + esc(c) + '">').join('') + '</datalist></div>'
     + '<div class="two"><div class="fg"><label class="fl" for="ln-valor">Valor (R$)</label><input class="inp" id="ln-valor" name="valor" type="text" inputmode="decimal" placeholder="0,00"></div><div class="fg"><label class="fl" for="ln-data">Data</label><input class="inp" id="ln-data" name="data" type="date" value="' + today() + '"></div></div>'
@@ -813,18 +820,16 @@ function viewEstoque(){
   const setoresComItem = Array.from(new Set(items.map(i => i.setor)));
   const setF = allSetores().filter(s => okCtx('stock', s));
   const stSetor = setoresComItem[0] || allSetores()[0] || '';
-  const oe = openEds(), de = defaultOpenEd(), noOpen = !oe.length;
+  const EL = edLanc(), noOpen = !EL.id;
   const trows = rows.map(i => {
     const s = sit(i), pc = i.min > 0 ? Math.min(100, Math.round(i.qtd / i.min * 100)) : 100;
     return '<tr><td><b>' + esc(i.nome) + '</b></td><td>' + esc(i.setor) + '</td><td><div style="font-weight:700">' + fmtQ(i.qtd) + ' ' + esc(i.un) + '</div><div class="bar-t"><i class="bar-f ' + (s === 'ok' ? 'bf-ok' : s === 'low' ? 'bf-low' : 'bf-crit') + '" style="width:' + pc + '%"></i></div></td><td>' + fmtQ(i.min) + ' ' + esc(i.un) + '</td><td>' + sitBadge(s) + '</td>' + (adm ? '<td><div class="acts-c">' + iconBtn('item-edit', i.id, 'edit', 'Editar ' + i.nome) + iconBtn('item-del', i.id, 'trash', 'Excluir ' + i.nome) + '</div></td>' : '') + '</tr>';
   }).join('');
   const hist = M.slice().sort((a, b) => b.data.localeCompare(a.data)).slice(0, 15).map(m => { const it = itemById(m.item); return '<tr><td>' + dmy(m.data) + '</td><td><b>' + esc(it.nome) + '</b></td><td>' + (m.tipo === 'uso' ? badge('info', 'Uso') : badge('ok', 'Reposição')) + '</td><td class="num"><b>' + (m.tipo === 'uso' ? '− ' : '+ ') + fmtQ(m.qtd) + ' ' + esc(it.un) + '</b></td><td>' + esc(it.setor) + '</td><td>' + esc(edName(m.ed)) + '</td><td>' + esc(m.por) + '</td></tr>'; }).join('');
-  const itemOpts = s => { const l = items.filter(i => i.setor === s); return l.length ? l.map(i => opt(i.id, i.nome + ' (' + fmtQ(i.qtd) + ' ' + i.un + ')')).join('') : opt('', 'Cadastre um item primeiro'); };
-  const form = '<form class="form" data-form="mov" novalidate>' + (noOpen ? '<div class="note">Não há edição aberta. Abra uma edição em “' + esc(lab('edicoes')) + '” para registrar.</div>' : '')
+  const itemOpts = () => { const gs = allSetores().filter(st => items.some(i => i.setor === st)); return gs.length ? opt('', 'Escolha o item') + gs.map(st => '<optgroup label="' + esc(st) + '">' + items.filter(i => i.setor === st).map(i => opt(i.id, i.nome + ' (' + fmtQ(i.qtd) + ' ' + i.un + ')')).join('') + '</optgroup>').join('') : opt('', 'Cadastre um item primeiro'); };
+  const form = '<form class="form" data-form="mov" novalidate>' + edLancBox(EL)
     + '<div class="seg" role="radiogroup" aria-label="Tipo de movimentação"><input type="radio" id="mv-u" name="tipo" value="uso" checked><label for="mv-u">Usamos</label><input type="radio" id="mv-r" name="tipo" value="rep"><label for="mv-r">Repomos</label></div>'
-    + '<div class="fg"><label class="fl" for="mv-ed">Edição</label><select class="inp" id="mv-ed" name="ed">' + oe.map(e => opt(e.id, e.nome, e.id === de)).join('') + '</select></div>'
-    + '<div class="fg"><label class="fl" for="mv-setor">Setor</label><select class="inp" id="mv-setor" name="setor" data-chg="mov-setor">' + allSetores().map(s => opt(s, s, s === stSetor)).join('') + '</select></div>'
-    + '<div class="fg"><label class="fl" for="mv-item">Item</label><select class="inp" id="mv-item" name="item">' + itemOpts(stSetor) + '</select></div>'
+    + '<div class="fg"><label class="fl" for="mv-item">Item</label><select class="inp" id="mv-item" name="item">' + itemOpts() + '</select></div>'
     + '<div class="fg"><label class="fl" for="mv-qtd">Quantidade</label><input class="inp" id="mv-qtd" name="qtd" type="text" inputmode="decimal" placeholder="Ex.: 4"></div>'
     + '<div class="fg"><label class="fl" for="mv-obs">Observação <small>(opcional)</small></label><textarea class="inp" id="mv-obs" name="obs" style="min-height:80px" placeholder="Ex.: usado no cenário da abertura"></textarea></div>'
     + '<button class="btn btn-primary btn-block" type="submit"' + (noOpen ? ' disabled' : '') + '>Registrar</button></form>';
@@ -1081,7 +1086,28 @@ function render(){
   if (U.view === 'acessos' || U.view === 'config'){ if (!isAdmin()) U.view = 'inicio'; }
   else if (U.view !== 'inicio' && U.view !== 'busca' && !can(U.view)) U.view = 'inicio';
   const V = {inicio:viewInicio, edicoes:viewEdicoes, financeiro:viewFinanceiro, estoque:viewEstoque, organizacional:viewOrg, equipe:viewEquipe, relatorios:viewRel, acessos:viewAcessos, config:viewConfig, busca:viewBusca};
+  const keep = !forceNext; forceNext = false;
+  const saved = keep ? snapForms(app) : null;
   app.innerHTML = shell((V[U.view] || viewInicio)());
+  if (saved) restoreForms(app, saved);
+}
+function snapForms(app){
+  const out = [];
+  app.querySelectorAll('form[data-form] [id]').forEach(el => {
+    if (!/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || /^(file|submit|button|hidden|password)$/.test(el.type || '')) return;
+    out.push({id:el.id, v:el.value, c:el.checked});
+  });
+  return out;
+}
+function restoreForms(app, saved){
+  saved.forEach(x => {
+    const el = document.getElementById(x.id); if (!el || !app.contains(el)) return;
+    if (el.type === 'radio' || el.type === 'checkbox'){ el.checked = x.c; }
+    else if (el.tagName === 'SELECT'){ if (Array.prototype.some.call(el.options, o => o.value === x.v)) el.value = x.v; }
+    else el.value = x.v;
+  });
+  const tp = app.querySelector('form[data-form="lanc"] input[name="tipo"]:checked');
+  const g = app.querySelector('#fg-setor'); if (tp && g) g.hidden = tp.value === 'receita';
 }
 function go(v){ U.view = v; render(); window.scrollTo(0, 0); const m = $('#main'); if (m) m.focus({preventScroll:true}); }
 
