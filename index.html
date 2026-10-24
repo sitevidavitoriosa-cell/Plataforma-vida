@@ -654,7 +654,7 @@ function activity(){
 function lancRow(l, o){
   o = o || {};
   const neg = l.tipo === 'despesa', e = edById(l.ed), open = e && e.status === 'aberta';
-  return '<tr><td>' + dmy(l.data) + '</td><td><b>' + esc(l.desc) + '</b>' + (l.ajusteDe ? ' <span class="badge b-info">Ajuste de ' + esc(edName(l.ajusteDe)) + '</span>' : '') + '</td>'
+  return '<tr><td>' + dmy(l.data) + '</td><td><b>' + esc(l.desc) + '</b>' + (l.ajusteDe ? ' <span class="badge b-info">Ajuste de ' + esc(edById(l.ajusteDe) ? edName(l.ajusteDe) : 'edição excluída') + '</span>' : '') + '</td>'
     + (o.ed ? '<td>' + esc(edName(l.ed)) + '</td>' : '') + '<td>' + (l.setor ? esc(l.setor) : '—') + '</td><td>' + esc(l.cat) + '</td>'
     + '<td class="num ' + (neg ? 'neg' : 'pos') + '">' + (neg ? '− ' : '+ ') + brl(l.valor) + '</td>'
     + '<td>' + (l.comp ? '<button class="link" data-act="comp" data-id="' + l.id + '">Ver anexo</button>' : (neg ? '<span class="muted">Sem anexo</span>' : '—')) + '</td>'
@@ -1261,10 +1261,21 @@ const ACTS = {
   'ed-edit': el => { if (needAdmin()) return; const e = edById(el.dataset.id); if (e) openModal({title:'Editar ' + e.nome, body:edForm(e)}); },
   'ed-del': el => {
     if (needAdmin()) return; const e = edById(el.dataset.id); if (!e) return;
-    if (S.lanc.some(l => l.ed === e.id || l.ajusteDe === e.id) || S.movs.some(m => m.ed === e.id)){ toast(e.nome + ' tem lançamentos ou movimentos e não pode ser excluída.'); return; }
-    openModal({title:'Excluir ' + e.nome + '?', body:'<p>A edição será removida da lista.</p>', actions:[{label:'Cancelar', act:'close'}, {label:'Excluir', act:'ed-del-ok', id:e.id, primary:true}]});
+    const nl = S.lanc.filter(l => l.ed === e.id).length, nm = S.movs.filter(m => m.ed === e.id).length;
+    const aviso = (nl || nm)
+      ? '<p>Esta edição tem <b>' + nl + '</b> lançamento(s) financeiro(s) e <b>' + nm + '</b> movimento(s) de estoque. Tudo isso será <b>apagado junto</b>.</p><div class="note"><b>Atenção:</b> o saldo do caixa deixa de contar os valores desta edição. A quantidade atual do estoque <b>não volta</b> ao que era antes; se precisar, corrija em Estoque. Esta ação não pode ser desfeita.</div>'
+      : '<p>A edição será removida da lista.</p>';
+    openModal({title:'Excluir ' + e.nome + '?', body:aviso, actions:[{label:'Cancelar', act:'close'}, {label:'Excluir', act:'ed-del-ok', id:e.id, primary:true}]});
   },
-  'ed-del-ok': async el => { if (needAdmin()) return; const id = el.dataset.id; if (await W(() => BE.db.batch([{t:'del', path:'edicoes/' + id}, {t:'del', path:'edicoes_fin/' + id}]))){ if (S.selEd === id) S.selEd = 'all'; closeModal(); toast('Edição excluída.'); } },
+  'ed-del-ok': async el => {
+    if (needAdmin()) return; const id = el.dataset.id;
+    const ls = S.lanc.filter(l => l.ed === id), ms = S.movs.filter(m => m.ed === id);
+    const ops = ls.map(l => ({t:'del', path:'lancamentos/' + l.id})).concat(ms.map(m => ({t:'del', path:'movimentos/' + m.id})), [{t:'del', path:'edicoes/' + id}, {t:'del', path:'edicoes_fin/' + id}]);
+    if (await W(() => BE.db.batch(ops))){
+      ls.forEach(l => { if (l.compPath) BE.storage.rm(l.compPath).catch(() => {}); });
+      if (S.selEd === id) S.selEd = 'all'; closeModal(); toast('Edição excluída.');
+    }
+  },
   'ed-rel': el => { const e = edById(el.dataset.id); const acts = []; if (canMoney()) acts.push({label:'Baixar planilha', act:'export-csv', id:'ed:' + e.id, icon:'download'}); if (canMoney() || canStock()) acts.push({label:'Baixar relatório', act:'export-html', id:'ed:' + e.id, icon:'download'}); acts.push({label:'Fechar', act:'close', primary:true}); openModal({title:'Relatório · ' + e.nome, body:edReportBody(e), actions:acts}); },
   'lanc-edit': el => {
     if (needAdmin()) return; const l = S.lanc.find(x => x.id === el.dataset.id); if (!l) return;
