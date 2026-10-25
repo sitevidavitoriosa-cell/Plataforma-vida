@@ -264,6 +264,8 @@ body{font-family:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
 .card{box-shadow:none!important;border:1px solid var(--line)}
 .top{box-shadow:none;border-bottom:1px solid var(--line)}
 .bnav{display:none}
+.hdr{position:sticky;top:0;z-index:35;background:var(--bg)}
+@media (max-width:820px){.hdr{position:static}}
 .chips{display:flex;flex-wrap:nowrap!important;gap:8px;overflow-x:auto;padding:2px 0 10px;margin:0 -2px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:none;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap}
@@ -694,12 +696,12 @@ function shell(content){
   const u = ME(), c = S.cfg;
   const eds = S.ed.slice().sort((a, b) => { const o = {aberta:0, planejada:1, fechada:2}; return o[a.status] - o[b.status] || (a.status === 'fechada' ? b.ini.localeCompare(a.ini) : a.ini.localeCompare(b.ini)); });
   const tabs = [['inicio', 'home']].concat(MODS.filter(can).map(m => [m, MOD_ICON[m]])).concat(isAdmin() ? [['acessos', 'key'], ['config', 'gear']] : []);
-  return '<header class="top"><div class="top-in"><div class="brand"><div class="logo">' + esc(c.sigla) + '</div><div class="brand-n"><b>' + esc(c.nome) + '</b><small>' + esc(c.sub) + '</small></div></div>'
+  return '<div class="hdr"><header class="top"><div class="top-in"><div class="brand"><div class="logo">' + esc(c.sigla) + '</div><div class="brand-n"><b>' + esc(c.nome) + '</b><small>' + esc(c.sub) + '</small></div></div>'
     + '<form class="search" data-form="search" role="search">' + icon('search') + '<label class="sr" for="gs">Buscar</label><input id="gs" name="q" type="search" placeholder="Buscar lançamentos, itens, arquivos e pessoas" value="' + esc(U.search) + '"></form>'
     + '<div class="top-right"><label class="ed-sel"><span>Edição</span><select data-chg="ed" aria-label="Edição selecionada">' + opt('all', 'Todas as edições', S.selEd === 'all') + eds.map(e => opt(e.id, e.nome + ' · ' + e.status, S.selEd === e.id)).join('') + '</select></label>'
     + '<button class="icon-btn" data-act="theme" aria-label="Alternar entre tema claro e escuro">' + icon(isDark() ? 'sun' : 'moon', 20) + '</button>'
     + '<button class="user" data-act="user-menu" aria-label="Menu do usuário"><span class="avatar">' + esc(initials(u.nome)) + '</span><span class="user-t"><b>' + esc(u.nome) + '</b><small>' + (u.papel === 'admin' ? 'Administrador' : 'Visitante') + '</small></span></button></div></div></header>'
-    + '<nav class="nav" aria-label="Áreas da plataforma"><div class="nav-in">' + tabs.map(t => '<button class="tab' + (U.view === t[0] ? ' on' : '') + '" data-act="nav" data-v="' + t[0] + '"' + (U.view === t[0] ? ' aria-current="page"' : '') + '>' + icon(t[1]) + esc(lab(t[0])) + '</button>').join('') + '</div></nav>'
+    + '<nav class="nav" aria-label="Áreas da plataforma"><div class="nav-in">' + tabs.map(t => '<button class="tab' + (U.view === t[0] ? ' on' : '') + '" data-act="nav" data-v="' + t[0] + '"' + (U.view === t[0] ? ' aria-current="page"' : '') + '>' + icon(t[1]) + esc(lab(t[0])) + '</button>').join('') + '</div></nav></div>'
     + '<main id="main" tabindex="-1">' + content + '</main>' + bottomNav();
 }
 function bottomNav(){
