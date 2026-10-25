@@ -253,6 +253,64 @@ input[type=file].inp{padding:10px 12px;min-height:48px}
   .login-card{padding:24px}
   .user-t{display:none}
 }
+
+/* ===== Novo layout limpo e mobile-first ===== */
+body{font-family:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+.kpi{background:var(--surface)!important;color:var(--ink)!important;border:1px solid var(--line);box-shadow:none!important;padding:16px 18px}
+.kpi .k-i{display:none}
+.kpi .k-l{color:var(--muted)!important;font-weight:700}
+.kpi .k-v{color:var(--ink)!important}
+.kpi .k-s{color:var(--muted)!important}
+.card{box-shadow:none!important;border:1px solid var(--line)}
+.top{box-shadow:none;border-bottom:1px solid var(--line)}
+.bnav{display:none}
+.chips{display:flex;flex-wrap:nowrap!important;gap:8px;overflow-x:auto;padding:2px 0 10px;margin:0 -2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.sec-h{display:flex;align-items:center;justify-content:space-between;margin:18px 2px 8px;font-size:13px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.lst{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.li{display:flex;align-items:center;gap:12px;padding:12px 14px;min-height:56px;border-top:1px solid var(--line);width:100%;text-align:left;background:transparent;border-left:0;border-right:0;border-bottom:0;color:var(--ink);font:inherit}
+.li:first-child{border-top:0}
+button.li{cursor:pointer}
+.li-m{flex:1;min-width:0}
+.li-m b{display:block;font-size:15px;overflow:hidden;text-overflow:ellipsis}
+.li-m small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+.li-r{text-align:right;font-weight:800;white-space:nowrap}
+.li-r small{display:block;font-weight:600;color:var(--muted);font-size:12px}
+.li .bar-t{margin-top:6px}
+.pos{color:#2E7D5B}.neg{color:#B4442B}
+.fab{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:30;min-height:52px;padding:0 20px;border-radius:999px;border:0;background:var(--accent);color:#fff;font-weight:800;font-size:15px;display:flex;align-items:center;gap:8px;box-shadow:0 8px 22px rgba(0,0,0,.25);cursor:pointer}
+.stp{display:flex;align-items:center;gap:10px}
+.stp button{width:52px;height:52px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:26px;font-weight:700;cursor:pointer}
+.stp input{flex:1;text-align:center;font-size:22px;font-weight:800;min-width:0}
+.prev{padding:12px 14px;border-radius:12px;background:var(--field);font-size:14px;font-weight:700}
+.ecard{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:10px}
+.ecard h3{font-size:17px;margin-bottom:2px}
+.ecard .eg{display:flex;gap:16px;margin:10px 0;font-size:13px;color:var(--muted)}
+.ecard .eg b{display:block;color:var(--ink);font-size:15px}
+.ecard .ea{display:flex;flex-wrap:wrap;gap:8px}
+@media (max-width:820px){
+  .nav{display:none}
+  .top-in{padding:10px 14px;gap:8px}
+  .search{display:none}
+  .brand-n small{display:none}
+  .top-right{width:100%;justify-content:space-between}
+  #main{padding:14px 14px calc(96px + env(safe-area-inset-bottom,0px))}
+  .kpis{grid-template-columns:1fr 1fr;gap:10px}
+  .row{display:block}
+  .row>*{margin-bottom:14px}
+  .ph{flex-direction:column;align-items:stretch;gap:10px}
+  .ph h1{font-size:24px}
+  .bnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--surface);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))}
+  .bnav button{flex:1;min-height:52px;border:0;background:transparent;color:var(--muted);font-weight:700;font-size:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:12px;cursor:pointer}
+  .bnav button.on{color:var(--accent)}
+  .ov{align-items:flex-end;padding:0}
+  .dlg,.dlg.wide{max-width:none;border-radius:24px 24px 0 0;max-height:92vh;padding:20px 18px calc(20px + env(safe-area-inset-bottom,0px))}
+  .dlg::before{content:"";display:block;width:40px;height:4px;border-radius:4px;background:var(--line);margin:-6px auto 14px}
+  .toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+}
+@media (min-width:821px){.fab{right:28px;bottom:28px}}
 </style>
 </head>
 <body>
@@ -319,7 +377,7 @@ const DEF_AREAS = [
 /* ---------- estado e ligação com o Firebase ---------- */
 let BE = null, S = null, U = null, AU = null, phase = 'pre', fatalMsg = '';
 const PREFS = 'vv-gestao-prefs';
-const mkUI = () => ({view:'inicio', login:{modo:'entrar'}, fin:{tipo:'all', setor:'all', cat:'all', q:'', lim:12}, est:{setor:'all', sit:'all'}, org:{pasta:'geral', open:{}, q:'', ord:'recentes'}, eq:{alvo:'all', q:''}, rel:{modo:'mensal', mes:null, ano:null}, search:''});
+const mkUI = () => ({view:'inicio', login:{modo:'entrar'}, fin:{tipo:'all', setor:'all', cat:'all', q:'', lim:12}, est:{setor:'all', sit:'all', aba:'geral'}, org:{pasta:'geral', open:{}, q:'', ord:'recentes'}, eq:{alvo:'all', q:''}, rel:{modo:'mensal', mes:null, ano:null}, search:''});
 const emptyState = () => ({cfg:null, users:[], convites:[], team:[], ed:[], lanc:[], items:[], movs:[], files:[], userId:null, selEd:'all', theme:'auto'});
 let selPref = false;
 function loadPrefs(){ try { const p = JSON.parse(localStorage.getItem(PREFS) || '{}'); if (p.theme) S.theme = p.theme; if (p.selEd){ S.selEd = p.selEd; selPref = true; } } catch (e) {} }
@@ -544,6 +602,8 @@ const ICON = {
   clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   chevR:'<path d="M9 6l6 6-6 6"/>',
   chevD:'<path d="M6 9l6 6 6-6"/>',
+  menu:'<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
+  logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/>',
   swap:'<path d="M7 4v14"/><path d="M3 14l4 4 4-4"/><path d="M17 20V6"/><path d="M13 10l4-4 4 4"/>'
 };
 const icon = (n, s) => '<svg class="ic" width="' + (s || 18) + '" height="' + (s || 18) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[n] + '</svg>';
@@ -640,7 +700,20 @@ function shell(content){
     + '<button class="icon-btn" data-act="theme" aria-label="Alternar entre tema claro e escuro">' + icon(isDark() ? 'sun' : 'moon', 20) + '</button>'
     + '<button class="user" data-act="user-menu" aria-label="Menu do usuário"><span class="avatar">' + esc(initials(u.nome)) + '</span><span class="user-t"><b>' + esc(u.nome) + '</b><small>' + (u.papel === 'admin' ? 'Administrador' : 'Visitante') + '</small></span></button></div></div></header>'
     + '<nav class="nav" aria-label="Áreas da plataforma"><div class="nav-in">' + tabs.map(t => '<button class="tab' + (U.view === t[0] ? ' on' : '') + '" data-act="nav" data-v="' + t[0] + '"' + (U.view === t[0] ? ' aria-current="page"' : '') + '>' + icon(t[1]) + esc(lab(t[0])) + '</button>').join('') + '</div></nav>'
-    + '<main id="main" tabindex="-1">' + content + '</main>';
+    + '<main id="main" tabindex="-1">' + content + '</main>' + bottomNav();
+}
+function bottomNav(){
+  const main = [['inicio', 'home', 'Início']].concat(['estoque', 'financeiro', 'edicoes'].filter(can).map(m => [m, MOD_ICON[m], lab(m)]));
+  const maisOn = main.every(t => t[0] !== U.view);
+  return '<nav class="bnav" aria-label="Navegação">' + main.map(t => '<button class="' + (U.view === t[0] ? 'on' : '') + '" data-act="nav" data-v="' + t[0] + '">' + icon(t[1], 22) + '<span>' + esc(t[2]) + '</span></button>').join('')
+    + '<button class="' + (maisOn ? 'on' : '') + '" data-act="nav" data-v="mais">' + icon('menu', 22) + '<span>Mais</span></button></nav>';
+}
+function viewMais(){
+  const u = ME(), items = ['organizacional', 'equipe', 'relatorios'].filter(can).map(m => [m, MOD_ICON[m], lab(m)]).concat(isAdmin() ? [['acessos', 'key', lab('acessos')], ['config', 'gear', lab('config')]] : []);
+  const rows = items.map(t => '<button class="li" data-act="nav" data-v="' + t[0] + '">' + icon(t[1], 22) + '<span class="li-m"><b>' + esc(t[2]) + '</b></span>' + icon('chevR', 18) + '</button>').join('');
+  return pageHead('Mais', esc(u.nome) + ' · ' + (u.papel === 'admin' ? 'Administrador' : 'Visitante'))
+    + (rows ? '<div class="lst">' + rows + '</div>' : '<div class="empty">Nenhuma outra área liberada.</div>')
+    + '<div class="sec-h">Conta</div><div class="lst"><button class="li" data-act="theme">' + icon(isDark() ? 'sun' : 'moon', 22) + '<span class="li-m"><b>Tema ' + (isDark() ? 'claro' : 'escuro') + '</b></span></button><button class="li" data-act="logout">' + icon('logout', 22) + '<span class="li-m"><b>Sair</b></span></button></div>';
 }
 
 /* ---------- Início ---------- */
@@ -734,7 +807,8 @@ function viewEdicoes(){
     + kpi('k-brown', 'Edições abertas', String(openEds().length), 'Recebendo lançamentos', 'cal')
     + (stock ? kpi('k-slate', 'Itens no estoque geral', String(visItems().length), 'Compartilhado entre as edições', 'boxes') : '')
     + kpi('k-terra', 'Próxima edição', prox ? esc(prox.nome) : '—', prox ? 'Retiro em ' + dmy(prox.ini) : 'Nenhuma planejada', 'clock');
-  const rows = eds.map(e => {
+  const ord = {aberta:0, planejada:1, fechada:2};
+  const cards = eds.slice().sort((x, y) => ord[x.status] - ord[y.status] || (x.status === 'fechada' ? y.ini.localeCompare(x.ini) : x.ini.localeCompare(y.ini))).map(e => {
     const tt = edTot(e), np = e.status === 'planejada';
     const mv = visMovs().filter(m => m.ed === e.id).length;
     let a = '';
@@ -742,24 +816,23 @@ function viewEdicoes(){
     if (adm && e.status === 'planejada') a += '<button class="btn btn-sm btn-primary" data-act="ed-abrir" data-id="' + e.id + '">Abrir edição</button>';
     if (adm && e.status === 'aberta') a += '<button class="btn btn-sm" data-act="ed-fechar" data-id="' + e.id + '">' + icon('lock', 16) + 'Fechar edição</button>';
     if (adm) a += iconBtn('ed-edit', e.id, 'edit', 'Editar ' + e.nome) + iconBtn('ed-del', e.id, 'trash', 'Excluir ' + e.nome);
-    return '<tr><td><b>' + esc(e.nome) + '</b></td><td>' + retiroLabel(e) + '</td><td>' + statusBadge(e.status) + '</td><td class="num">' + (np ? '—' : mf ? brl(e.saldoInicial) : 'Restrito') + '</td><td class="num ' + (np || !mf ? '' : tt.res >= 0 ? 'pos' : 'neg') + '">' + (np ? '—' : mf ? signed(tt.res) : 'Restrito') + '</td><td>' + (np ? '—' : stock ? mv + ' mov.' : 'Restrito') + '</td><td><div class="ph-a" style="gap:8px">' + a + '</div></td></tr>';
+    return '<div class="ecard"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><div><h3>' + esc(e.nome) + '</h3><div class="muted small">Retiro ' + retiroLabel(e) + '</div></div>' + statusBadge(e.status) + '</div>'
+      + (np ? '' : '<div class="eg"><div>Saldo inicial<b>' + (mf ? brl(e.saldoInicial) : 'Restrito') + '</b></div><div>Resultado<b class="' + (mf ? (tt.res >= 0 ? 'pos' : 'neg') : '') + '">' + (mf ? signed(tt.res) : 'Restrito') + '</b></div><div>Material<b>' + (stock ? mv + ' mov.' : 'Restrito') + '</b></div></div>')
+      + '<div class="ea">' + a + '</div></div>';
   }).join('');
-  const form = adm
-    ? '<form class="form" data-form="ed-nova" novalidate><div class="fg"><label class="fl" for="ed-nome">Nome da edição</label><input class="inp" id="ed-nome" name="nome" type="text" placeholder="Ex.: Vida 14"></div>'
-      + '<div class="two"><div class="fg"><label class="fl" for="ed-ini">Início do retiro</label><input class="inp" id="ed-ini" name="ini" type="date"></div><div class="fg"><label class="fl" for="ed-fim">Fim do retiro</label><input class="inp" id="ed-fim" name="fim" type="date"></div></div>'
-      + '<div class="fg"><label class="fl" for="ed-loc">Local <small>(opcional)</small></label><input class="inp" id="ed-loc" name="local" type="text" placeholder="Onde será o retiro"></div>'
-      + '<div class="fg"><label class="fl" for="ed-resp">Responsável</label><select class="inp" id="ed-resp" name="resp">' + adminOpts('') + '</select></div>'
-      + '<div class="note">O saldo inicial do caixa e do estoque é calculado sozinho, a partir dos valores gerais no dia em que a edição é aberta.</div>'
-      + '<button class="btn btn-primary btn-block" type="submit">Criar edição</button></form>'
-    : '<div class="note">Somente administradores criam, abrem, fecham e editam edições. Você acompanha o andamento delas.</div>';
   return [
-    pageHead(esc(lab('edicoes')), 'Cada retiro é uma edição. Dados separados por edição, com caixa e estoque num fluxo contínuo'),
+    pageHead(esc(lab('edicoes')), 'Cada retiro é uma edição; caixa e estoque seguem num fluxo contínuo', adm ? '<button class="btn btn-primary" data-act="ed-novo">' + icon('plus', 16) + 'Nova edição</button>' : ''),
     '<div class="kpis">' + k + '</div>',
-    card('Linha do tempo', timeline() + '<div class="note" style="margin-top:16px">Enquanto duas edições estão abertas ao mesmo tempo, as duas usam o mesmo caixa e o mesmo estoque. Cada uma mostra só os próprios lançamentos e movimentos.</div>', {sub:'Uma edição fica aberta da preparação até o fechamento, e duas podem se sobrepor'}),
-    '<div class="row"><div class="r2">' + card('Todas as edições', table([['Edição'], ['Retiro'], ['Status'], ['Saldo inicial', 1], ['Resultado', 1], ['Material'], ['Ação']], rows, {min:860})) + '</div>'
-      + '<div class="r1 stack">' + card('Nova edição', form)
-      + card('Ao fechar uma edição', '<div class="acts" style="gap:8px;font-size:14px"><div>Os números dela ficam congelados e o relatório da edição é gerado.</div><div>O que sobrou de caixa e de material segue no fluxo geral para as próximas.</div><div>Correções posteriores entram como ajuste, com registro de quem fez.</div></div>') + '</div></div>'
+    '<div class="sec-h"><span>Todas as edições</span></div>' + (cards || '<div class="empty">Nenhuma edição cadastrada.</div>'),
+    '<div class="sec-h"><span>Linha do tempo</span></div>' + card('', timeline() + '<div class="note" style="margin-top:16px">Enquanto duas edições estão abertas ao mesmo tempo, as duas usam o mesmo caixa e o mesmo estoque. Cada uma mostra só os próprios lançamentos e movimentos.</div>')
   ].join('');
+}
+function edNovaForm(){
+  return '<form class="form" data-form="ed-nova" novalidate><div class="fg"><label class="fl" for="ed-nome">Nome da edição</label><input class="inp" id="ed-nome" name="nome" type="text" placeholder="Ex.: Vida 14"></div>'
+    + '<div class="two"><div class="fg"><label class="fl" for="ed-ini">Início do retiro</label><input class="inp" id="ed-ini" name="ini" type="date"></div><div class="fg"><label class="fl" for="ed-fim">Fim do retiro</label><input class="inp" id="ed-fim" name="fim" type="date"></div></div>'
+    + '<div class="fg"><label class="fl" for="ed-loc">Local <small>(opcional)</small></label><input class="inp" id="ed-loc" name="local" type="text" placeholder="Onde será o retiro"></div>'
+    + '<div class="fg"><label class="fl" for="ed-resp">Responsável</label><select class="inp" id="ed-resp" name="resp">' + adminOpts('') + '</select></div>'
+    + '<div class="note">O saldo inicial do caixa e do estoque é calculado sozinho no dia em que a edição é aberta.</div>' + modalBtns('Criar edição') + '</form>';
 }
 
 /* ---------- Financeiro ---------- */
@@ -775,72 +848,97 @@ function edLanc(){
 }
 function edLancBox(EL){ return EL.id ? '<div class="note">Lançando em: <b>' + esc(EL.nome) + '</b> <span class="muted">(troque no seletor “Edição” do topo)</span></div><input type="hidden" name="ed" value="' + esc(EL.id) + '">' : '<div class="note">' + esc(EL.msg) + '</div>'; }
 function defaultOpenEd(){ const o = openEds(); return (S.selEd !== 'all' && o.some(e => e.id === S.selEd)) ? S.selEd : (o[0] ? o[0].id : ''); }
-function viewFinanceiro(){
-  const adm = isAdmin(), F = U.fin, L = visLanc().filter(inSel), ent = entradas(L), sai = saidas(L);
-  const q = (F.q || '').toLowerCase();
-  const rows = L.filter(l => (F.tipo === 'all' || l.tipo === F.tipo) && (F.setor === 'all' || l.setor === F.setor) && (F.cat === 'all' || l.cat === F.cat) && (!q || (l.desc + ' ' + l.cat + ' ' + l.setor).toLowerCase().indexOf(q) >= 0)).sort((a, b) => b.data.localeCompare(a.data));
-  const shown = rows.slice(0, F.lim);
-  const cats = adm ? catList() : Array.from(new Set(visLanc().map(l => l.cat))).sort();
-  const sc = S.selEd === 'all' ? 'Todas as edições' : edName(S.selEd);
-  const k = kpi('k-sage', 'Entradas', brl(ent), 'Receitas lançadas', 'up') + kpi('k-terra', 'Saídas', brl(sai), 'Despesas lançadas', 'down') + kpi('k-brown', 'Resultado da edição', brl(ent - sai), moneyFull() ? 'Saldo geral: ' + brl(saldoGeral()) : 'Nas áreas liberadas', 'wallet');
-  const EL = edLanc();
-  const closed = S.ed.filter(e => e.status === 'fechada').sort((a, b) => b.fechadaEm.localeCompare(a.fechadaEm)).slice(0, 12);
-  const noOpen = !EL.id;
-  const form = '<form class="form" data-form="lanc" novalidate>'
-    + edLancBox(EL)
+function lancForm(){
+  const EL = edLanc(), cats = isAdmin() ? catList() : [], closed = S.ed.filter(e => e.status === 'fechada').sort((a, b) => b.fechadaEm.localeCompare(a.fechadaEm)).slice(0, 12);
+  return '<form class="form" data-form="lanc" novalidate>' + edLancBox(EL)
     + '<div class="seg" role="radiogroup" aria-label="Tipo de lançamento"><input type="radio" id="t-d" name="tipo" value="despesa" checked data-chg="lanc-tipo"><label for="t-d">Despesa</label><input type="radio" id="t-r" name="tipo" value="receita" data-chg="lanc-tipo"><label for="t-r">Receita</label></div>'
-    + '<div class="fg" id="fg-setor"><label class="fl" for="ln-setor">Setor <small>(obrigatório em despesas)</small></label><select class="inp" id="ln-setor" name="setor">' + opt('', 'Escolha o setor') + setorOptions('') + '</select></div>'
-    + '<div class="fg"><label class="fl" for="ln-cat">Categoria</label><input class="inp" id="ln-cat" name="cat" type="text" list="cats" placeholder="Ex.: Material, Serviços, Alimentação" autocomplete="off"><datalist id="cats">' + cats.map(c => '<option value="' + esc(c) + '">').join('') + '</datalist></div>'
+    + '<div class="fg" id="fg-setor"><label class="fl" for="ln-setor">Setor</label><select class="inp" id="ln-setor" name="setor">' + opt('', 'Escolha o setor') + setorOptions('') + '</select></div>'
     + '<div class="two"><div class="fg"><label class="fl" for="ln-valor">Valor (R$)</label><input class="inp" id="ln-valor" name="valor" type="text" inputmode="decimal" placeholder="0,00"></div><div class="fg"><label class="fl" for="ln-data">Data</label><input class="inp" id="ln-data" name="data" type="date" value="' + today() + '"></div></div>'
-    + '<div class="fg"><label class="fl" for="ln-desc">Descrição</label><textarea class="inp" id="ln-desc" name="desc" placeholder="O que foi comprado ou recebido"></textarea></div>'
+    + '<div class="fg"><label class="fl" for="ln-desc">Descrição</label><input class="inp" id="ln-desc" name="desc" type="text" placeholder="O que foi comprado ou recebido"></div>'
+    + '<div class="fg"><label class="fl" for="ln-cat">Categoria</label><input class="inp" id="ln-cat" name="cat" type="text" list="cats" placeholder="Ex.: Material, Alimentação" autocomplete="off"><datalist id="cats">' + cats.map(c => '<option value="' + esc(c) + '">').join('') + '</datalist></div>'
     + '<div class="fg"><label class="fl" for="ln-comp">Comprovante <small>(foto da nota ou recibo)</small></label><input class="inp" id="ln-comp" name="comp" type="file" accept="image/*,application/pdf"></div>'
     + '<div class="fg"><label class="fl" for="ln-aj">Ajuste de edição fechada <small>(opcional)</small></label><select class="inp" id="ln-aj" name="ajuste">' + opt('', 'Não é ajuste') + closed.map(e => opt(e.id, 'Referente a ' + e.nome)).join('') + '</select></div>'
-    + '<button class="btn btn-primary btn-block" type="submit"' + (noOpen ? ' disabled' : '') + '>Salvar lançamento</button></form>';
+    + '<div class="dlg-a"><button type="button" class="btn" data-act="close">Cancelar</button><button type="submit" class="btn btn-primary"' + (EL.id ? '' : ' disabled') + '>Salvar</button></div></form>';
+}
+function lancActs(l, e){ return e && e.status === 'aberta' ? iconBtn('lanc-edit', l.id, 'edit', 'Editar ' + l.desc) + iconBtn('del-lanc', l.id, 'trash', 'Excluir ' + l.desc) : '<span class="muted" title="Edição fechada">' + icon('lock', 16) + '</span>'; }
+function viewFinanceiro(){
+  const adm = isAdmin(), F = U.fin, L = visLanc().filter(inSel), ent = entradas(L), sai = saidas(L);
+  const rows = L.filter(l => (F.tipo === 'all' || l.tipo === F.tipo) && (F.setor === 'all' || l.setor === F.setor)).sort((a, b) => b.data.localeCompare(a.data));
+  const shown = rows.slice(0, F.lim);
+  const sc = S.selEd === 'all' ? 'Todas as edições' : edName(S.selEd);
   const setF = allSetores().filter(s => okCtx('money', s));
-  const filt = '<div class="filters"><div class="fg"><label class="fl-s" for="f-tipo">Tipo</label><select class="inp sm" id="f-tipo" data-chg="fin-tipo">' + opt('all', 'Todos', F.tipo === 'all') + opt('receita', 'Receitas', F.tipo === 'receita') + opt('despesa', 'Despesas', F.tipo === 'despesa') + '</select></div>'
-    + '<div class="fg"><label class="fl-s" for="f-setor">Setor</label><select class="inp sm" id="f-setor" data-chg="fin-setor">' + opt('all', 'Todos os setores', F.setor === 'all') + setF.map(s => opt(s, s, F.setor === s)).join('') + '</select></div>'
-    + '<div class="fg"><label class="fl-s" for="f-cat">Categoria</label><select class="inp sm" id="f-cat" data-chg="fin-cat">' + opt('all', 'Todas', F.cat === 'all') + cats.map(c => opt(c, c, F.cat === c)).join('') + '</select></div>'
-    + '<div class="fg"><label class="fl-s" for="f-q">Buscar</label><input class="inp sm" id="f-q" type="search" data-chg="fin-q" placeholder="Descrição ou categoria" value="' + esc(F.q) + '"></div></div>';
-  const withEd = S.selEd === 'all';
-  const head = [['Data'], ['Descrição']].concat(withEd ? [['Edição']] : []).concat([['Setor'], ['Categoria'], ['Valor', 1], ['Comprovante']]).concat(adm ? [['Ações']] : []);
-  const list = rows.length ? table(head, shown.map(l => lancRow(l, {ed:withEd, del:adm})).join(''), {min:withEd ? 860 : 780}) + '<div class="ph" style="margin-top:14px"><span class="muted small">Mostrando ' + shown.length + ' de ' + rows.length + ' lançamentos</span>' + (rows.length > shown.length ? '<button class="btn btn-sm" data-act="fin-more">Ver mais</button>' : '') + '</div>' : '<div class="empty">Nenhum lançamento encontrado com esses filtros.</div>';
-  return [
-    pageHead(esc(lab('financeiro')), esc(sc) + ' · caixa do evento: receitas e despesas', '<button class="btn" data-act="export-csv" data-id="fin">' + icon('download', 16) + 'Exportar planilha</button>'),
-    '<div class="kpis">' + k + '</div>',
-    '<div class="row"><div class="r2">' + card('Lançamentos', filt + list) + '</div>' + (adm ? '<div class="r1">' + card('Novo lançamento', form) + '</div>' : '') + '</div>'
-  ].join('');
+  const k = kpi('k-sage', 'Entradas', brl(ent), 'Receitas', 'up') + kpi('k-terra', 'Saídas', brl(sai), 'Despesas', 'down') + '<div style="grid-column:1/-1">' + kpi('k-brown', 'Resultado', brl(ent - sai), moneyFull() ? 'Saldo geral: ' + brl(saldoGeral()) : 'Nas áreas liberadas', 'wallet') + '</div>';
+  const chips = '<div class="chips"><button class="chip' + (F.tipo === 'all' ? ' on' : '') + '" data-act="fin-tipo" data-id="all">Tudo</button><button class="chip' + (F.tipo === 'despesa' ? ' on' : '') + '" data-act="fin-tipo" data-id="despesa">Despesas</button><button class="chip' + (F.tipo === 'receita' ? ' on' : '') + '" data-act="fin-tipo" data-id="receita">Receitas</button></div>'
+    + '<div class="chips"><button class="chip' + (F.setor === 'all' ? ' on' : '') + '" data-act="fin-chip" data-id="all">Todos os setores</button>' + setF.map(st => '<button class="chip' + (F.setor === st ? ' on' : '') + '" data-act="fin-chip" data-id="' + esc(st) + '">' + esc(st) + '</button>').join('') + '</div>';
+  const list = rows.length ? '<div class="lst">' + shown.map(l => {
+    const neg = l.tipo === 'despesa', e = edById(l.ed);
+    return '<div class="li"><div class="li-m"><b>' + esc(l.desc) + '</b><small>' + dmy(l.data) + ' · ' + (l.setor ? esc(l.setor) : 'Receita') + ' · ' + esc(l.cat) + (S.selEd === 'all' ? ' · ' + esc(edName(l.ed)) : '') + (l.ajusteDe ? ' · ajuste de ' + esc(edById(l.ajusteDe) ? edName(l.ajusteDe) : 'edição excluída') : '') + '</small>'
+      + (l.comp ? '<small><button class="link" data-act="comp" data-id="' + l.id + '">Ver anexo</button></small>' : (neg ? '<small>Sem anexo</small>' : '')) + '</div>'
+      + '<div class="li-r ' + (neg ? 'neg' : 'pos') + '">' + (neg ? '− ' : '+ ') + brl(l.valor) + '</div>'
+      + (adm ? '<div class="acts-c">' + lancActs(l, e) + '</div>' : '') + '</div>';
+  }).join('') + '</div>' + (rows.length > shown.length ? '<div style="text-align:center;margin-top:12px"><button class="btn btn-sm" data-act="fin-more">Ver mais (' + (rows.length - shown.length) + ')</button></div>' : '') : '<div class="empty">Nenhum lançamento encontrado.</div>';
+  return pageHead(esc(lab('financeiro')), esc(sc), '<button class="btn" data-act="export-csv" data-id="fin">' + icon('download', 16) + 'Exportar</button>')
+    + '<div class="kpis">' + k + '</div>' + chips + list
+    + (adm ? '<button class="fab" data-act="lanc-novo">' + icon('plus', 20) + 'Lançar valor</button>' : '');
 }
 
 /* ---------- Estoque ---------- */
+function itemOptsFor(items, setor){
+  const list = items.filter(i => !setor || i.setor === setor);
+  return list.length ? opt('', 'Escolha o item') + list.map(i => opt(i.id, i.nome + ' (' + fmtQ(i.qtd) + ' ' + i.un + ')')).join('') : opt('', setor ? 'Nenhum item neste setor' : 'Cadastre um item primeiro');
+}
+function movForm(){
+  const items = visItems(), EL = edLanc();
+  const setores = allSetores().filter(st => items.some(i => i.setor === st));
+  const ini = U.est.fsetor && setores.indexOf(U.est.fsetor) >= 0 ? U.est.fsetor : '';
+  return '<form class="form" data-form="mov" novalidate>' + edLancBox(EL)
+    + '<div class="seg" role="radiogroup" aria-label="Tipo de movimentação"><input type="radio" id="mv-u" name="tipo" value="uso" checked data-chg="mov-prev"><label for="mv-u">Usamos</label><input type="radio" id="mv-r" name="tipo" value="rep" data-chg="mov-prev"><label for="mv-r">Repomos</label></div>'
+    + '<div class="fg"><label class="fl" for="mv-setor">Setor</label><select class="inp" id="mv-setor" name="msetor" data-chg="mov-setor">' + opt('', 'Escolha o setor') + setores.map(st => opt(st, st, st === ini)).join('') + '</select></div>'
+    + '<div class="fg"><label class="fl" for="mv-item">Item</label><select class="inp" id="mv-item" name="item" data-chg="mov-prev">' + itemOptsFor(items, ini) + '</select></div>'
+    + '<div class="fg"><label class="fl" for="mv-qtd">Quantidade</label><div class="stp"><button type="button" data-act="qtd-step" data-id="-1" aria-label="Diminuir">−</button><input class="inp" id="mv-qtd" name="qtd" type="text" inputmode="decimal" placeholder="0" data-chg="mov-prev"><button type="button" data-act="qtd-step" data-id="1" aria-label="Aumentar">+</button></div></div>'
+    + '<div class="prev" id="mv-prev" aria-live="polite">Escolha um item para ver o efeito no estoque geral.</div>'
+    + '<div class="fg"><label class="fl" for="mv-obs">Observação <small>(opcional)</small></label><input class="inp" id="mv-obs" name="obs" type="text" placeholder="Ex.: usado no cenário da abertura"></div>'
+    + '<div class="dlg-a"><button type="button" class="btn" data-act="close">Cancelar</button><button type="submit" class="btn btn-primary"' + (EL.id ? '' : ' disabled') + '>Registrar</button></div></form>';
+}
+function movPrev(){
+  const f = document.querySelector('form[data-form="mov"]'), box = $('#mv-prev'); if (!f || !box) return;
+  const fd = new FormData(f), it = itemById(fd.get('item')), q = parseMoney(String(fd.get('qtd') || '')), tp = fd.get('tipo');
+  if (!it){ box.textContent = 'Escolha um item para ver o efeito no estoque geral.'; return; }
+  if (!(q > 0)){ box.textContent = it.nome + ': hoje há ' + fmtQ(it.qtd) + ' ' + it.un + ' no estoque geral.'; return; }
+  const novo = it.qtd + (tp === 'rep' ? q : -q);
+  box.textContent = novo < 0 ? 'Só há ' + fmtQ(it.qtd) + ' ' + it.un + ' no estoque geral.' : 'Estoque geral de ' + it.nome + ': ' + fmtQ(it.qtd) + ' → ' + fmtQ(novo) + ' ' + it.un;
+}
 function viewEstoque(){
   const adm = isAdmin(), F = U.est, items = visItems();
-  const low = items.filter(i => sit(i) !== 'ok'), crit = items.filter(i => sit(i) === 'crit');
+  if (!F.aba) F.aba = 'geral';
+  const low = items.filter(i => sit(i) !== 'ok');
   const M = visMovs().filter(inSel);
-  const rows = items.filter(i => (F.setor === 'all' || i.setor === F.setor) && (F.sit === 'all' || sit(i) === F.sit)).sort((a, b) => (a.min > 0 ? a.qtd / a.min : 99) - (b.min > 0 ? b.qtd / b.min : 99) || a.nome.localeCompare(b.nome));
-  const setoresComItem = Array.from(new Set(items.map(i => i.setor)));
-  const setF = allSetores().filter(s => okCtx('stock', s));
-  const stSetor = setoresComItem[0] || allSetores()[0] || '';
-  const EL = edLanc(), noOpen = !EL.id;
-  const trows = rows.map(i => {
-    const s = sit(i), pc = i.min > 0 ? Math.min(100, Math.round(i.qtd / i.min * 100)) : 100;
-    return '<tr><td><b>' + esc(i.nome) + '</b></td><td>' + esc(i.setor) + '</td><td><div style="font-weight:700">' + fmtQ(i.qtd) + ' ' + esc(i.un) + '</div><div class="bar-t"><i class="bar-f ' + (s === 'ok' ? 'bf-ok' : s === 'low' ? 'bf-low' : 'bf-crit') + '" style="width:' + pc + '%"></i></div></td><td>' + fmtQ(i.min) + ' ' + esc(i.un) + '</td><td>' + sitBadge(s) + '</td>' + (adm ? '<td><div class="acts-c">' + iconBtn('item-edit', i.id, 'edit', 'Editar ' + i.nome) + iconBtn('item-del', i.id, 'trash', 'Excluir ' + i.nome) + '</div></td>' : '') + '</tr>';
-  }).join('');
-  const hist = M.slice().sort((a, b) => b.data.localeCompare(a.data)).slice(0, 15).map(m => { const it = itemById(m.item); return '<tr><td>' + dmy(m.data) + '</td><td><b>' + esc(it.nome) + '</b></td><td>' + (m.tipo === 'uso' ? badge('info', 'Uso') : badge('ok', 'Reposição')) + '</td><td class="num"><b>' + (m.tipo === 'uso' ? '− ' : '+ ') + fmtQ(m.qtd) + ' ' + esc(it.un) + '</b></td><td>' + esc(it.setor) + '</td><td>' + esc(edName(m.ed)) + '</td><td>' + esc(m.por) + '</td></tr>'; }).join('');
-  const itemOpts = () => { const gs = allSetores().filter(st => items.some(i => i.setor === st)); return gs.length ? opt('', 'Escolha o item') + gs.map(st => '<optgroup label="' + esc(st) + '">' + items.filter(i => i.setor === st).map(i => opt(i.id, i.nome + ' (' + fmtQ(i.qtd) + ' ' + i.un + ')')).join('') + '</optgroup>').join('') : opt('', 'Cadastre um item primeiro'); };
-  const form = '<form class="form" data-form="mov" novalidate>' + edLancBox(EL)
-    + '<div class="seg" role="radiogroup" aria-label="Tipo de movimentação"><input type="radio" id="mv-u" name="tipo" value="uso" checked><label for="mv-u">Usamos</label><input type="radio" id="mv-r" name="tipo" value="rep"><label for="mv-r">Repomos</label></div>'
-    + '<div class="fg"><label class="fl" for="mv-item">Item</label><select class="inp" id="mv-item" name="item">' + itemOpts() + '</select></div>'
-    + '<div class="fg"><label class="fl" for="mv-qtd">Quantidade</label><input class="inp" id="mv-qtd" name="qtd" type="text" inputmode="decimal" placeholder="Ex.: 4"></div>'
-    + '<div class="fg"><label class="fl" for="mv-obs">Observação <small>(opcional)</small></label><textarea class="inp" id="mv-obs" name="obs" style="min-height:80px" placeholder="Ex.: usado no cenário da abertura"></textarea></div>'
-    + '<button class="btn btn-primary btn-block" type="submit"' + (noOpen ? ' disabled' : '') + '>Registrar</button></form>';
-  const k = kpi('k-slate', 'Itens cadastrados', String(items.length), 'Em ' + setoresComItem.length + ' setor(es)', 'boxes') + kpi('k-terra', 'Abaixo do mínimo', low.length + (low.length === 1 ? ' item' : ' itens'), crit.length + ' em situação crítica', 'warn') + kpi('k-sage', 'Movimentações', String(M.length), (S.selEd === 'all' ? 'Em todas as edições' : 'Na ' + edName(S.selEd)), 'swap');
-  const filt = '<div class="filters"><div class="fg"><label class="fl-s" for="e-setor">Setor</label><select class="inp sm" id="e-setor" data-chg="est-setor">' + opt('all', 'Todos os setores', F.setor === 'all') + setF.map(s => opt(s, s, F.setor === s)).join('') + '</select></div><div class="fg"><label class="fl-s" for="e-sit">Situação</label><select class="inp sm" id="e-sit" data-chg="est-sit">' + opt('all', 'Todas', F.sit === 'all') + opt('crit', 'Crítico', F.sit === 'crit') + opt('low', 'Baixo', F.sit === 'low') + opt('ok', 'Em dia', F.sit === 'ok') + '</select></div></div>';
-  return [
-    pageHead(esc(lab('estoque')), 'Materiais por setor, com quantidade mínima. O estoque é contínuo entre as edições', adm ? '<button class="btn btn-primary" data-act="item-novo">' + icon('plus', 16) + 'Novo item</button>' : ''),
-    '<div class="kpis">' + k + '</div>',
-    '<div class="row"><div class="r2">' + card('Itens em estoque', filt + (rows.length ? table([['Item'], ['Setor'], ['Atual'], ['Mínimo'], ['Situação']].concat(adm ? [['Ações']] : []), trows, {min:680}) : '<div class="empty">Nenhum item com esses filtros.</div>')) + '</div>' + (adm ? '<div class="r1">' + card('Registrar movimentação', form) + '</div>' : '') + '</div>',
-    card('Histórico de movimentações', M.length ? table([['Data'], ['Item'], ['Tipo'], ['Quantidade', 1], ['Setor'], ['Edição'], ['Registrado por']], hist, {min:760}) : '<div class="empty">Nenhuma movimentação nesta edição.</div>', {sub:esc(edTxt()) + ' · últimas 15 movimentações'})
-  ].join('');
+  const setoresAll = allSetores().filter(st => items.some(i => i.setor === st) && okCtx('stock', st));
+  const chips = '<div class="chips"><button class="chip' + (F.setor === 'all' ? ' on' : '') + '" data-act="est-chip" data-id="all">Todos</button>' + setoresAll.map(st => '<button class="chip' + (F.setor === st ? ' on' : '') + '" data-act="est-chip" data-id="' + esc(st) + '">' + esc(st) + '</button>').join('') + '</div>';
+  const seg = '<div class="chips"><button class="chip' + (F.aba === 'geral' ? ' on' : '') + '" data-act="est-aba" data-id="geral">Estoque geral</button><button class="chip' + (F.aba === 'ed' ? ' on' : '') + '" data-act="est-aba" data-id="ed">Desta edição</button>'
+    + (F.aba === 'geral' ? '<button class="chip' + (F.sit === 'falta' ? ' on' : '') + '" data-act="est-falta">Em falta · ' + low.length + '</button>' : '') + '</div>';
+  let body = '';
+  if (F.aba === 'geral'){
+    const sets = setoresAll.filter(st => F.setor === 'all' || st === F.setor);
+    body = sets.map(st => {
+      const rows = items.filter(i => i.setor === st && (F.sit !== 'falta' || sit(i) !== 'ok')).sort((a, b) => (a.min > 0 ? a.qtd / a.min : 99) - (b.min > 0 ? b.qtd / b.min : 99) || a.nome.localeCompare(b.nome));
+      if (!rows.length) return '';
+      return '<div class="sec-h"><span>' + esc(st) + '</span><span>' + rows.length + '</span></div><div class="lst">' + rows.map(i => {
+        const s = sit(i), pc = i.min > 0 ? Math.min(100, Math.round(i.qtd / i.min * 100)) : 100;
+        return '<div class="li"><div class="li-m"><b>' + esc(i.nome) + '</b><small>mín. ' + fmtQ(i.min) + ' ' + esc(i.un) + '</small><div class="bar-t"><i class="bar-f ' + (s === 'ok' ? 'bf-ok' : s === 'low' ? 'bf-low' : 'bf-crit') + '" style="width:' + pc + '%"></i></div></div><div class="li-r">' + fmtQ(i.qtd) + ' ' + esc(i.un) + '<small>' + (s === 'ok' ? 'Em dia' : s === 'low' ? 'Baixo' : 'Crítico') + '</small></div>'
+          + (adm ? '<div class="acts-c">' + iconBtn('item-edit', i.id, 'edit', 'Editar ' + i.nome) + iconBtn('item-del', i.id, 'trash', 'Excluir ' + i.nome) + '</div>' : '') + '</div>';
+      }).join('') + '</div>';
+    }).join('') || '<div class="empty">' + (items.length ? 'Nenhum item com esse filtro.' : 'Nenhum item cadastrado ainda.') + '</div>';
+  } else {
+    const sc = S.selEd === 'all' ? 'todas as edições' : edName(S.selEd);
+    const mv = M.filter(m => F.setor === 'all' || (itemById(m.item) || {}).setor === F.setor).sort((a, b) => b.data.localeCompare(a.data));
+    const sets = Array.from(new Set(mv.map(m => (itemById(m.item) || {}).setor).filter(Boolean)));
+    body = '<p class="muted small" style="margin:2px 2px 4px">Movimentações de ' + esc(sc) + '. Cada uma já foi somada ou abatida do estoque geral.</p>'
+      + (sets.map(st => '<div class="sec-h"><span>' + esc(st) + '</span></div><div class="lst">' + mv.filter(m => (itemById(m.item) || {}).setor === st).map(m => { const it = itemById(m.item); return '<div class="li"><div class="li-m"><b>' + esc(it.nome) + '</b><small>' + dmy(m.data) + ' · ' + esc(m.por) + (S.selEd === 'all' ? ' · ' + esc(edName(m.ed)) : '') + '</small></div><div class="li-r ' + (m.tipo === 'uso' ? 'neg' : 'pos') + '">' + (m.tipo === 'uso' ? '− ' : '+ ') + fmtQ(m.qtd) + ' ' + esc(it.un) + '<small>' + (m.tipo === 'uso' ? 'Uso' : 'Reposição') + '</small></div></div>'; }).join('') + '</div>').join('') || '<div class="empty">Nenhuma movimentação nesta edição.</div>');
+  }
+  return pageHead(esc(lab('estoque')), 'Estoque geral contínuo entre as edições', adm ? '<button class="btn" data-act="item-novo">' + icon('plus', 16) + 'Novo item</button>' : '')
+    + seg + chips + body
+    + (adm ? '<button class="fab" data-act="mov-novo">' + icon('plus', 20) + 'Registrar</button>' : '');
 }
 
 /* ---------- Organizacional ---------- */
@@ -1084,8 +1182,8 @@ function render(){
   if (!S.cfg){ app.innerHTML = gateView('Aguardando configuração', '<p>' + (isAdmin() ? 'Criando a configuração inicial…' : 'O administrador ainda está preparando a plataforma. Tente de novo em instantes.') + '</p><button class="link" data-act="logout">Sair</button>'); return; }
   if (selInit && S.selEd !== 'all' && !edById(S.selEd)) S.selEd = 'all';
   if (U.view === 'acessos' || U.view === 'config'){ if (!isAdmin()) U.view = 'inicio'; }
-  else if (U.view !== 'inicio' && U.view !== 'busca' && !can(U.view)) U.view = 'inicio';
-  const V = {inicio:viewInicio, edicoes:viewEdicoes, financeiro:viewFinanceiro, estoque:viewEstoque, organizacional:viewOrg, equipe:viewEquipe, relatorios:viewRel, acessos:viewAcessos, config:viewConfig, busca:viewBusca};
+  else if (U.view !== 'inicio' && U.view !== 'busca' && U.view !== 'mais' && !can(U.view)) U.view = 'inicio';
+  const V = {inicio:viewInicio, edicoes:viewEdicoes, financeiro:viewFinanceiro, estoque:viewEstoque, organizacional:viewOrg, equipe:viewEquipe, relatorios:viewRel, acessos:viewAcessos, config:viewConfig, busca:viewBusca, mais:viewMais};
   const keep = !forceNext; forceNext = false;
   const saved = keep ? snapForms(app) : null;
   app.innerHTML = shell((V[U.view] || viewInicio)());
@@ -1239,6 +1337,15 @@ function itemForm(i){
 const findRec = id => id.indexOf('c:') === 0 ? S.convites.find(c => c.id === id.slice(2)) : S.users.find(u => u.id === id);
 const ACTS = {
   nav: el => go(el.dataset.v),
+  'mov-novo': () => { openModal({title:'Registrar no estoque', body:movForm()}); movPrev(); },
+  'lanc-novo': () => openModal({title:'Lançar valor', body:lancForm()}),
+  'ed-novo': () => openModal({title:'Nova edição', body:edNovaForm()}),
+  'est-chip': el => { U.est.setor = el.dataset.id; render(); },
+  'est-aba': el => { U.est.aba = el.dataset.id; render(); },
+  'est-falta': () => { U.est.sit = U.est.sit === 'falta' ? 'all' : 'falta'; render(); },
+  'qtd-step': el => { const i = $('#mv-qtd'); if (!i) return; const v = Math.max(0, (parseMoney(i.value) || 0) + Number(el.dataset.id)); i.value = String(v).replace('.', ','); movPrev(); },
+  'fin-tipo': el => { U.fin.tipo = el.dataset.id; U.fin.lim = 12; render(); },
+  'fin-chip': el => { U.fin.setor = el.dataset.id; U.fin.lim = 12; render(); },
   theme: () => { S.theme = isDark() ? 'light' : 'dark'; applyTheme(); save(); render(); },
   'login-modo': el => { U.login.modo = el.dataset.id; render(); },
   'verify-check': async () => {
@@ -1381,6 +1488,8 @@ const CHG = {
   'eq-q': el => { U.eq.q = el.value; render(); },
   'rel-mes': el => { U.rel.mes = el.value; render(); },
   'rel-ano': el => { U.rel.ano = el.value; render(); },
+  'mov-setor': el => { const sel = $('#mv-item'); if (sel){ sel.innerHTML = itemOptsFor(visItems(), el.value); } movPrev(); },
+  'mov-prev': () => movPrev(),
   'lanc-tipo': el => { const f = el.form, rec = f.elements.tipo.value === 'receita'; const g = $('#fg-setor'); if (g) g.hidden = rec; },
   'mov-setor': el => { const s = el.value, l = S.items.filter(i => i.setor === s); $('#mv-item').innerHTML = l.length ? l.map(i => opt(i.id, i.nome + ' (' + fmtQ(i.qtd) + ' ' + i.un + ')')).join('') : opt('', 'Cadastre um item primeiro'); },
   'perm-ui': el => {
@@ -1404,7 +1513,7 @@ async function addFiles(list){
   if (!ok) return;
   toast(semConteudo ? ok + ' registrado(s), mas ' + semConteudo + ' sem o conteúdo: confira se o Storage está ativado e as regras publicadas.' : ok + (ok === 1 ? ' arquivo enviado.' : ' arquivos enviados.'));
 }
-const fv = (f, n) => f.elements[n] ? f.elements[n].value : '';
+const fv = (f, n) => { const e = f.elements.namedItem(n); return e && e.value != null ? e.value : ''; };
 const checkedFile = (f, n) => f.elements[n] && f.elements[n].files && f.elements[n].files[0];
 const FORMS = {
   login: async f => {
@@ -1433,7 +1542,7 @@ const FORMS = {
     if (S.ed.some(e => e.nome.toLowerCase() === nome.toLowerCase())){ toast('Já existe uma edição com esse nome.'); return; }
     if (!ini || !fim){ toast('Informe o início e o fim do retiro.'); return; }
     if (fim < ini){ toast('O fim do retiro não pode ser antes do início.'); return; }
-    if (await W(() => BE.db.set('edicoes/' + BE.db.newId('edicoes'), {nome, ini, fim, local:fv(f, 'local').trim(), resp:fv(f, 'resp'), status:'planejada'}))) toast(nome + ' criada como planejada.');
+    if (await W(() => BE.db.set('edicoes/' + BE.db.newId('edicoes'), {nome, ini, fim, local:fv(f, 'local').trim(), resp:fv(f, 'resp'), status:'planejada'}))){ closeModal(); toast(nome + ' criada como planejada.'); }
   },
   'ed-edit': async f => {
     if (needAdmin()) return;
@@ -1461,7 +1570,7 @@ const FORMS = {
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     let aviso = '';
     if (file){ try { await BE.storage.put(rec.compPath, file); } catch (er) { console.error(er); aviso = ' O comprovante não foi enviado: confira o Storage e as regras.'; await W(() => BE.db.update('lancamentos/' + id, {compPath:{__del:true}})); } }
-    toast('Lançamento salvo.' + aviso); scheduleRender(true);
+    closeModal(); toast('Lançamento salvo.' + aviso); scheduleRender(true);
   },
   'lanc-edit': async f => {
     if (needAdmin()) return;
@@ -1490,7 +1599,7 @@ const FORMS = {
     if (tipo === 'uso' && qtd > it.qtd){ toast('Só há ' + fmtQ(it.qtd) + ' ' + it.un + ' em estoque.'); return; }
     const mid = BE.db.newId('movimentos');
     const ok = await W(() => BE.db.batch([{t:'set', path:'movimentos/' + mid, data:{ed, item:it.id, setor:it.setor, tipo, qtd, data:today(), obs:fv(f, 'obs').trim(), por:ME().nome}}, upd('itens/' + it.id, {qtd:{__inc:tipo === 'rep' ? qtd : -qtd}})]));
-    if (ok){ if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); toast((tipo === 'uso' ? 'Uso' : 'Reposição') + ' registrado.'); scheduleRender(true); }
+    if (ok){ if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); closeModal(); toast((tipo === 'uso' ? 'Uso' : 'Reposição') + ' registrado.'); scheduleRender(true); }
   },
   'item-save': async f => {
     if (needAdmin()) return;
@@ -1591,6 +1700,7 @@ document.addEventListener('click', e => {
   const el = e.target.closest('[data-act]'); if (!el) return;
   const h = ACTS[el.dataset.act]; if (h){ h(el, e); }
 });
+document.addEventListener('input', e => { if (e.target.dataset && e.target.dataset.chg === 'mov-prev' && e.target.type === 'text') movPrev(); });
 document.addEventListener('change', e => {
   const c = e.target.dataset && e.target.dataset.chg; if (c && CHG[c]) CHG[c](e.target);
 });
