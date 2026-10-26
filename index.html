@@ -266,6 +266,13 @@ body{font-family:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
 .bnav{display:none}
 .hdr{position:sticky;top:0;z-index:35;background:var(--bg)}
 @media (max-width:820px){.hdr{position:static}}
+.accs{display:block}
+.acc{margin-bottom:8px}
+.acc-h{width:100%;min-height:52px;display:flex;align-items:center;gap:10px;padding:0 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);font:inherit;font-weight:800;font-size:15px;cursor:pointer;text-align:left}
+.acc-h.on{border-bottom-left-radius:0;border-bottom-right-radius:0}
+.acc-h>span:first-child{flex:1}
+.acc-n{font-weight:600;font-size:13px;color:var(--muted)}
+.acc .lst{border-top:0;border-top-left-radius:0;border-top-right-radius:0}
 .chips{display:flex;flex-wrap:nowrap!important;gap:8px;overflow-x:auto;padding:2px 0 10px;margin:0 -2px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:none;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap}
@@ -922,6 +929,16 @@ function movPrev(){
   const novo = it.qtd + (tp === 'rep' ? q : -q);
   box.textContent = novo < 0 ? 'Só há ' + fmtQ(it.qtd) + ' ' + it.un + ' no estoque geral.' : 'Estoque geral de ' + it.nome + ': ' + fmtQ(it.qtd) + ' → ' + fmtQ(novo) + ' ' + it.un;
 }
+function estSec(key, title, count, inner, F){
+  const open = !!(F.open && F.open[key]) || F.setor !== 'all' || F.sit === 'falta';
+  return '<div class="acc"><button type="button" class="acc-h' + (open ? ' on' : '') + '" data-act="est-tog" data-id="' + esc(key) + '" aria-expanded="' + open + '"><span>' + esc(title) + '</span><span class="acc-n">' + count + '</span>' + icon(open ? 'chevD' : 'chevR', 18) + '</button>' + (open ? inner : '') + '</div>';
+}
+function estAreas(sets, build, F){
+  return S.cfg.areas.map(a => {
+    const ss = a.setores.filter(st => sets.indexOf(st) >= 0), parts = ss.map(st => build(st)).filter(Boolean);
+    return parts.length ? '<div class="sec-h"><span>' + esc(a.nome) + '</span></div>' + parts.join('') : '';
+  }).join('');
+}
 function viewEstoque(){
   const adm = isAdmin(), F = U.est, items = visItems();
   if (!F.aba) F.aba = 'geral';
@@ -934,24 +951,25 @@ function viewEstoque(){
   let body = '';
   if (F.aba === 'geral'){
     const sets = setoresAll.filter(st => F.setor === 'all' || st === F.setor);
-    body = sets.map(st => {
+    body = estAreas(sets, st => {
       const rows = items.filter(i => i.setor === st && (F.sit !== 'falta' || sit(i) !== 'ok')).sort((a, b) => (a.min > 0 ? a.qtd / a.min : 99) - (b.min > 0 ? b.qtd / b.min : 99) || a.nome.localeCompare(b.nome));
       if (!rows.length) return '';
-      return '<div class="sec-h"><span>' + esc(st) + '</span><span>' + rows.length + '</span></div><div class="lst">' + rows.map(i => {
+      const nl = rows.filter(i => sit(i) !== 'ok').length;
+      return estSec('g:' + st, st, rows.length + (nl ? ' · ' + nl + ' em falta' : ''), '<div class="lst">' + rows.map(i => {
         const s = sit(i), pc = i.min > 0 ? Math.min(100, Math.round(i.qtd / i.min * 100)) : 100;
         return '<div class="li"><div class="li-m"><b>' + esc(i.nome) + '</b><small>mín. ' + fmtQ(i.min) + ' ' + esc(i.un) + (i.qtd < i.min ? ' · faltam ' + fmtQ(i.min - i.qtd) : '') + '</small><div class="bar-t"><i class="bar-f ' + (s === 'ok' ? 'bf-ok' : s === 'low' ? 'bf-low' : 'bf-crit') + '" style="width:' + pc + '%"></i></div></div><div class="li-r">' + fmtQ(i.qtd) + ' ' + esc(i.un) + '<small>' + (s === 'ok' ? 'Em dia' : s === 'low' ? 'Baixo' : 'Crítico') + '</small></div>'
           + (adm ? '<div class="acts-c">' + iconBtn('item-edit', i.id, 'edit', 'Editar ' + i.nome) + iconBtn('item-del', i.id, 'trash', 'Excluir ' + i.nome) + '</div>' : '') + '</div>';
-      }).join('') + '</div>';
-    }).join('') || '<div class="empty">' + (items.length ? 'Nenhum item com esse filtro.' : 'Nenhum item cadastrado ainda.') + '</div>';
+      }).join('') + '</div>', F);
+    }, F) || '<div class="empty">' + (items.length ? 'Nenhum item com esse filtro.' : 'Nenhum item cadastrado ainda.') + '</div>';
   } else {
     const sc = S.selEd === 'all' ? 'todas as edições' : edName(S.selEd);
     const mv = M.filter(m => F.setor === 'all' || (itemById(m.item) || {}).setor === F.setor).sort((a, b) => b.data.localeCompare(a.data));
     const sets = Array.from(new Set(mv.map(m => (itemById(m.item) || {}).setor).filter(Boolean)));
     body = '<p class="muted small" style="margin:2px 2px 4px">Movimentações de ' + esc(sc) + '. Cada uma já foi somada ou abatida do estoque geral.</p>'
-      + (sets.map(st => '<div class="sec-h"><span>' + esc(st) + '</span></div><div class="lst">' + mv.filter(m => (itemById(m.item) || {}).setor === st).map(m => { const it = itemById(m.item); return '<div class="li"><div class="li-m"><b>' + esc(it.nome) + '</b><small>' + dmy(m.data) + ' · ' + esc(m.por) + (S.selEd === 'all' ? ' · ' + esc(edName(m.ed)) : '') + '</small></div><div class="li-r ' + (m.tipo === 'uso' ? 'neg' : 'pos') + '">' + (m.tipo === 'uso' ? '− ' : '+ ') + fmtQ(m.qtd) + ' ' + esc(it.un) + '<small>' + (m.tipo === 'uso' ? 'Uso' : 'Reposição') + '</small></div></div>'; }).join('') + '</div>').join('') || '<div class="empty">Nenhuma movimentação nesta edição.</div>');
+      + (estAreas(sets, st => estSec('m:' + st, st, mv.filter(m => (itemById(m.item) || {}).setor === st).length, '<div class="lst">' + mv.filter(m => (itemById(m.item) || {}).setor === st).map(m => { const it = itemById(m.item); return '<div class="li"><div class="li-m"><b>' + esc(it.nome) + '</b><small>' + dmy(m.data) + ' · ' + esc(m.por) + (S.selEd === 'all' ? ' · ' + esc(edName(m.ed)) : '') + '</small></div><div class="li-r ' + (m.tipo === 'uso' ? 'neg' : 'pos') + '">' + (m.tipo === 'uso' ? '− ' : '+ ') + fmtQ(m.qtd) + ' ' + esc(it.un) + '<small>' + (m.tipo === 'uso' ? 'Uso' : 'Reposição') + '</small></div></div>'; }).join('') + '</div>', F)) || '<div class="empty">Nenhuma movimentação nesta edição.</div>');
   }
   return pageHead(esc(lab('estoque')), 'Estoque geral contínuo entre as edições', adm ? '<button class="btn" data-act="inv-import">' + icon('upload', 16) + 'Importar inventário</button><button class="btn" data-act="item-novo">' + icon('plus', 16) + 'Novo item</button>' : '')
-    + seg + chips + body
+    + seg + chips + '<div class="accs">' + body + '</div>'
     + (adm ? '<button class="fab" data-act="mov-novo">' + icon('plus', 20) + 'Registrar</button>' : '');
 }
 
@@ -1383,6 +1401,7 @@ const ACTS = {
   'lanc-novo': () => openModal({title:'Lançar valor', body:lancForm()}),
   'ed-novo': () => openModal({title:'Nova edição', body:edNovaForm()}),
   'est-chip': el => { U.est.setor = el.dataset.id; render(); },
+    'est-tog': el => { const o = U.est.open = U.est.open || {}; o[el.dataset.id] = !o[el.dataset.id]; render(); },
   'est-aba': el => { U.est.aba = el.dataset.id; render(); },
   'est-falta': () => { U.est.sit = U.est.sit === 'falta' ? 'all' : 'falta'; render(); },
   'qtd-step': el => { const i = $('#mv-qtd'); if (!i) return; const v = Math.max(0, (parseMoney(i.value) || 0) + Number(el.dataset.id)); i.value = String(v).replace('.', ','); movPrev(); },
