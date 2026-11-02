@@ -965,7 +965,7 @@ function viewEdicoes(){
     if (adm && !np) a += '<button class="btn btn-sm" data-act="dec-open" data-id="' + e.id + '">' + icon('check', 16) + 'Decisões</button>';
     if (adm) a += iconBtn('ed-edit', e.id, 'edit', 'Editar ' + e.nome) + iconBtn('ed-del', e.id, 'trash', 'Excluir ' + e.nome);
     return '<div class="ecard"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><div><h3>' + esc(e.nome) + '</h3><div class="muted small">Retiro ' + retiroLabel(e) + '</div></div>' + statusBadge(e.status) + '</div>'
-      + (np ? '' : '<div class="eg"><div>Saldo inicial<b>' + (mf ? brl(e.saldoInicial) : 'Restrito') + '</b></div><div>Resultado<b class="' + (mf ? (tt.res >= 0 ? 'pos' : 'neg') : '') + '">' + (mf ? signed(tt.res) : 'Restrito') + '</b></div><div>Material<b>' + (stock ? mv + ' mov.' : 'Restrito') + '</b></div></div>')
+      + (np ? (e.enc != null ? '<div class="eg"><div>Encontristas<b>' + e.enc + '</b></div></div>' : '') : '<div class="eg"><div>Saldo inicial<b>' + (mf ? brl(e.saldoInicial) : 'Restrito') + '</b></div><div>Resultado<b class="' + (mf ? (tt.res >= 0 ? 'pos' : 'neg') : '') + '">' + (mf ? signed(tt.res) : 'Restrito') + '</b></div><div>Encontristas<b>' + (e.enc == null ? '—' : e.enc) + '</b></div><div>Material<b>' + (stock ? mv + ' mov.' : 'Restrito') + '</b></div></div>')
       + '<div class="ea">' + a + '</div></div>';
   }).join('');
   return [
@@ -978,6 +978,7 @@ function viewEdicoes(){
 function edNovaForm(){
   return '<form class="form" data-form="ed-nova" novalidate><div class="fg"><label class="fl" for="ed-nome">Nome da edição</label><input class="inp" id="ed-nome" name="nome" type="text" placeholder="Ex.: Vida 14"></div>'
     + '<div class="two"><div class="fg"><label class="fl" for="ed-ini">Início do retiro</label><input class="inp" id="ed-ini" name="ini" type="date"></div><div class="fg"><label class="fl" for="ed-fim">Fim do retiro</label><input class="inp" id="ed-fim" name="fim" type="date"></div></div>'
+    + '<div class="fg"><label class="fl" for="ed-enc">Quantidade de encontristas <small>(previsão)</small></label><input class="inp" id="ed-enc" name="enc" type="text" inputmode="numeric" placeholder="Ex.: 150"></div>'
     + '<div class="fg"><label class="fl" for="ed-loc">Local <small>(opcional)</small></label><input class="inp" id="ed-loc" name="local" type="text" placeholder="Onde será o retiro"></div>'
     + '<div class="fg"><label class="fl" for="ed-resp">Responsável</label><select class="inp" id="ed-resp" name="resp">' + adminOpts('') + '</select></div>'
     + '<div class="note">O saldo inicial do caixa e do estoque é calculado sozinho no dia em que a edição é aberta.</div>' + modalBtns('Criar edição') + '</form>';
@@ -1103,17 +1104,12 @@ const numIn = (chg, id, f, v, ph) => '<input class="inp bal-in" type="text" inpu
 const stpBtn = (act, id, f, d, label) => '<button type="button" data-act="' + act + '" data-id="' + esc(id) + '"' + (f ? ' data-f="' + f + '"' : '') + ' data-d="' + d + '" aria-label="' + label + '">' + (d < 0 ? '−' : '+') + '</button>';
 const stp2 = (act, chg, id, f, v) => '<div class="stp2">' + stpBtn(act, id, f, -1, 'Diminuir') + numIn(chg, id, f, v) + stpBtn(act, id, f, 1, 'Aumentar') + '</div>';
 const balV = x => x.volta == null ? x.env + (x.comp || 0) : x.volta;
-function encBox(ed, adm){
-  const n = ed.enc == null ? '' : fmtQ(ed.enc);
-  return '<div class="encb"><div><b>Encontristas</b><small>Base para planejar o material</small></div>' + (adm ? '<div class="stp2">' + stpBtn('enc-step', ed.id, '', -5, 'Diminuir 5') + numIn('enc-set', ed.id, '', n, '—') + stpBtn('enc-step', ed.id, '', 5, 'Aumentar 5') + '</div>' : '<b class="encn">' + (n || '—') + '</b>') + '</div>';
-}
 function estEnvio(F, adm){
   const ed = decEd(); if (!ed) return estNeedEd();
   const list = S.envios.filter(x => x.ed === ed.id).map(x => ({x, it:itemById(x.item)})).filter(r => r.it);
   const sets = allSetores().filter(st => list.some(r => r.x.setor === st) && okCtx('stock', st) && (F.setor === 'all' || F.setor === st));
   const tot = sum(list, r => r.x.env);
-  return encBox(ed, adm)
-    + '<p class="muted small" style="margin:2px 2px 4px">O que saiu do depósito para ' + esc(ed.nome) + '. O estoque geral já desconta o enviado. ' + fmtQ(tot) + ' unidades em ' + list.length + ' itens.</p>'
+  return '<p class="muted small" style="margin:2px 2px 4px">O que saiu do depósito para ' + esc(ed.nome) + '. O estoque geral já desconta o enviado. ' + fmtQ(tot) + ' unidades em ' + list.length + ' itens.</p>'
     + (estAreas(sets, st => estSec('e:' + st, st, list.filter(r => r.x.setor === st).length, '<div class="lst">' + list.filter(r => r.x.setor === st).map(r => '<div class="li li-nc"><div class="li-m"><b>' + esc(r.it.nome) + '</b><small>No depósito: ' + fmtQ(r.it.qtd) + ' ' + esc(r.it.un) + '</small>' + envTag(r.it) + '</div>'
       + (adm && r.x.aplicado == null ? stp2('env-step', 'env-set', r.it.id, '', fmtQ(r.x.env)) : '<div class="li-r">' + fmtQ(r.x.env) + ' ' + esc(r.it.un) + (r.x.aplicado != null ? '<small>balanço fechado</small>' : '') + '</div>') + '</div>').join('') + '</div>', F, true), F) || '<div class="empty">Nada enviado para esta edição ainda.' + (adm ? ' Toque em “Enviar item”.' : '') + '</div>');
 }
@@ -1132,7 +1128,7 @@ function balCalc(){
 function estBal(F, adm){
   const B = balCalc(); if (!B) return estNeedEd();
   const {list} = B;
-  if (!list.length) return encBox(B.ed, adm) + '<div class="empty">Nada foi enviado para esta edição, então não há o que contar. Registre antes em “Enviado”.</div>';
+  if (!list.length) return '<div class="empty">Nada foi enviado para esta edição, então não há o que contar. Registre antes em “Enviado”.</div>';
   const sets = allSetores().filter(st => list.some(r => r.x.setor === st) && okCtx('stock', st) && (F.setor === 'all' || F.setor === st));
   const card = r => {
     const x = r.x, it = r.it, cons = r.cons;
@@ -1143,7 +1139,7 @@ function estBal(F, adm){
       + (r.falta ? '<div class="al al-bad">Faltou voltar ' + fmtQ(cons) + '. Este item não é consumível: confira antes de fechar.</div>' : '')
       + (r.baixo ? '<div class="al al-low">O estoque geral ficará em ' + fmtQ(r.depois) + ' ' + esc(it.un) + ', abaixo do mínimo de ' + fmtQ(it.min) + '. Vale comprar.</div>' : '') + '</div>';
   };
-  return encBox(B.ed, adm) + '<div class="bsum"><div><b>' + list.length + '</b><span>itens enviados</span></div><div><b class="neg">' + B.faltas + '</b><span>não voltaram</span></div><div><b>' + B.comprar + '</b><span>abaixo do mínimo</span></div></div>'
+  return '<div class="bsum"><div><b>' + list.length + '</b><span>itens enviados</span></div><div><b class="neg">' + B.faltas + '</b><span>não voltaram</span></div><div><b>' + B.comprar + '</b><span>abaixo do mínimo</span></div></div>'
     + '<p class="muted small" style="margin:2px 2px 4px">Cada item começa como se tudo tivesse voltado. Toque em − para o que não voltou e em + para o que sobrou a mais (ou digite o número).</p>'
     + estAreas(sets, st => estSec('b:' + st, st, list.filter(r => r.x.setor === st).length, list.filter(r => r.x.setor === st).map(card).join(''), F, true), F)
     + (adm ? '<button class="btn btn-primary btn-block" data-act="bal-fechar" style="margin-top:14px">Fechar balanço e atualizar o estoque geral</button>' : '');
@@ -1329,7 +1325,7 @@ function decMatriz(per){
   const cols = [];
   eds.forEach(e => decBotoes(e.id).forEach(b => { if ((!b.arq || decCount(e.id, b.id) > 0) && cols.indexOf(b.nome) < 0) cols.push(b.nome); }));
   const rows = eds.map(e => {
-    const enc = S.pess.filter(x => x.ed === e.id).length, bs = decBotoes(e.id), cell = {};
+    const enc = e.enc || S.pess.filter(x => x.ed === e.id).length, bs = decBotoes(e.id), cell = {};
     cols.forEach(c => { cell[c] = sum(bs.filter(b => b.nome === c), b => decCount(e.id, b.id)); });
     return {e, enc, cell};
   });
@@ -1347,6 +1343,28 @@ function decMatrizCard(per){
 function decMatrizHtml(per){
   const M = decMatriz(per); if (!M) return '';
   return '<h2>Matriz de decisões</h2>' + hTable([['Edição'], ['Encontristas', 1]].concat(M.cols.map(c => [c, 1])), M.rows.map(r => [r.e.nome, r.enc ? String(r.enc) : '—'].concat(M.cols.map(c => r.cell[c] + (r.enc ? ' (' + Math.round(r.cell[c] / r.enc * 100) + '%)' : '')))).concat(M.rows.length > 1 ? [['Total', M.enc ? String(M.enc) : '—'].concat(M.cols.map(c => M.tot[c] + (M.enc ? ' (' + Math.round(M.tot[c] / M.enc * 100) + '%)' : '')))] : []));
+}
+
+function matEnc(per){
+  if (!canStock()) return null;
+  const eds = S.ed.filter(e => (e.ini || '').indexOf(per) === 0 && e.enc > 0), ids = eds.map(e => e.id), enc = sum(eds, e => e.enc);
+  if (!enc) return null;
+  const m = {};
+  S.envios.filter(x => ids.indexOf(x.ed) >= 0 && x.aplicado != null).forEach(x => { const c = x.env + (x.comp || 0) - x.aplicado; if (c > 0) m[x.item] = (m[x.item] || 0) + c; });
+  const rows = Object.keys(m).map(id => ({it:itemById(id), c:m[id]})).filter(r => r.it).sort((a, b) => b.c - a.c);
+  return {enc, eds, rows};
+}
+function matEncCard(per){
+  const M = matEnc(per); if (!M) return '';
+  return card('Material por encontrista', M.rows.length ? table([['Item'], ['Consumido', 1], ['Por encontrista', 1]], M.rows.slice(0, 15).map(r => '<tr><td><b>' + esc(r.it.nome) + '</b></td><td class="num">' + fmtQ(r.c) + ' ' + esc(r.it.un) + '</td><td class="num">' + (r.c / M.enc).toLocaleString('pt-BR', {maximumFractionDigits:2}) + '</td></tr>').join(''), {min:420}) : '<div class="empty">Feche o balanço de uma edição para ver o consumo.</div>', {sub:fmtQ(M.enc) + ' encontristas em ' + M.eds.length + (M.eds.length === 1 ? ' edição' : ' edições')});
+}
+function matEncHtml(per){
+  const M = matEnc(per); if (!M || !M.rows.length) return '';
+  return '<h2>Material por encontrista · ' + fmtQ(M.enc) + ' encontristas</h2>' + hTable([['Item'], ['Consumido', 1], ['Por encontrista', 1]], M.rows.map(r => [r.it.nome, fmtQ(r.c) + ' ' + r.it.un, (r.c / M.enc).toLocaleString('pt-BR', {maximumFractionDigits:2})]));
+}
+function encKpi(per){
+  const eds = S.ed.filter(e => (e.ini || '').indexOf(per) === 0 && e.enc > 0);
+  return eds.length ? kpi('k-sage', 'Encontristas', fmtQ(sum(eds, e => e.enc)), eds.length + (eds.length === 1 ? ' edição' : ' edições') + ' no período', 'users') : '';
 }
 function viewRel(){
   const R = U.rel, months = monthsList(), years = yearsList();
@@ -1368,11 +1386,11 @@ function viewRel(){
     const tEd = edRows.length
       ? table([['Edição'], ['Entradas', 1], ['Saídas', 1], ['Resultado', 1]], edRows.map(x => '<tr><td><b>' + esc(x.ed.nome) + '</b></td><td class="num">' + brl(x.o.e) + '</td><td class="num">' + brl(x.o.s) + '</td><td class="num ' + (x.o.e - x.o.s >= 0 ? 'pos' : 'neg') + '">' + signed(x.o.e - x.o.s) + '</td></tr>').join('') + '<tr><td><b>Total</b></td><td class="num"><b>' + brl(ent) + '</b></td><td class="num"><b>' + brl(sai) + '</b></td><td class="num ' + (ent - sai >= 0 ? 'pos' : 'neg') + '">' + signed(ent - sai) + '</td></tr>', {min:420})
       : '<div class="empty">Sem lançamentos no mês.</div>';
-    const k = kpi('k-sage', 'Entradas', brl(ent), 'Receitas do mês', 'up') + kpi('k-terra', 'Saídas', brl(sai), 'Despesas do mês', 'down') + kpi('k-brown', 'Resultado do mês', brl(ent - sai), 'Entradas menos saídas', 'wallet') + kpi('k-slate', 'Estoque abaixo do mínimo', lowN + (lowN === 1 ? ' item' : ' itens'), 'Situação atual', 'boxes');
+    const k = kpi('k-sage', 'Entradas', brl(ent), 'Receitas do mês', 'up') + kpi('k-terra', 'Saídas', brl(sai), 'Despesas do mês', 'down') + kpi('k-brown', 'Resultado do mês', brl(ent - sai), 'Entradas menos saídas', 'wallet') + kpi('k-slate', 'Estoque abaixo do mínimo', lowN + (lowN === 1 ? ' item' : ' itens'), 'Situação atual', 'boxes') + encKpi(R.mes);
     return [head, ctrl,
       '<h2 style="font-size:26px">Relatório mensal · ' + esc(mesLabel(R.mes)) + '</h2>', '<div class="kpis">' + k + '</div>',
       '<div class="row"><div class="r2">' + card('Gastos por setor no mês', barH(porSetor(L), 'Gráfico de barras com os gastos por setor no mês'), {sub:'Total de ' + brl(sai)}) + '</div><div class="r1">' + card('Resultado por edição', tEd) + '</div></div>',
-      card('Movimentação de material no mês', matTable(M)), decMatrizCard(R.mes)].join('');
+      card('Movimentação de material no mês', matTable(M)), decMatrizCard(R.mes), matEncCard(R.mes)].join('');
   }
   const data = [];
   const now = new Date(), nowY = String(now.getFullYear()), nowM = now.getMonth();
@@ -1384,11 +1402,11 @@ function viewRel(){
   const setores = porSetor(L), maxS = setores.length ? setores[0].value : 1;
   const sRows = setores.map(s => '<tr><td><b>' + esc(s.label) + '</b></td><td class="num">' + brl(s.value) + '</td><td class="num"><b>' + Math.round(s.value / (sai || 1) * 100) + '%</b></td><td><div class="bar-t" style="width:160px"><i class="bar-f bf-acc" style="width:' + Math.round(s.value / maxS * 100) + '%"></i></div></td></tr>').join('');
   const top = matRows(M).filter(x => x.uso > 0).slice(0, 5).map((x, i) => '<div class="act"><div class="act-i b-info" style="font-weight:800">' + (i + 1) + '</div><div style="flex:1;font-weight:700">' + esc(x.it.nome) + '</div><b>' + fmtQ(x.uso) + ' ' + esc(x.it.un) + '</b></div>').join('') || '<div class="empty">Sem consumo de material no ano.</div>';
-  const k = kpi('k-sage', 'Entradas no ano', brl(ent), 'Receitas acumuladas', 'up') + kpi('k-terra', 'Saídas no ano', brl(sai), 'Despesas acumuladas', 'down') + kpi('k-brown', 'Resultado do ano', brl(ent - sai), 'Entradas menos saídas', 'wallet') + kpi('k-slate', 'Gasto médio por mês', brl(withSai ? sai / withSai : 0), 'Média de ' + withSai + ' ' + (withSai === 1 ? 'mês' : 'meses') + ' com gasto', 'chart');
+  const k = kpi('k-sage', 'Entradas no ano', brl(ent), 'Receitas acumuladas', 'up') + kpi('k-terra', 'Saídas no ano', brl(sai), 'Despesas acumuladas', 'down') + kpi('k-brown', 'Resultado do ano', brl(ent - sai), 'Entradas menos saídas', 'wallet') + kpi('k-slate', 'Gasto médio por mês', brl(withSai ? sai / withSai : 0), 'Média de ' + withSai + ' ' + (withSai === 1 ? 'mês' : 'meses') + ' com gasto', 'chart') + encKpi(R.ano);
   return [head, ctrl,
     '<h2 style="font-size:26px">Relatório anual · ' + esc(R.ano) + '</h2>', '<div class="kpis">' + k + '</div>',
     card('Entradas e saídas por mês', '<div class="legend"><div><span class="sw c1b"></span>Entradas</div><div><span class="sw" style="background:var(--bad)"></span>Saídas</div></div>' + groupedBars(data)),
-    '<div class="row"><div class="r2">' + card('Gastos por setor no ano', setores.length ? table([['Setor'], ['Total', 1], ['% do total', 1], ['Proporção']], sRows, {min:520}) : '<div class="empty">Sem despesas no ano.</div>') + '</div><div class="r1">' + card('Materiais mais consumidos no ano', '<div class="acts">' + top + '</div>') + '</div></div>', decMatrizCard(R.ano)].join('');
+    '<div class="row"><div class="r2">' + card('Gastos por setor no ano', setores.length ? table([['Setor'], ['Total', 1], ['% do total', 1], ['Proporção']], sRows, {min:520}) : '<div class="empty">Sem despesas no ano.</div>') + '</div><div class="r1">' + card('Materiais mais consumidos no ano', '<div class="acts">' + top + '</div>') + '</div></div>', decMatrizCard(R.ano), matEncCard(R.ano)].join('');
 }
 
 /* ---------- Acessos: administradores e visitantes, com permissão por área e por setor ---------- */
@@ -1660,7 +1678,7 @@ async function fecharEdicao(id){
   const ok = await W(() => BE.db.batch([upd('edicoes/' + id, {status:'fechada', fechadaEm:d}), {t:'set', path:'edicoes_fin/' + id, data:{saldoInicial:e.saldoInicial || 0, snap:{entradas:tt.ent, saidas:tt.sai, resultado:tt.res, saldoFinal:saldo}}}]));
   if (ok){ closeModal(); toast(e.nome + ' fechada. O saldo segue no fluxo geral.'); }
 }
-const edForm = e => '<form class="form" data-form="ed-edit" novalidate><input type="hidden" name="id" value="' + esc(e.id) + '"><div class="fg"><label class="fl" for="ee-nome">Nome da edição</label><input class="inp" id="ee-nome" name="nome" type="text" value="' + esc(e.nome) + '"></div><div class="two"><div class="fg"><label class="fl" for="ee-ini">Início do retiro</label><input class="inp" id="ee-ini" name="ini" type="date" value="' + esc(e.ini) + '"></div><div class="fg"><label class="fl" for="ee-fim">Fim do retiro</label><input class="inp" id="ee-fim" name="fim" type="date" value="' + esc(e.fim) + '"></div></div><div class="fg"><label class="fl" for="ee-loc">Local</label><input class="inp" id="ee-loc" name="local" type="text" value="' + esc(e.local || '') + '"></div><div class="fg"><label class="fl" for="ee-resp">Responsável</label><select class="inp" id="ee-resp" name="resp">' + adminOpts(e.resp) + '</select></div>' + modalBtns('Salvar') + '</form>';
+const edForm = e => '<form class="form" data-form="ed-edit" novalidate><input type="hidden" name="id" value="' + esc(e.id) + '"><div class="fg"><label class="fl" for="ee-nome">Nome da edição</label><input class="inp" id="ee-nome" name="nome" type="text" value="' + esc(e.nome) + '"></div><div class="two"><div class="fg"><label class="fl" for="ee-ini">Início do retiro</label><input class="inp" id="ee-ini" name="ini" type="date" value="' + esc(e.ini) + '"></div><div class="fg"><label class="fl" for="ee-fim">Fim do retiro</label><input class="inp" id="ee-fim" name="fim" type="date" value="' + esc(e.fim) + '"></div></div><div class="fg"><label class="fl" for="ee-enc">Quantidade de encontristas</label><input class="inp" id="ee-enc" name="enc" type="text" inputmode="numeric" value="' + (e.enc == null ? '' : esc(String(e.enc))) + '"></div><div class="fg"><label class="fl" for="ee-loc">Local</label><input class="inp" id="ee-loc" name="local" type="text" value="' + esc(e.local || '') + '"></div><div class="fg"><label class="fl" for="ee-resp">Responsável</label><select class="inp" id="ee-resp" name="resp">' + adminOpts(e.resp) + '</select></div>' + modalBtns('Salvar') + '</form>';
 function itemForm(i){
   return '<form class="form" data-form="item-save" id="item-form" novalidate><input type="hidden" name="id" value="' + esc(i ? i.id : '') + '"><div class="fg"><label class="fl" for="it-nome">Nome do item</label><input class="inp" id="it-nome" name="nome" type="text" value="' + esc(i ? i.nome : '') + '" placeholder="Ex.: Fita crepe"></div><div class="fg"><label class="fl" for="it-setor">Setor</label><select class="inp" id="it-setor" name="setor">' + setorOptions(i ? i.setor : '') + '</select></div>'
     + '<div class="two"><div class="fg"><label class="fl" for="it-un">Unidade</label><select class="inp" id="it-un" name="un">' + S.cfg.unidades.map(u => opt(u, u, i && i.un === u)).join('') + '</select></div>' + (i ? '' : '<div class="fg"><label class="fl" for="it-qtd">Quantidade atual</label><input class="inp" id="it-qtd" name="qtd" type="text" inputmode="decimal" value="0"></div>') + '<div class="fg"><label class="fl" for="it-min">Mínimo</label><input class="inp" id="it-min" name="min" type="text" inputmode="decimal" value="' + (i ? String(i.min).replace('.', ',') : '0') + '"></div></div>'
@@ -2062,7 +2080,7 @@ const ACTS = {
   },
   'export-html': el => {
     const id = el.dataset.id;
-    if (id === 'rel'){ const per = U.rel.modo === 'mensal' ? U.rel.mes : U.rel.ano; const L = visLanc().filter(l => l.data.indexOf(per) === 0), M = visMovs().filter(m => m.data.indexOf(per) === 0); saveFile('relatorio-' + per + '.html', relDoc('Relatório ' + (U.rel.modo === 'mensal' ? 'mensal · ' + mesLabel(per) : 'anual · ' + per), L, M, decMatrizHtml(per))); }
+    if (id === 'rel'){ const per = U.rel.modo === 'mensal' ? U.rel.mes : U.rel.ano; const L = visLanc().filter(l => l.data.indexOf(per) === 0), M = visMovs().filter(m => m.data.indexOf(per) === 0); saveFile('relatorio-' + per + '.html', relDoc('Relatório ' + (U.rel.modo === 'mensal' ? 'mensal · ' + mesLabel(per) : 'anual · ' + per), L, M, decMatrizHtml(per) + matEncHtml(per))); }
     else { const e = edById(id.slice(3)); saveFile('relatorio-' + e.id + '.html', relDoc('Relatório da edição · ' + e.nome, visLanc().filter(l => l.ed === e.id), visMovs().filter(m => m.ed === e.id), matReportHtml(e) + decReportHtml(e))); }
   }
 };
@@ -2183,7 +2201,8 @@ const FORMS = {
     if (S.ed.some(e => e.nome.toLowerCase() === nome.toLowerCase())){ toast('Já existe uma edição com esse nome.'); return; }
     if (!ini || !fim){ toast('Informe o início e o fim do retiro.'); return; }
     if (fim < ini){ toast('O fim do retiro não pode ser antes do início.'); return; }
-    if (await W(() => BE.db.set('edicoes/' + BE.db.newId('edicoes'), {nome, ini, fim, local:fv(f, 'local').trim(), resp:fv(f, 'resp'), status:'planejada'}))){ closeModal(); toast(nome + ' criada como planejada.'); }
+    const enc = (() => { const t = fv(f, 'enc').trim(); return t === '' ? null : Math.round(parseMoney(t)); })(); if (enc !== null && (isNaN(enc) || enc < 0)){ toast('Informe um número de encontristas válido.'); return; }
+    if (await W(() => BE.db.set('edicoes/' + BE.db.newId('edicoes'), {nome, ini, fim, enc, local:fv(f, 'local').trim(), resp:fv(f, 'resp'), status:'planejada'}))){ closeModal(); toast(nome + ' criada como planejada.'); }
   },
   'ed-edit': async f => {
     if (needAdmin()) return;
@@ -2192,7 +2211,8 @@ const FORMS = {
     if (!nome){ toast('Dê um nome para a edição.'); return; }
     if (S.ed.some(x => x !== e && x.nome.toLowerCase() === nome.toLowerCase())){ toast('Já existe uma edição com esse nome.'); return; }
     if (!ini || !fim || fim < ini){ toast('Confira as datas do retiro.'); return; }
-    if (await W(() => BE.db.update('edicoes/' + e.id, {nome, ini, fim, local:fv(f, 'local').trim(), resp:fv(f, 'resp')}))){ closeModal(); toast('Edição atualizada.'); }
+    const enc = (() => { const t = fv(f, 'enc').trim(); return t === '' ? null : Math.round(parseMoney(t)); })(); if (enc !== null && (isNaN(enc) || enc < 0)){ toast('Informe um número de encontristas válido.'); return; }
+    if (await W(() => BE.db.update('edicoes/' + e.id, {nome, ini, fim, enc, local:fv(f, 'local').trim(), resp:fv(f, 'resp')}))){ closeModal(); toast('Edição atualizada.'); }
   },
   lanc: async f => {
     if (needAdmin()) return;
