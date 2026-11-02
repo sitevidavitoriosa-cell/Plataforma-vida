@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Vida Vitoriosa</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Playfair+Display:wght@600;700&display=swap">
@@ -802,6 +803,7 @@ function loginView(){
     : '<button type="button" class="link" data-act="login-modo" data-id="entrar">Voltar para entrar</button>';
   return '<div class="login"><section class="login-photo" aria-hidden="true"></section><section class="login-wrap"><form class="card login-card form" data-form="' + (m === 'entrar' ? 'login' : m === 'criar' ? 'signup' : 'reset') + '" novalidate><div><h1>' + head[0] + '</h1><p class="muted small" style="margin-top:6px">' + head[1] + '</p></div>' + fields + '<button class="btn btn-primary btn-block" type="submit">' + btn + '</button>' + links + '</form></section></div>';
 }
+const APP_VER = '2 nov 2026 · 11:05';
 const MQ = window.matchMedia ? window.matchMedia('(max-width:820px)') : null;
 const isMob = () => !!(MQ && MQ.matches);
 if (MQ && MQ.addEventListener) MQ.addEventListener('change', () => { if (S && U) render(); });
@@ -834,6 +836,7 @@ function viewMais(){
     + '<form class="msearch" data-form="search" role="search">' + icon('search') + '<label class="sr" for="gs2">Buscar</label><input id="gs2" name="q" type="search" placeholder="Buscar lançamentos, itens, arquivos…" value="' + esc(U.search) + '"></form>'
     + (rows ? '<div class="lst">' + rows + '</div>' : '<div class="empty">Nenhuma outra área liberada.</div>')
     + (extra.length ? '<div class="sec-h">Atalhos</div><div class="lst">' + extra.map(t => '<button class="li" data-act="' + t[0] + '"' + (t[3] ? ' data-id="' + t[3] + '"' : '') + '>' + icon(t[1], 22) + '<span class="li-m"><b>' + esc(t[2]) + '</b></span>' + icon('chevR', 18) + '</button>').join('') + '</div>' : '')
+    + '<p class="muted small" style="text-align:center;margin-top:18px">Versão ' + APP_VER + '</p>'
     + '<div class="sec-h">Conta</div><div class="lst"><button class="li" data-act="theme">' + icon(isDark() ? 'sun' : 'moon', 22) + '<span class="li-m"><b>Tema ' + (isDark() ? 'claro' : 'escuro') + '</b></span></button><button class="li" data-act="logout">' + icon('logout', 22) + '<span class="li-m"><b>Sair</b></span></button></div>';
 }
 
@@ -1136,6 +1139,7 @@ function estBal(F, adm){
       + '<div class="bc-r"><div class="bc-k"><span>Voltou</span>' + (adm ? stp2('bal-step', 'bal-num', it.id, 'volta', fmtQ(r.v)) : '<b>' + fmtQ(r.v) + '</b>') + '</div>'
       + '<div class="bc-k"><span>Comprado</span>' + (adm ? stp2('bal-step', 'bal-num', it.id, 'comp', fmtQ(x.comp || 0)) : '<b>' + fmtQ(x.comp || 0) + '</b>') + '</div></div>'
       + '<div class="bc-s ' + (r.falta ? 'neg' : '') + '">' + (cons < 0 ? 'sobrou ' + fmtQ(-cons) + ' a mais' : cons === 0 ? 'nada consumido' : 'consumiu ' + fmtQ(cons)) + '</div>'
+      + '<div class="bc-s">Estoque geral: ' + fmtQ(it.qtd) + ' → <b>' + fmtQ(r.depois) + '</b> ' + esc(it.un) + ' <span class="muted">(' + (r.v - envBack(x) >= 0 ? '+' : '−') + fmtQ(Math.abs(r.v - envBack(x))) + ' ao fechar)</span></div>'
       + (r.falta ? '<div class="al al-bad">Faltou voltar ' + fmtQ(cons) + '. Este item não é consumível: confira antes de fechar.</div>' : '')
       + (r.baixo ? '<div class="al al-low">O estoque geral ficará em ' + fmtQ(r.depois) + ' ' + esc(it.un) + ', abaixo do mínimo de ' + fmtQ(it.min) + '. Vale comprar.</div>' : '') + '</div>';
   };
