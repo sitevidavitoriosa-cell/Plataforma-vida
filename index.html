@@ -312,6 +312,36 @@ body{font-family:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
 .bsum b{font-size:20px}.bsum span{font-size:12px;color:var(--muted)}
 .chk{display:flex;align-items:center;gap:10px;min-height:44px;font-weight:600}
 .chk input{width:22px;height:22px}
+
+.fdot,.msearch{display:none}
+.bprog{height:8px;border-radius:4px;background:var(--line);margin:2px 0 8px;overflow:hidden}.bprog i{display:block;height:100%;background:var(--accent)}
+.btn-del{color:#B4442B;border-color:#E7B8AB;align-self:flex-start}
+.big2{display:flex;flex-direction:column;gap:10px}.big2 .btn{min-height:56px;font-size:16px;font-weight:800}
+@media (max-width:820px){
+  .top-in{flex-wrap:nowrap;padding:8px 14px}
+  .brand-n,.top-right .icon-btn,.user-t,.ed-sel>span{display:none}
+  .top-right{width:auto;flex:1;min-width:0;justify-content:flex-end}
+  .ed-sel{flex:1;min-width:0}.ed-sel select{width:100%;min-height:44px;font-weight:800}
+  .ph-lite .muted,.ph-lite .ph-a{display:none}.ph-lite h1{font-size:28px}
+  .chips-set{display:none!important}
+  .li{min-height:64px;cursor:pointer}.li-r{font-size:19px;font-weight:800}.li .acts-c{display:none}
+  .fdot{display:flex;flex:none;width:36px;height:36px;border-radius:50%;align-items:center;justify-content:center}
+  .fdot.neg{background:#F9E3DD;color:#B4442B}.fdot.pos{background:#E3F1EA;color:#2E7D5B}
+  .fstrip{display:flex;justify-content:space-between;align-items:flex-end;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:14px 16px;margin-bottom:12px}
+  .fstrip span{display:block;font-size:12px;font-weight:700;color:var(--muted)}.fstrip b{font-size:18px}.fstrip .fs-r{text-align:right}.fstrip .fs-r b{font-size:26px}
+  .stp2 button{width:56px;height:56px;font-size:26px}.bal-in{width:76px;height:56px;font-size:24px}
+  .bc-r{justify-content:space-between}
+  .mh{background:var(--accent);color:#fff;border-radius:22px;padding:18px;margin-bottom:14px}
+  .mh-l{font-size:13px;font-weight:700;opacity:.85}.mh-v{font-size:36px;font-weight:800;letter-spacing:-.02em;margin-top:2px}.mh-s{font-size:13px;opacity:.85;margin-top:2px}
+  .mtg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:18px}
+  .mt{min-height:104px;border:0;border-radius:20px;padding:14px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;font-size:16px;font-weight:800;text-align:left;cursor:pointer}
+  .mt-g{background:#E3F1EA;color:#14513F}.mt-b{background:#E1ECF6;color:#1F5A87}.mt-o{background:#F8EBDA;color:#8E5414}.mt-p{background:#EEE5F3;color:#6A3F80}
+  .mat-h{display:flex;justify-content:space-between;align-items:baseline;margin:0 2px 8px;font-size:17px}
+  .mat{min-height:56px;padding:8px 14px;margin-bottom:8px;background:var(--surface);border:1px solid var(--line);border-radius:14px;display:flex;align-items:center;gap:12px}
+  .mat i{flex:none;width:10px;height:10px;border-radius:50%;background:#B4442B}.mat b{flex:1;font-size:15px}.mat span{font-size:14px;color:var(--muted)}.mat em{font-style:normal;font-weight:800;font-size:17px;color:#B4442B}
+  .msearch{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:0 14px;min-height:52px;margin-bottom:14px}
+  .msearch input{flex:1;border:0;background:transparent;font-size:16px;min-height:48px;outline:none;color:var(--ink)}
+}
 .bnav{display:none}
 .hdr{position:sticky;top:0;z-index:35;background:var(--bg)}
 @media (max-width:820px){.hdr{position:static}}
@@ -385,6 +415,7 @@ const $ = (s, r) => (r || document).querySelector(s);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const nfBRL = new Intl.NumberFormat('pt-BR', {style:'currency', currency:'BRL'});
 const nfBRL0 = new Intl.NumberFormat('pt-BR', {style:'currency', currency:'BRL', minimumFractionDigits:0, maximumFractionDigits:0});
+const brlK = v => (v < 0 ? '− ' : '') + Math.abs(v).toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:0});
 const brl = n => nfBRL.format(Math.round(n * 100) / 100);
 const brl0 = n => nfBRL0.format(n);
 const signed = n => (n >= 0 ? '+ ' : '− ') + brl(Math.abs(n));
@@ -682,7 +713,7 @@ const card = (title, body, o) => { o = o || {}; return '<section class="card ' +
 const badge = (k, t) => '<span class="badge b-' + k + '">' + esc(t) + '</span>';
 const sitBadge = s => s === 'ok' ? badge('ok', 'Em dia') : s === 'low' ? badge('warn', 'Baixo') : badge('bad', 'Crítico');
 const statusBadge = s => s === 'aberta' ? badge('ok', 'Aberta') : s === 'planejada' ? badge('warn', 'Planejada') : badge('info', 'Fechada');
-const pageHead = (t, sub, actions) => '<div class="ph"><div><h1>' + t + '</h1><div class="muted">' + sub + '</div></div><div class="ph-a">' + (actions || '') + '</div></div>';
+const pageHead = (t, sub, actions, lite) => '<div class="ph' + (lite ? ' ph-lite' : '') + '"><div><h1>' + t + '</h1><div class="muted">' + sub + '</div></div><div class="ph-a">' + (actions || '') + '</div></div>';
 const opt = (v, label, sel) => '<option value="' + esc(v) + '"' + (sel ? ' selected' : '') + '>' + esc(label) + '</option>';
 const table = (head, rows, o) => { o = o || {}; return '<div class="scroll"><table class="tbl"' + (o.min ? ' style="min-width:' + o.min + 'px"' : '') + '><thead><tr>' + head.map(h => '<th' + (h[1] ? ' class="num"' : '') + '>' + h[0] + '</th>').join('') + '</tr></thead><tbody>' + rows + '</tbody></table></div>'; };
 const iconBtn = (act, id, ic, label) => '<button class="icon-btn" data-act="' + act + '" data-id="' + esc(id) + '" aria-label="' + esc(label) + '">' + icon(ic) + '</button>';
@@ -757,6 +788,9 @@ function loginView(){
     : '<button type="button" class="link" data-act="login-modo" data-id="entrar">Voltar para entrar</button>';
   return '<div class="login"><section class="login-photo" aria-hidden="true"></section><section class="login-wrap"><form class="card login-card form" data-form="' + (m === 'entrar' ? 'login' : m === 'criar' ? 'signup' : 'reset') + '" novalidate><div><h1>' + head[0] + '</h1><p class="muted small" style="margin-top:6px">' + head[1] + '</p></div>' + fields + '<button class="btn btn-primary btn-block" type="submit">' + btn + '</button>' + links + '</form></section></div>';
 }
+const MQ = window.matchMedia ? window.matchMedia('(max-width:820px)') : null;
+const isMob = () => !!(MQ && MQ.matches);
+if (MQ && MQ.addEventListener) MQ.addEventListener('change', () => { if (S && U) render(); });
 const isDark = () => S.theme === 'dark' || (S.theme !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
 function shell(content){
   const u = ME(), c = S.cfg;
@@ -779,8 +813,13 @@ function bottomNav(){
 function viewMais(){
   const u = ME(), items = ['organizacional', 'equipe', 'relatorios'].filter(can).map(m => [m, MOD_ICON[m], lab(m)]).concat(isAdmin() ? [['decisoes', 'check', lab('decisoes')], ['acessos', 'key', lab('acessos')], ['config', 'gear', lab('config')]] : []);
   const rows = items.map(t => '<button class="li" data-act="nav" data-v="' + t[0] + '">' + icon(t[1], 22) + '<span class="li-m"><b>' + esc(t[2]) + '</b></span>' + icon('chevR', 18) + '</button>').join('');
+  const extra = [];
+  if (isAdmin() && canStock()){ extra.push(['inv-import', 'upload', 'Importar inventário']); extra.push(['item-novo', 'plus', 'Novo item']); }
+  if (can('financeiro')) extra.push(['export-csv', 'download', 'Exportar financeiro', 'fin']);
   return pageHead('Mais', esc(u.nome) + ' · ' + (u.papel === 'admin' ? 'Administrador' : 'Visitante'))
+    + '<form class="msearch" data-form="search" role="search">' + icon('search') + '<label class="sr" for="gs2">Buscar</label><input id="gs2" name="q" type="search" placeholder="Buscar lançamentos, itens, arquivos…" value="' + esc(U.search) + '"></form>'
     + (rows ? '<div class="lst">' + rows + '</div>' : '<div class="empty">Nenhuma outra área liberada.</div>')
+    + (extra.length ? '<div class="sec-h">Atalhos</div><div class="lst">' + extra.map(t => '<button class="li" data-act="' + t[0] + '"' + (t[3] ? ' data-id="' + t[3] + '"' : '') + '>' + icon(t[1], 22) + '<span class="li-m"><b>' + esc(t[2]) + '</b></span>' + icon('chevR', 18) + '</button>').join('') + '</div>' : '')
     + '<div class="sec-h">Conta</div><div class="lst"><button class="li" data-act="theme">' + icon(isDark() ? 'sun' : 'moon', 22) + '<span class="li-m"><b>Tema ' + (isDark() ? 'claro' : 'escuro') + '</b></span></button><button class="li" data-act="logout">' + icon('logout', 22) + '<span class="li-m"><b>Sair</b></span></button></div>';
 }
 
@@ -801,7 +840,33 @@ function lancRow(l, o){
     + '<td>' + (l.comp ? '<button class="link" data-act="comp" data-id="' + l.id + '">Ver anexo</button>' : (neg ? '<span class="muted">Sem anexo</span>' : '—')) + '</td>'
     + (o.del ? '<td>' + (open ? '<div class="acts-c">' + iconBtn('lanc-edit', l.id, 'edit', 'Editar lançamento ' + l.desc) + iconBtn('del-lanc', l.id, 'trash', 'Excluir lançamento ' + l.desc) + '</div>' : '<span class="muted" title="Edição fechada">' + icon('lock', 16) + '</span>') + '</td>' : '') + '</tr>';
 }
+function viewInicioMob(){
+  const money = canMoney(), stock = canStock(), adm = isAdmin();
+  const L = visLanc().filter(inSel), ent = entradas(L), sai = saidas(L);
+  const low = visItems().filter(i => sit(i) !== 'ok').sort((a, b) => a.qtd / a.min - b.qtd / b.min);
+  const T = [];
+  const tile = (cls, ic, label, attrs) => '<button class="mt ' + cls + '" ' + attrs + '>' + icon(ic, 30) + '<span>' + label + '</span></button>';
+  if (adm){
+    if (money) T.push(tile('mt-g', 'plus', 'Lançar valor', 'data-act="lanc-novo"'));
+    if (stock){ T.push(tile('mt-b', 'boxes', 'Enviar item', 'data-act="home-go" data-v="estoque" data-aba="env"')); T.push(tile('mt-o', 'check', 'Balanço', 'data-act="home-go" data-v="estoque" data-aba="bal"')); }
+    T.push(tile('mt-p', 'check', 'Decisões', 'data-act="nav" data-v="decisoes"'));
+  } else {
+    if (stock) T.push(tile('mt-b', 'boxes', lab('estoque'), 'data-act="nav" data-v="estoque"'));
+    if (money) T.push(tile('mt-g', 'wallet', lab('financeiro'), 'data-act="nav" data-v="financeiro"'));
+    if (can('edicoes')) T.push(tile('mt-o', 'cal', lab('edicoes'), 'data-act="nav" data-v="edicoes"'));
+    if (can('relatorios')) T.push(tile('mt-p', 'chart', lab('relatorios'), 'data-act="nav" data-v="relatorios"'));
+  }
+  const ed = S.selEd === 'all' ? null : edById(S.selEd);
+  let out = '<div class="mh"><div class="mh-l">' + (S.selEd === 'all' ? 'Todas as edições' : 'Caixa · ' + esc(edName(S.selEd))) + '</div>'
+    + (money ? '<div class="mh-v">' + (ent - sai < 0 ? '− ' : '+ ') + brl(Math.abs(ent - sai)) + '</div><div class="mh-s">Entrou ' + brl(ent) + ' · saiu ' + brl(sai) + '</div>' : '<div class="mh-v" style="font-size:24px">' + esc(edTxt()) + '</div>') + '</div>';
+  if (!T.length && !money) out += '<div class="empty">Nenhuma área liberada para você ainda. Fale com um administrador.</div>';
+  out += '<div class="mtg">' + T.join('') + '</div>';
+  if (stock) out += '<div class="mat-h"><b>Precisa de atenção</b>' + (low.length > 4 ? '<button class="link" data-act="home-go" data-v="estoque" data-aba="geral">Ver os ' + low.length + '</button>' : '') + '</div>'
+    + (low.length ? low.slice(0, 4).map(i => '<div class="mat"><i></i><b>' + esc(i.nome) + '</b><span><em>' + fmtQ(i.qtd) + '</em> de ' + fmtQ(i.min) + '</span></div>').join('') : '<div class="empty">Tudo em dia no estoque.</div>');
+  return out;
+}
 function viewInicio(){
+  if (isMob()) return viewInicioMob();
   const money = canMoney(), stock = canStock(), org = can('organizacional'), adm = isAdmin();
   const L = visLanc().filter(inSel), ent = entradas(L), sai = saidas(L);
   const low = visItems().filter(i => sit(i) !== 'ok').sort((a, b) => a.qtd / a.min - b.qtd / b.min);
@@ -938,16 +1003,16 @@ function viewFinanceiro(){
   const setF = allSetores().filter(s => okCtx('money', s));
   const k = kpi('k-sage', 'Entradas', brl(ent), 'Receitas', 'up') + kpi('k-terra', 'Saídas', brl(sai), 'Despesas', 'down') + '<div style="grid-column:1/-1">' + kpi('k-brown', 'Resultado', brl(ent - sai), moneyFull() ? 'Saldo geral: ' + brl(saldoGeral()) : 'Nas áreas liberadas', 'wallet') + '</div>';
   const chips = '<div class="chips"><button class="chip' + (F.tipo === 'all' ? ' on' : '') + '" data-act="fin-tipo" data-id="all">Tudo</button><button class="chip' + (F.tipo === 'despesa' ? ' on' : '') + '" data-act="fin-tipo" data-id="despesa">Despesas</button><button class="chip' + (F.tipo === 'receita' ? ' on' : '') + '" data-act="fin-tipo" data-id="receita">Receitas</button></div>'
-    + '<div class="chips"><button class="chip' + (F.setor === 'all' ? ' on' : '') + '" data-act="fin-chip" data-id="all">Todos os setores</button>' + setF.map(st => '<button class="chip' + (F.setor === st ? ' on' : '') + '" data-act="fin-chip" data-id="' + esc(st) + '">' + esc(st) + '</button>').join('') + '</div>';
+    + '<div class="chips chips-set"><button class="chip' + (F.setor === 'all' ? ' on' : '') + '" data-act="fin-chip" data-id="all">Todos os setores</button>' + setF.map(st => '<button class="chip' + (F.setor === st ? ' on' : '') + '" data-act="fin-chip" data-id="' + esc(st) + '">' + esc(st) + '</button>').join('') + '</div>';
   const list = rows.length ? '<div class="lst">' + shown.map(l => {
     const neg = l.tipo === 'despesa', e = edById(l.ed);
-    return '<div class="li"><div class="li-m"><b>' + esc(l.desc) + '</b><small>' + dmy(l.data) + ' · ' + (l.setor ? esc(l.setor) : 'Receita') + ' · ' + esc(l.cat) + (S.selEd === 'all' ? ' · ' + esc(edName(l.ed)) : '') + (l.ajusteDe ? ' · ajuste de ' + esc(edById(l.ajusteDe) ? edName(l.ajusteDe) : 'edição excluída') : '') + '</small>'
+    return '<div class="li"' + (adm && e && e.status === 'aberta' ? ' data-act="lanc-edit" data-id="' + esc(l.id) + '"' : '') + '><div class="fdot ' + (neg ? 'neg' : 'pos') + '">' + icon(neg ? 'down' : 'up', 18) + '</div><div class="li-m"><b>' + esc(l.desc) + '</b><small>' + dmy(l.data) + ' · ' + (l.setor ? esc(l.setor) : 'Receita') + ' · ' + esc(l.cat) + (S.selEd === 'all' ? ' · ' + esc(edName(l.ed)) : '') + (l.ajusteDe ? ' · ajuste de ' + esc(edById(l.ajusteDe) ? edName(l.ajusteDe) : 'edição excluída') : '') + '</small>'
       + (l.comp ? '<small><button class="link" data-act="comp" data-id="' + l.id + '">Ver anexo</button></small>' : (neg ? '<small>Sem anexo</small>' : '')) + '</div>'
       + '<div class="li-r ' + (neg ? 'neg' : 'pos') + '">' + (neg ? '− ' : '+ ') + brl(l.valor) + '</div>'
       + (adm ? '<div class="acts-c">' + lancActs(l, e) + '</div>' : '') + '</div>';
   }).join('') + '</div>' + (rows.length > shown.length ? '<div style="text-align:center;margin-top:12px"><button class="btn btn-sm" data-act="fin-more">Ver mais (' + (rows.length - shown.length) + ')</button></div>' : '') : '<div class="empty">Nenhum lançamento encontrado.</div>';
-  return pageHead(esc(lab('financeiro')), esc(sc), '<button class="btn" data-act="export-csv" data-id="fin">' + icon('download', 16) + 'Exportar</button>')
-    + '<div class="kpis">' + k + '</div>' + chips + list
+  return pageHead(esc(lab('financeiro')), esc(sc), '<button class="btn" data-act="export-csv" data-id="fin">' + icon('download', 16) + 'Exportar</button>', true)
+    + (isMob() ? '<div class="fstrip"><div><span>Entrou</span><b class="pos">' + brlK(ent) + '</b></div><div><span>Saiu</span><b class="neg">' + brlK(sai) + '</b></div><div class="fs-r"><span>Sobrou</span><b>' + brlK(ent - sai) + '</b></div></div>' : '<div class="kpis">' + k + '</div>') + chips + list
     + (adm ? '<button class="fab" data-act="lanc-novo">' + icon('plus', 20) + 'Lançar valor</button>' : '');
 }
 
@@ -1036,7 +1101,7 @@ function estBal(F, adm){
       + (r.falta ? '<div class="al al-bad">Faltou voltar ' + fmtQ(cons) + '. Este item não é consumível: confira antes de fechar.</div>' : '')
       + (r.baixo ? '<div class="al al-low">O estoque geral ficará em ' + fmtQ(r.depois) + ' ' + esc(it.un) + ', abaixo do mínimo de ' + fmtQ(it.min) + '. Vale comprar.</div>' : '') + '</div>';
   };
-  return '<div class="bsum"><div><b>' + B.contados + '/' + list.length + '</b><span>itens contados</span></div><div><b class="neg">' + B.faltas + '</b><span>não voltaram</span></div><div><b>' + B.comprar + '</b><span>abaixo do mínimo</span></div></div>'
+  return '<div class="bprog"><i style="width:' + Math.round(B.contados / list.length * 100) + '%"></i></div><div class="bsum"><div><b>' + B.contados + '/' + list.length + '</b><span>itens contados</span></div><div><b class="neg">' + B.faltas + '</b><span>não voltaram</span></div><div><b>' + B.comprar + '</b><span>abaixo do mínimo</span></div></div>'
     + '<p class="muted small" style="margin:2px 2px 4px">Conte o que voltou de cada item. O consumo é calculado: enviado + comprado − voltou.</p>'
     + estAreas(sets, st => estSec('b:' + st, st, list.filter(r => r.x.setor === st).length, list.filter(r => r.x.setor === st).map(card).join(''), F, true), F)
     + (adm ? '<button class="btn btn-primary btn-block" data-act="bal-fechar" style="margin-top:14px">Fechar balanço e atualizar o estoque geral</button>' : '');
@@ -1101,8 +1166,8 @@ function viewEstoque(){
   const low = items.filter(i => sit(i) !== 'ok');
   const M = visMovs().filter(inSel);
   const setoresAll = allSetores().filter(st => items.some(i => i.setor === st) && okCtx('stock', st));
-  const chips = '<div class="chips"><button class="chip' + (F.setor === 'all' ? ' on' : '') + '" data-act="est-chip" data-id="all">Todos</button>' + setoresAll.map(st => '<button class="chip' + (F.setor === st ? ' on' : '') + '" data-act="est-chip" data-id="' + esc(st) + '">' + esc(st) + '</button>').join('') + '</div>';
-  const seg = '<div class="chips">' + [['geral', 'Estoque geral'], ['env', 'Enviado'], ['bal', 'Balanço'], ['mov', 'Ajustes']].map(a => '<button class="chip' + (F.aba === a[0] ? ' on' : '') + '" data-act="est-aba" data-id="' + a[0] + '">' + a[1] + '</button>').join('')
+  const chips = '<div class="chips chips-set"><button class="chip' + (F.setor === 'all' ? ' on' : '') + '" data-act="est-chip" data-id="all">Todos</button>' + setoresAll.map(st => '<button class="chip' + (F.setor === st ? ' on' : '') + '" data-act="est-chip" data-id="' + esc(st) + '">' + esc(st) + '</button>').join('') + '</div>';
+  const seg = '<div class="chips">' + [['geral', isMob() ? 'Geral' : 'Estoque geral'], ['env', 'Enviado'], ['bal', 'Balanço'], ['mov', 'Ajustes']].map(a => '<button class="chip' + (F.aba === a[0] ? ' on' : '') + '" data-act="est-aba" data-id="' + a[0] + '">' + a[1] + '</button>').join('')
     + (F.aba === 'geral' ? '<button class="chip' + (F.sit === 'falta' ? ' on' : '') + '" data-act="est-falta">Em falta · ' + low.length + '</button>' : '') + '</div>';
   let body = '';
   if (F.aba === 'geral'){
@@ -1113,7 +1178,7 @@ function viewEstoque(){
       const nl = rows.filter(i => sit(i) !== 'ok').length;
       return estSec('g:' + st, st, rows.length + (nl ? ' · ' + nl + ' em falta' : ''), '<div class="lst">' + rows.map(i => {
         const s = sit(i), pc = i.min > 0 ? Math.min(100, Math.round(i.qtd / i.min * 100)) : 100;
-        return '<div class="li"><div class="li-m"><b>' + esc(i.nome) + '</b><small>mín. ' + fmtQ(i.min) + ' ' + esc(i.un) + (i.qtd < i.min ? ' · faltam ' + fmtQ(i.min - i.qtd) : '') + '</small><div class="bar-t"><i class="bar-f ' + (s === 'ok' ? 'bf-ok' : s === 'low' ? 'bf-low' : 'bf-crit') + '" style="width:' + pc + '%"></i></div></div><div class="li-r">' + fmtQ(i.qtd) + ' ' + esc(i.un) + '<small>' + (s === 'ok' ? 'Em dia' : s === 'low' ? 'Baixo' : 'Crítico') + '</small></div>'
+        return '<div class="li"' + (adm ? ' data-act="item-edit" data-id="' + esc(i.id) + '"' : '') + '><div class="li-m"><b>' + esc(i.nome) + '</b><small>mín. ' + fmtQ(i.min) + ' ' + esc(i.un) + (i.qtd < i.min ? ' · faltam ' + fmtQ(i.min - i.qtd) : '') + '</small><div class="bar-t"><i class="bar-f ' + (s === 'ok' ? 'bf-ok' : s === 'low' ? 'bf-low' : 'bf-crit') + '" style="width:' + pc + '%"></i></div></div><div class="li-r">' + fmtQ(i.qtd) + ' ' + esc(i.un) + '<small>' + (s === 'ok' ? 'Em dia' : s === 'low' ? 'Baixo' : 'Crítico') + '</small></div>'
           + (adm ? '<div class="acts-c">' + iconBtn('item-edit', i.id, 'edit', 'Editar ' + i.nome) + iconBtn('item-del', i.id, 'trash', 'Excluir ' + i.nome) + '</div>' : '') + '</div>';
       }).join('') + '</div>', F);
     }, F) || '<div class="empty">' + (items.length ? 'Nenhum item com esse filtro.' : 'Nenhum item cadastrado ainda.') + '</div>';
@@ -1128,9 +1193,9 @@ function viewEstoque(){
     body = '<p class="muted small" style="margin:2px 2px 4px">Ajustes avulsos de ' + esc(sc) + ' (usos e reposições). Cada um já foi somado ou abatido do estoque geral.</p>'
       + (estAreas(sets, st => estSec('m:' + st, st, mv.filter(m => (itemById(m.item) || {}).setor === st).length, '<div class="lst">' + mv.filter(m => (itemById(m.item) || {}).setor === st).map(m => { const it = itemById(m.item); return '<div class="li"><div class="li-m"><b>' + esc(it.nome) + '</b><small>' + dmy(m.data) + ' · ' + esc(m.por) + (S.selEd === 'all' ? ' · ' + esc(edName(m.ed)) : '') + '</small></div><div class="li-r ' + (m.tipo === 'uso' ? 'neg' : 'pos') + '">' + (m.tipo === 'uso' ? '− ' : '+ ') + fmtQ(m.qtd) + ' ' + esc(it.un) + '<small>' + (m.tipo === 'uso' ? 'Uso' : 'Reposição') + '</small></div></div>'; }).join('') + '</div>', F)) || '<div class="empty">Nenhuma movimentação nesta edição.</div>');
   }
-  return pageHead(esc(lab('estoque')), 'Estoque geral contínuo entre as edições', adm ? '<button class="btn" data-act="inv-import">' + icon('upload', 16) + 'Importar inventário</button><button class="btn" data-act="item-novo">' + icon('plus', 16) + 'Novo item</button>' : '')
+  return pageHead(esc(lab('estoque')), 'Estoque geral contínuo entre as edições', adm ? '<button class="btn" data-act="inv-import">' + icon('upload', 16) + 'Importar inventário</button><button class="btn" data-act="item-novo">' + icon('plus', 16) + 'Novo item</button>' : '', true)
     + seg + chips + '<div class="accs">' + body + '</div>'
-    + (adm && F.aba === 'env' ? '<button class="fab" data-act="env-novo">' + icon('plus', 20) + 'Enviar item</button>' : adm && F.aba !== 'bal' ? '<button class="fab" data-act="mov-novo">' + icon('plus', 20) + (F.aba === 'mov' ? 'Ajuste' : 'Registrar') + '</button>' : '');
+    + (adm && F.aba === 'geral' && isMob() ? '<button class="fab" data-act="est-fab">' + icon('plus', 20) + 'Registrar</button>' : adm && F.aba === 'env' ? '<button class="fab" data-act="env-novo">' + icon('plus', 20) + 'Enviar item</button>' : adm && F.aba !== 'bal' ? '<button class="fab" data-act="mov-novo">' + icon('plus', 20) + (F.aba === 'mov' ? 'Ajuste' : 'Registrar') + '</button>' : '');
 }
 
 /* ---------- Organizacional ---------- */
@@ -1528,7 +1593,7 @@ function itemForm(i){
   return '<form class="form" data-form="item-save" id="item-form" novalidate><input type="hidden" name="id" value="' + esc(i ? i.id : '') + '"><div class="fg"><label class="fl" for="it-nome">Nome do item</label><input class="inp" id="it-nome" name="nome" type="text" value="' + esc(i ? i.nome : '') + '" placeholder="Ex.: Fita crepe"></div><div class="fg"><label class="fl" for="it-setor">Setor</label><select class="inp" id="it-setor" name="setor">' + setorOptions(i ? i.setor : '') + '</select></div>'
     + '<div class="two"><div class="fg"><label class="fl" for="it-un">Unidade</label><select class="inp" id="it-un" name="un">' + S.cfg.unidades.map(u => opt(u, u, i && i.un === u)).join('') + '</select></div>' + (i ? '' : '<div class="fg"><label class="fl" for="it-qtd">Quantidade atual</label><input class="inp" id="it-qtd" name="qtd" type="text" inputmode="decimal" value="0"></div>') + '<div class="fg"><label class="fl" for="it-min">Mínimo</label><input class="inp" id="it-min" name="min" type="text" inputmode="decimal" value="' + (i ? String(i.min).replace('.', ',') : '0') + '"></div></div>'
     + '<label class="chk"><input type="checkbox" name="cons"' + (i && i.cons ? ' checked' : '') + '> É consumível (acaba com o uso, como descartáveis e limpeza)</label>'
-    + (i ? '<div class="note">Para corrigir a quantidade, registre um uso ou uma reposição. Assim o histórico fica certo.</div>' : '') + modalBtns(i ? 'Salvar' : 'Cadastrar') + '</form>';
+    + (i ? '<div class="note">Para corrigir a quantidade, registre um uso ou uma reposição. Assim o histórico fica certo.</div>' : '') + (i ? '<button type="button" class="btn btn-del" data-act="item-del" data-id="' + esc(i.id) + '">Excluir item</button>' : '') + modalBtns(i ? 'Salvar' : 'Cadastrar') + '</form>';
 }
 const findRec = id => id.indexOf('c:') === 0 ? S.convites.find(c => c.id === id.slice(2)) : S.users.find(u => u.id === id);
 
@@ -1704,6 +1769,8 @@ function pubRegistrar(){
 }
 const ACTS = {
   nav: el => go(el.dataset.v),
+  'est-fab': () => openModal({title:'O que você quer fazer?', body:'<div class="big2"><button type="button" class="btn btn-primary" data-act="mov-novo">Registrar uso ou reposição</button><button type="button" class="btn" data-act="item-novo">Cadastrar item novo</button></div>'}),
+  'home-go': el => { const a = el.dataset.aba; if (a){ U.est.aba = a; U.est.setor = 'all'; U.est.sit = 'all'; } go(el.dataset.v); },
   'env-novo': () => { if (needAdmin()) return; if (!decEd()){ toast('Escolha uma edição no seletor do topo.'); return; } openModal({title:'Enviar item para a edição', body:envForm()}); },
   'env-step': el => { if (needAdmin()) return; const ed = decEd(), it = itemById(el.dataset.id); if (!ed || !it) return; const cur = envOf(ed.id, it.id); envSet(ed, it, (cur ? cur.env : 0) + Number(el.dataset.d)); },
   'bal-step': el => { if (needAdmin()) return; const ed = decEd(), x = ed && envOf(ed.id, el.dataset.id); if (!x) return; const f = el.dataset.f, v = Math.max(0, (x[f] == null ? 0 : x[f]) + Number(el.dataset.d)); const patch = {}; patch[f] = v; W(() => BE.db.update('envios/' + x.id, patch)); },
@@ -1841,7 +1908,7 @@ const ACTS = {
       + '<div class="fg"><label class="fl" for="le-cat">Categoria</label><input class="inp" id="le-cat" name="cat" type="text" list="cats2" value="' + esc(l.cat) + '" autocomplete="off"><datalist id="cats2">' + catList().map(c => '<option value="' + esc(c) + '">').join('') + '</datalist></div>'
       + '<div class="two"><div class="fg"><label class="fl" for="le-valor">Valor (R$)</label><input class="inp" id="le-valor" name="valor" type="text" inputmode="decimal" value="' + String(l.valor).replace('.', ',') + '"></div><div class="fg"><label class="fl" for="le-data">Data</label><input class="inp" id="le-data" name="data" type="date" value="' + esc(l.data) + '"></div></div>'
       + '<div class="fg"><label class="fl" for="le-desc">Descrição</label><textarea class="inp" id="le-desc" name="desc">' + esc(l.desc) + '</textarea></div>'
-      + '<div class="fg"><label class="fl" for="le-comp">Comprovante <small>(atual: ' + esc(l.comp || 'nenhum') + ')</small></label><input class="inp" id="le-comp" name="comp" type="file" accept="image/*,application/pdf"></div>' + modalBtns('Salvar') + '</form>'});
+      + '<div class="fg"><label class="fl" for="le-comp">Comprovante <small>(atual: ' + esc(l.comp || 'nenhum') + ')</small></label><input class="inp" id="le-comp" name="comp" type="file" accept="image/*,application/pdf"></div><button type="button" class="btn btn-del" data-act="del-lanc" data-id="' + esc(l.id) + '">Excluir lançamento</button>' + modalBtns('Salvar') + '</form>'});
   },
   'del-lanc': el => { if (needAdmin()) return; const l = S.lanc.find(x => x.id === el.dataset.id); if (!l) return; openModal({title:'Excluir lançamento?', body:'<p><b>' + esc(l.desc) + '</b> · ' + brl(l.valor) + '</p>', actions:[{label:'Cancelar', act:'close'}, {label:'Excluir', act:'del-lanc-ok', id:l.id, primary:true}]}); },
   'del-lanc-ok': async el => { if (needAdmin()) return; const l = S.lanc.find(x => x.id === el.dataset.id); if (!l) return; if (await W(() => BE.db.del('lancamentos/' + l.id))){ if (l.compPath) BE.storage.rm(l.compPath).catch(() => {}); closeModal(); toast('Lançamento excluído.'); } },
