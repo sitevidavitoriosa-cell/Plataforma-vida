@@ -1060,6 +1060,7 @@ function envForm(){
   const items = visItems(), setores = allSetores().filter(st => items.some(i => i.setor === st));
   items.forEach(i => { if (setores.indexOf(i.setor) < 0) setores.push(i.setor); });
   return '<form class="form" data-form="env-add" novalidate><div class="note">Enviando para: <b>' + esc(edName(S.selEd)) + '</b>. O estoque geral desconta na hora.</div>'
+    + '<div class="fg"><label class="fl" for="ea-q">Buscar pelo nome</label><input class="inp" id="ea-q" type="search" autocomplete="off" placeholder="Digite parte do nome, ex.: tesoura" data-inp="item-busca" data-sel="ea-item" data-setor="ea-setor"></div>'
     + '<div class="fg"><label class="fl" for="ea-setor">Setor</label><select class="inp" id="ea-setor" name="msetor" data-chg="env-setor">' + opt('', 'Escolha o setor') + setores.map(st => opt(st, st)).join('') + '</select></div>'
     + '<div class="fg"><label class="fl" for="ea-item">Item</label><select class="inp" id="ea-item" name="item">' + itemOptsFor(items, '') + '</select></div>'
     + '<div class="fg"><label class="fl" for="ea-qtd">Quantidade enviada</label><input class="inp" id="ea-qtd" name="qtd" type="text" inputmode="decimal" placeholder="0"></div>' + modalBtns('Enviar') + '</form>';
@@ -1125,8 +1126,10 @@ function matReportHtml(e){
   if (low.length) h += '<h2>Para comprar antes da próxima edição</h2>' + hTable([['Item'], ['Setor'], ['Atual', 1], ['Mínimo', 1], ['Faltam', 1]], low.map(i => [i.nome, i.setor, fmtQ(i.qtd), fmtQ(i.min), fmtQ(i.min - i.qtd)]));
   return h;
 }
-function itemOptsFor(items, setor){
-  const list = items.filter(i => !setor || i.setor === setor);
+function itemOptsFor(items, setor, q){
+  const nq = q ? normTxt(q) : '';
+  const list = items.filter(i => nq ? normTxt(i.nome + ' ' + i.setor).indexOf(nq) >= 0 : (!setor || i.setor === setor));
+  if (nq) return list.length ? (list.length > 1 ? opt('', list.length + ' itens encontrados · escolha') : '') + list.map(i => opt(i.id, i.nome + ' · ' + i.setor + ' (' + fmtQ(i.qtd) + ' ' + i.un + ')', list.length === 1)).join('') : opt('', 'Nenhum item com esse nome');
   return list.length ? opt('', 'Escolha o item') + list.map(i => opt(i.id, i.nome + ' (' + fmtQ(i.qtd) + ' ' + i.un + ')')).join('') : opt('', setor ? 'Nenhum item neste setor' : 'Cadastre um item primeiro');
 }
 function movForm(){
@@ -1135,6 +1138,7 @@ function movForm(){
   const ini = U.est.fsetor && setores.indexOf(U.est.fsetor) >= 0 ? U.est.fsetor : '';
   return '<form class="form" data-form="mov" novalidate>' + edLancBox(EL)
     + '<div class="seg" role="radiogroup" aria-label="Tipo de movimentação"><input type="radio" id="mv-u" name="tipo" value="uso" checked data-chg="mov-prev"><label for="mv-u">Usamos</label><input type="radio" id="mv-r" name="tipo" value="rep" data-chg="mov-prev"><label for="mv-r">Repomos</label></div>'
+    + '<div class="fg"><label class="fl" for="mv-q">Buscar pelo nome</label><input class="inp" id="mv-q" type="search" autocomplete="off" placeholder="Digite parte do nome, ex.: tesoura" data-inp="item-busca" data-sel="mv-item" data-setor="mv-setor"></div>'
     + '<div class="fg"><label class="fl" for="mv-setor">Setor</label><select class="inp" id="mv-setor" name="msetor" data-chg="mov-setor">' + opt('', 'Escolha o setor') + setores.map(st => opt(st, st, st === ini)).join('') + '</select></div>'
     + '<div class="fg"><label class="fl" for="mv-item">Item</label><select class="inp" id="mv-item" name="item" data-chg="mov-prev">' + itemOptsFor(items, ini) + '</select></div>'
     + '<div class="fg"><label class="fl" for="mv-qtd">Quantidade</label><div class="stp"><button type="button" data-act="qtd-step" data-id="-1" aria-label="Diminuir">−</button><input class="inp" id="mv-qtd" name="qtd" type="text" inputmode="decimal" placeholder="0" data-chg="mov-prev"><button type="button" data-act="qtd-step" data-id="1" aria-label="Aumentar">+</button></div></div>'
@@ -1593,7 +1597,7 @@ function itemForm(i){
   return '<form class="form" data-form="item-save" id="item-form" novalidate><input type="hidden" name="id" value="' + esc(i ? i.id : '') + '"><div class="fg"><label class="fl" for="it-nome">Nome do item</label><input class="inp" id="it-nome" name="nome" type="text" value="' + esc(i ? i.nome : '') + '" placeholder="Ex.: Fita crepe"></div><div class="fg"><label class="fl" for="it-setor">Setor</label><select class="inp" id="it-setor" name="setor">' + setorOptions(i ? i.setor : '') + '</select></div>'
     + '<div class="two"><div class="fg"><label class="fl" for="it-un">Unidade</label><select class="inp" id="it-un" name="un">' + S.cfg.unidades.map(u => opt(u, u, i && i.un === u)).join('') + '</select></div>' + (i ? '' : '<div class="fg"><label class="fl" for="it-qtd">Quantidade atual</label><input class="inp" id="it-qtd" name="qtd" type="text" inputmode="decimal" value="0"></div>') + '<div class="fg"><label class="fl" for="it-min">Mínimo</label><input class="inp" id="it-min" name="min" type="text" inputmode="decimal" value="' + (i ? String(i.min).replace('.', ',') : '0') + '"></div></div>'
     + '<label class="chk"><input type="checkbox" name="cons"' + (i && i.cons ? ' checked' : '') + '> É consumível (acaba com o uso, como descartáveis e limpeza)</label>'
-    + (i ? '<div class="note">Para corrigir a quantidade, registre um uso ou uma reposição. Assim o histórico fica certo.</div>' : '') + (i ? '<button type="button" class="btn btn-del" data-act="item-del" data-id="' + esc(i.id) + '">Excluir item</button>' : '') + modalBtns(i ? 'Salvar' : 'Cadastrar') + '</form>';
+    + (i ? '<div class="fg"><label class="fl" for="it-qfix">Quantidade no depósito agora</label><input class="inp" id="it-qfix" name="qfix" type="text" inputmode="decimal" value="' + fmtQ(i.qtd).replace('.', ',') + '"><div class="note">Use só para corrigir uma contagem errada (ex.: o inventário dizia 0, mas existem 3). Usos e reposições do dia a dia: botão Registrar.</div></div>' : '') + (i ? '<button type="button" class="btn btn-del" data-act="item-del" data-id="' + esc(i.id) + '">Excluir item</button>' : '') + modalBtns(i ? 'Salvar' : 'Cadastrar') + '</form>';
 }
 const findRec = id => id.indexOf('c:') === 0 ? S.convites.find(c => c.id === id.slice(2)) : S.users.find(u => u.id === id);
 
@@ -1715,6 +1719,7 @@ async function decAddPessoas(ed, lista){
 /* ---------- tela do voluntário (link aberto, sem login) ---------- */
 let P = null;
 const INP = {
+  'item-busca': el => { const sel = $('#' + el.dataset.sel); if (!sel) return; const q = el.value.trim(); sel.innerHTML = itemOptsFor(visItems(), ($('#' + el.dataset.setor) || {}).value || '', q); if (sel.dataset.chg === 'mov-prev' || sel.id === 'mv-item') movPrev(); },
   'pub-q': el => { P.q = el.value; P.pick = null; const r = $('#pub-res'); if (r) r.innerHTML = pubRes(); pubBtn(); }
 };
 function startPublic(token){
@@ -1991,7 +1996,7 @@ const ACTS = {
   }
 };
 const CHG = {
-  'env-setor': el => { const sel = $('#ea-item'); if (sel) sel.innerHTML = itemOptsFor(visItems(), el.value); },
+  'env-setor': el => { const sel = $('#ea-item'), q = $('#ea-q'); if (q) q.value = ''; if (sel) sel.innerHTML = itemOptsFor(visItems(), el.value); },
   'bal-volta': el => { if (needAdmin()) return; const ed = decEd(), x = ed && envOf(ed.id, el.dataset.id); if (!x) return; const t = el.value.trim(), v = t === '' ? null : parseMoney(t); if (v !== null && (isNaN(v) || v < 0)){ toast('Informe um número válido.'); render(); return; } W(() => BE.db.update('envios/' + x.id, {volta:v})); },
 
   'dec-imp-file': async el => {
@@ -2018,7 +2023,7 @@ const CHG = {
   'eq-q': el => { U.eq.q = el.value; render(); },
   'rel-mes': el => { U.rel.mes = el.value; render(); },
   'rel-ano': el => { U.rel.ano = el.value; render(); },
-  'mov-setor': el => { const sel = $('#mv-item'); if (sel){ sel.innerHTML = itemOptsFor(visItems(), el.value); } movPrev(); },
+  'mov-setor': el => { const sel = $('#mv-item'), q = $('#mv-q'); if (q) q.value = ''; if (sel){ sel.innerHTML = itemOptsFor(visItems(), el.value); } movPrev(); },
   'mov-prev': () => movPrev(),
   'lanc-tipo': el => { const f = el.form, rec = f.elements.tipo.value === 'receita'; const g = $('#fg-setor'); if (g) g.hidden = rec; },
   'mov-setor': el => { const s = el.value, l = S.items.filter(i => i.setor === s); $('#mv-item').innerHTML = l.length ? l.map(i => opt(i.id, i.nome + ' (' + fmtQ(i.qtd) + ' ' + i.un + ')')).join('') : opt('', 'Cadastre um item primeiro'); },
@@ -2171,7 +2176,7 @@ const FORMS = {
     if (isNaN(qtd) || qtd < 0 || isNaN(min) || min < 0){ toast('Quantidade e mínimo precisam ser números.'); return; }
     if (S.items.some(i => i !== it && i.setor === setor && i.nome.toLowerCase() === nome.toLowerCase())){ toast('Esse item já existe nesse setor.'); return; }
     let ok;
-    if (it){ const cons = !!(f.elements.namedItem('cons') && f.elements.namedItem('cons').checked); const ops = [upd('itens/' + it.id, {nome, setor, un:fv(f, 'un'), min, cons})]; if (setor !== it.setor) S.movs.filter(m => m.item === it.id).forEach(m => ops.push(upd('movimentos/' + m.id, {setor}))); ok = await W(() => BE.db.batch(ops)); }
+    if (it){ const cons = !!(f.elements.namedItem('cons') && f.elements.namedItem('cons').checked); const qf = f.elements.namedItem('qfix') ? parseMoney(fv(f, 'qfix')) : it.qtd; if (isNaN(qf) || qf < 0){ toast('A quantidade precisa ser um número.'); return; } const patch = {nome, setor, un:fv(f, 'un'), min, cons}; if (qf !== it.qtd) patch.qtd = {__inc:qf - it.qtd}; const ops = [upd('itens/' + it.id, patch)]; if (setor !== it.setor) S.movs.filter(m => m.item === it.id).forEach(m => ops.push(upd('movimentos/' + m.id, {setor}))); ok = await W(() => BE.db.batch(ops)); }
     else ok = await W(() => BE.db.set('itens/' + BE.db.newId('itens'), {nome, setor, un:fv(f, 'un'), qtd, min, cons:!!(f.elements.namedItem('cons') && f.elements.namedItem('cons').checked)}));
     if (ok){ closeModal(); toast(it ? 'Item atualizado.' : 'Item cadastrado.'); }
   },
