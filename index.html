@@ -342,6 +342,13 @@ body{font-family:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
   .msearch{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:0 14px;min-height:52px;margin-bottom:14px}
   .msearch input{flex:1;border:0;background:transparent;font-size:16px;min-height:48px;outline:none;color:var(--ink)}
 }
+
+.encb{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:10px 14px;margin-bottom:10px}
+.encb b{display:block;font-size:16px}.encb small{color:var(--muted);font-size:12px}.encb .encn{font-size:24px}
+.stp2 .bal-in{width:64px;min-width:0}
+.bc-s{font-size:13px;font-weight:700}
+.bcard.bad{border-color:#E7B8AB}
+.li-nc{cursor:default}
 .bnav{display:none}
 .hdr{position:sticky;top:0;z-index:35;background:var(--bg)}
 @media (max-width:820px){.hdr{position:static}}
@@ -1065,55 +1072,62 @@ function envForm(){
     + '<div class="fg"><label class="fl" for="ea-item">Item</label><select class="inp" id="ea-item" name="item">' + itemOptsFor(items, '') + '</select></div>'
     + '<div class="fg"><label class="fl" for="ea-qtd">Quantidade enviada</label><input class="inp" id="ea-qtd" name="qtd" type="text" inputmode="decimal" placeholder="0"></div>' + modalBtns('Enviar') + '</form>';
 }
-const stp2 = (act, id, f, v, d0) => '<div class="stp2"><button type="button" data-act="' + act + '" data-id="' + esc(id) + '" data-f="' + f + '" data-d="-1" aria-label="Diminuir">−</button><b>' + v + '</b><button type="button" data-act="' + act + '" data-id="' + esc(id) + '" data-f="' + f + '" data-d="1" aria-label="Aumentar">+</button></div>';
+const numIn = (chg, id, f, v, ph) => '<input class="inp bal-in" type="text" inputmode="decimal" data-chg="' + chg + '" data-id="' + esc(id) + '"' + (f ? ' data-f="' + f + '"' : '') + ' value="' + esc(v) + '" placeholder="' + (ph || '0') + '" aria-label="Digitar quantidade">';
+const stpBtn = (act, id, f, d, label) => '<button type="button" data-act="' + act + '" data-id="' + esc(id) + '"' + (f ? ' data-f="' + f + '"' : '') + ' data-d="' + d + '" aria-label="' + label + '">' + (d < 0 ? '−' : '+') + '</button>';
+const stp2 = (act, chg, id, f, v) => '<div class="stp2">' + stpBtn(act, id, f, -1, 'Diminuir') + numIn(chg, id, f, v) + stpBtn(act, id, f, 1, 'Aumentar') + '</div>';
+const balV = x => x.volta == null ? x.env + (x.comp || 0) : x.volta;
+function encBox(ed, adm){
+  const n = ed.enc == null ? '' : fmtQ(ed.enc);
+  return '<div class="encb"><div><b>Encontristas</b><small>Base para planejar o material</small></div>' + (adm ? '<div class="stp2">' + stpBtn('enc-step', ed.id, '', -5, 'Diminuir 5') + numIn('enc-set', ed.id, '', n, '—') + stpBtn('enc-step', ed.id, '', 5, 'Aumentar 5') + '</div>' : '<b class="encn">' + (n || '—') + '</b>') + '</div>';
+}
 function estEnvio(F, adm){
   const ed = decEd(); if (!ed) return estNeedEd();
   const list = S.envios.filter(x => x.ed === ed.id).map(x => ({x, it:itemById(x.item)})).filter(r => r.it);
   const sets = allSetores().filter(st => list.some(r => r.x.setor === st) && okCtx('stock', st) && (F.setor === 'all' || F.setor === st));
   const tot = sum(list, r => r.x.env);
-  return '<p class="muted small" style="margin:2px 2px 4px">O que saiu do depósito para ' + esc(ed.nome) + '. O estoque geral já desconta o enviado. ' + fmtQ(tot) + ' unidades em ' + list.length + ' itens.</p>'
-    + (estAreas(sets, st => estSec('e:' + st, st, list.filter(r => r.x.setor === st).length, '<div class="lst">' + list.filter(r => r.x.setor === st).map(r => '<div class="li"><div class="li-m"><b>' + esc(r.it.nome) + '</b><small>No depósito: ' + fmtQ(r.it.qtd) + ' ' + esc(r.it.un) + '</small>' + envTag(r.it) + '</div>'
-      + (adm && r.x.aplicado == null ? '<div class="stp2"><button type="button" data-act="env-step" data-id="' + esc(r.it.id) + '" data-d="-1" aria-label="Diminuir">−</button><b>' + fmtQ(r.x.env) + '</b><button type="button" data-act="env-step" data-id="' + esc(r.it.id) + '" data-d="1" aria-label="Aumentar">+</button></div>' : '<div class="li-r">' + fmtQ(r.x.env) + ' ' + esc(r.it.un) + (r.x.aplicado != null ? '<small>balanço fechado</small>' : '') + '</div>') + '</div>').join('') + '</div>', F, true), F) || '<div class="empty">Nada enviado para esta edição ainda.' + (adm ? ' Toque em “Enviar item”.' : '') + '</div>');
+  return encBox(ed, adm)
+    + '<p class="muted small" style="margin:2px 2px 4px">O que saiu do depósito para ' + esc(ed.nome) + '. O estoque geral já desconta o enviado. ' + fmtQ(tot) + ' unidades em ' + list.length + ' itens.</p>'
+    + (estAreas(sets, st => estSec('e:' + st, st, list.filter(r => r.x.setor === st).length, '<div class="lst">' + list.filter(r => r.x.setor === st).map(r => '<div class="li li-nc"><div class="li-m"><b>' + esc(r.it.nome) + '</b><small>No depósito: ' + fmtQ(r.it.qtd) + ' ' + esc(r.it.un) + '</small>' + envTag(r.it) + '</div>'
+      + (adm && r.x.aplicado == null ? stp2('env-step', 'env-set', r.it.id, '', fmtQ(r.x.env)) : '<div class="li-r">' + fmtQ(r.x.env) + ' ' + esc(r.it.un) + (r.x.aplicado != null ? '<small>balanço fechado</small>' : '') + '</div>') + '</div>').join('') + '</div>', F, true), F) || '<div class="empty">Nada enviado para esta edição ainda.' + (adm ? ' Toque em “Enviar item”.' : '') + '</div>');
 }
 function balCalc(){
   const ed = decEd(); if (!ed) return null;
   const list = S.envios.filter(x => x.ed === ed.id).map(x => ({x, it:itemById(x.item)})).filter(r => r.it);
-  let contados = 0, faltas = 0, comprar = 0;
+  let ajust = 0, faltas = 0, comprar = 0;
   list.forEach(r => {
-    const x = r.x; if (x.volta == null) return; contados++;
-    const cons = x.env + (x.comp || 0) - x.volta; r.cons = cons; r.falta = !r.it.cons && cons > 0;
-    r.depois = r.it.qtd + (x.volta - envBack(x)); r.baixo = r.depois < r.it.min;
+    const x = r.x, v = balV(x); if (x.volta != null) ajust++;
+    r.v = v; r.cons = x.env + (x.comp || 0) - v; r.falta = !r.it.cons && r.cons > 0;
+    r.depois = r.it.qtd + (v - envBack(x)); r.baixo = r.depois < r.it.min;
     if (r.falta) faltas++; if (r.baixo) comprar++;
   });
-  return {ed, list, contados, faltas, comprar};
+  return {ed, list, ajust, faltas, comprar};
 }
 function estBal(F, adm){
   const B = balCalc(); if (!B) return estNeedEd();
   const {list} = B;
-  if (!list.length) return '<div class="empty">Nada foi enviado para esta edição, então não há o que contar. Registre antes em “Enviado”.</div>';
+  if (!list.length) return encBox(B.ed, adm) + '<div class="empty">Nada foi enviado para esta edição, então não há o que contar. Registre antes em “Enviado”.</div>';
   const sets = allSetores().filter(st => list.some(r => r.x.setor === st) && okCtx('stock', st) && (F.setor === 'all' || F.setor === st));
   const card = r => {
-    const x = r.x, it = r.it, cons = x.volta == null ? null : x.env + (x.comp || 0) - x.volta;
-    return '<div class="bcard"><div class="bc-h"><div class="li-m"><b>' + esc(it.nome) + '</b>' + envTag(it) + '</div><div class="li-r">' + (cons == null ? '—' : fmtQ(cons)) + '<small>consumo</small></div></div>'
-      + '<div class="bc-r"><div class="bc-k"><span>Enviado</span><b>' + fmtQ(x.env) + '</b></div>'
-      + '<div class="bc-k"><span>Comprado</span>' + (adm ? stp2('bal-step', it.id, 'comp', fmtQ(x.comp || 0)) : '<b>' + fmtQ(x.comp || 0) + '</b>') + '</div>'
-      + '<div class="bc-k"><span>Voltou</span>' + (adm ? '<div class="stp2"><button type="button" data-act="bal-step" data-id="' + esc(it.id) + '" data-f="volta" data-d="-1" aria-label="Diminuir">−</button><input class="inp bal-in" type="text" inputmode="decimal" data-chg="bal-volta" data-id="' + esc(it.id) + '" value="' + (x.volta == null ? '' : fmtQ(x.volta)) + '" placeholder="—" aria-label="Quanto voltou"><button type="button" data-act="bal-step" data-id="' + esc(it.id) + '" data-f="volta" data-d="1" aria-label="Aumentar">+</button></div>' : '<b>' + (x.volta == null ? '—' : fmtQ(x.volta)) + '</b>') + '</div></div>'
-      + (adm && x.volta == null ? '<button type="button" class="btn btn-sm" data-act="bal-tudo" data-id="' + esc(it.id) + '">Voltou tudo (' + fmtQ(x.env + (x.comp || 0)) + ')</button>' : '')
+    const x = r.x, it = r.it, cons = r.cons;
+    return '<div class="bcard' + (r.falta ? ' bad' : '') + '"><div class="bc-h"><div class="li-m"><b>' + esc(it.nome) + '</b>' + envTag(it) + '</div><div class="li-r">' + fmtQ(x.env) + '<small>enviado</small></div></div>'
+      + '<div class="bc-r"><div class="bc-k"><span>Voltou</span>' + (adm ? stp2('bal-step', 'bal-num', it.id, 'volta', fmtQ(r.v)) : '<b>' + fmtQ(r.v) + '</b>') + '</div>'
+      + '<div class="bc-k"><span>Comprado</span>' + (adm ? stp2('bal-step', 'bal-num', it.id, 'comp', fmtQ(x.comp || 0)) : '<b>' + fmtQ(x.comp || 0) + '</b>') + '</div></div>'
+      + '<div class="bc-s ' + (r.falta ? 'neg' : '') + '">' + (cons < 0 ? 'sobrou ' + fmtQ(-cons) + ' a mais' : cons === 0 ? 'nada consumido' : 'consumiu ' + fmtQ(cons)) + '</div>'
       + (r.falta ? '<div class="al al-bad">Faltou voltar ' + fmtQ(cons) + '. Este item não é consumível: confira antes de fechar.</div>' : '')
       + (r.baixo ? '<div class="al al-low">O estoque geral ficará em ' + fmtQ(r.depois) + ' ' + esc(it.un) + ', abaixo do mínimo de ' + fmtQ(it.min) + '. Vale comprar.</div>' : '') + '</div>';
   };
-  return '<div class="bprog"><i style="width:' + Math.round(B.contados / list.length * 100) + '%"></i></div><div class="bsum"><div><b>' + B.contados + '/' + list.length + '</b><span>itens contados</span></div><div><b class="neg">' + B.faltas + '</b><span>não voltaram</span></div><div><b>' + B.comprar + '</b><span>abaixo do mínimo</span></div></div>'
-    + '<p class="muted small" style="margin:2px 2px 4px">Conte o que voltou de cada item. O consumo é calculado: enviado + comprado − voltou.</p>'
+  return encBox(B.ed, adm) + '<div class="bsum"><div><b>' + list.length + '</b><span>itens enviados</span></div><div><b class="neg">' + B.faltas + '</b><span>não voltaram</span></div><div><b>' + B.comprar + '</b><span>abaixo do mínimo</span></div></div>'
+    + '<p class="muted small" style="margin:2px 2px 4px">Cada item começa como se tudo tivesse voltado. Toque em − para o que não voltou e em + para o que sobrou a mais (ou digite o número).</p>'
     + estAreas(sets, st => estSec('b:' + st, st, list.filter(r => r.x.setor === st).length, list.filter(r => r.x.setor === st).map(card).join(''), F, true), F)
     + (adm ? '<button class="btn btn-primary btn-block" data-act="bal-fechar" style="margin-top:14px">Fechar balanço e atualizar o estoque geral</button>' : '');
 }
 function matReportBody(e){
   if (!canStock()) return '';
-  const l = S.envios.filter(x => x.ed === e.id).map(x => ({x, it:itemById(x.item)})).filter(r => r.it && r.x.volta != null);
+  const l = S.envios.filter(x => x.ed === e.id).map(x => ({x, it:itemById(x.item)})).filter(r => r.it && r.x.aplicado != null).map(r => { r.x = Object.assign({}, r.x, {volta:r.x.aplicado}); return r; });
   const low = visItems().filter(i => i.qtd < i.min).sort((a, b) => (b.min - b.qtd) - (a.min - a.qtd)).slice(0, 8);
   if (!l.length && !low.length) return '';
   let h = '';
-  if (l.length) h += '<h3 style="font-size:17px;margin:18px 0 6px">Material da edição</h3><table class="kv"><tbody>' + l.map(r => '<tr><td>' + esc(r.it.nome) + '</td><td>' + fmtQ(r.x.env) + ' → ' + fmtQ(r.x.volta) + ' · consumo ' + fmtQ(r.x.env + (r.x.comp || 0) - r.x.volta) + '</td></tr>').join('') + '</tbody></table>';
+  if (l.length) h += '<h3 style="font-size:17px;margin:18px 0 6px">Material da edição' + (e.enc ? ' · ' + fmtQ(e.enc) + ' encontristas' : '') + '</h3><table class="kv"><tbody>' + l.map(r => { const c = r.x.env + (r.x.comp || 0) - r.x.volta; return '<tr><td>' + esc(r.it.nome) + '</td><td>' + fmtQ(r.x.env) + ' → ' + fmtQ(r.x.volta) + ' · consumo ' + fmtQ(c) + (e.enc && c > 0 && r.it.cons ? ' (' + (c / e.enc).toLocaleString('pt-BR', {maximumFractionDigits:2}) + ' por pessoa)' : '') + '</td></tr>'; }).join('') + '</tbody></table>';
   if (low.length) h += '<h3 style="font-size:17px;margin:18px 0 6px">Para comprar</h3><table class="kv"><tbody>' + low.map(i => '<tr><td>' + esc(i.nome) + '</td><td>faltam ' + fmtQ(i.min - i.qtd) + ' ' + esc(i.un) + '</td></tr>').join('') + '</tbody></table>';
   return h;
 }
@@ -1122,7 +1136,7 @@ function matReportHtml(e){
   const l = S.envios.filter(x => x.ed === e.id).map(x => ({x, it:itemById(x.item)})).filter(r => r.it);
   const low = visItems().filter(i => i.qtd < i.min).sort((a, b) => (b.min - b.qtd) - (a.min - a.qtd));
   let h = '';
-  if (l.length) h += '<h2>Material enviado e balanço</h2>' + hTable([['Item'], ['Setor'], ['Enviado', 1], ['Comprado', 1], ['Voltou', 1], ['Consumo', 1]], l.map(r => [r.it.nome, r.it.setor, fmtQ(r.x.env), fmtQ(r.x.comp || 0), r.x.volta == null ? 'não contado' : fmtQ(r.x.volta), r.x.volta == null ? '—' : fmtQ(r.x.env + (r.x.comp || 0) - r.x.volta)]));
+  if (l.length) h += '<h2>Material enviado e balanço' + (e.enc ? ' · ' + fmtQ(e.enc) + ' encontristas' : '') + '</h2>' + hTable([['Item'], ['Setor'], ['Enviado', 1], ['Comprado', 1], ['Voltou', 1], ['Consumo', 1]], l.map(r => [r.it.nome, r.it.setor, fmtQ(r.x.env), fmtQ(r.x.comp || 0), r.x.aplicado == null ? 'balanço aberto' : fmtQ(r.x.aplicado), r.x.aplicado == null ? '—' : fmtQ(r.x.env + (r.x.comp || 0) - r.x.aplicado)]));
   if (low.length) h += '<h2>Para comprar antes da próxima edição</h2>' + hTable([['Item'], ['Setor'], ['Atual', 1], ['Mínimo', 1], ['Faltam', 1]], low.map(i => [i.nome, i.setor, fmtQ(i.qtd), fmtQ(i.min), fmtQ(i.min - i.qtd)]));
   return h;
 }
@@ -1778,20 +1792,20 @@ const ACTS = {
   'home-go': el => { const a = el.dataset.aba; if (a){ U.est.aba = a; U.est.setor = 'all'; U.est.sit = 'all'; } go(el.dataset.v); },
   'env-novo': () => { if (needAdmin()) return; if (!decEd()){ toast('Escolha uma edição no seletor do topo.'); return; } openModal({title:'Enviar item para a edição', body:envForm()}); },
   'env-step': el => { if (needAdmin()) return; const ed = decEd(), it = itemById(el.dataset.id); if (!ed || !it) return; const cur = envOf(ed.id, it.id); envSet(ed, it, (cur ? cur.env : 0) + Number(el.dataset.d)); },
-  'bal-step': el => { if (needAdmin()) return; const ed = decEd(), x = ed && envOf(ed.id, el.dataset.id); if (!x) return; const f = el.dataset.f, v = Math.max(0, (x[f] == null ? 0 : x[f]) + Number(el.dataset.d)); const patch = {}; patch[f] = v; W(() => BE.db.update('envios/' + x.id, patch)); },
-  'bal-tudo': el => { if (needAdmin()) return; const ed = decEd(), x = ed && envOf(ed.id, el.dataset.id); if (!x) return; W(() => BE.db.update('envios/' + x.id, {volta:x.env + (x.comp || 0)})); },
+  'bal-step': el => { if (needAdmin()) return; const ed = decEd(), x = ed && envOf(ed.id, el.dataset.id); if (!x) return; const f = el.dataset.f, base = f === 'volta' ? balV(x) : (x.comp || 0), v = Math.max(0, base + Number(el.dataset.d)), patch = {}; patch[f] = v; W(() => BE.db.update('envios/' + x.id, patch)); },
+  'enc-step': el => { if (needAdmin()) return; const ed = edById(el.dataset.id); if (!ed) return; W(() => BE.db.update('edicoes/' + ed.id, {enc:Math.max(0, (ed.enc || 0) + Number(el.dataset.d))})); },
+
   'bal-fechar': () => {
     if (needAdmin()) return; const B = balCalc(); if (!B) return;
-    const ap = B.list.filter(r => r.x.volta != null && (r.x.aplicado == null || r.x.volta !== r.x.aplicado)), pend = B.list.length - B.contados;
-    if (!ap.length){ toast(B.contados ? 'O balanço já está fechado para os itens contados.' : 'Conte pelo menos um item antes de fechar.'); return; }
-    openModal({title:'Fechar o balanço?', body:'<p>' + ap.length + ' itens vão devolver ao estoque geral o que voltou.' + (pend ? ' <b>' + pend + ' itens ainda não foram contados</b> e ficam de fora (dá para fechar depois).' : '') + (B.faltas ? ' <b>' + B.faltas + ' itens não consumíveis não voltaram inteiros.</b>' : '') + '</p><p class="muted small">O consumo fica registrado no relatório da edição. Dá para corrigir uma contagem e fechar de novo.</p>', actions:[{label:'Cancelar', act:'close'}, {label:'Fechar balanço', act:'bal-fechar-ok', primary:true}]});
+    const ap = B.list.filter(r => r.x.aplicado == null || r.v !== r.x.aplicado);
+    if (!ap.length){ toast('O balanço já está fechado.'); return; }
+    openModal({title:'Fechar o balanço?', body:'<p>' + ap.length + ' itens vão devolver ao estoque geral o que voltou. Itens em que você não mexeu contam como “voltou tudo”.' + (B.faltas ? ' <b>' + B.faltas + ' itens não consumíveis não voltaram inteiros.</b>' : '') + '</p><p class="muted small">O consumo fica registrado no relatório da edição. Dá para corrigir uma contagem e fechar de novo.</p>', actions:[{label:'Cancelar', act:'close'}, {label:'Fechar balanço', act:'bal-fechar-ok', primary:true}]});
   },
   'bal-fechar-ok': async () => {
     if (needAdmin()) return; const B = balCalc(); if (!B) return; const ops = [];
-    B.list.forEach(r => { const x = r.x; if (x.volta == null) return; const d = x.volta - envBack(x); if (d === 0 && x.aplicado != null) return; ops.push(upd('envios/' + x.id, {aplicado:x.volta})); if (d) ops.push(upd('itens/' + r.it.id, {qtd:{__inc:d}})); });
+    B.list.forEach(r => { const x = r.x, d = r.v - envBack(x); if (d === 0 && x.aplicado != null) return; ops.push(upd('envios/' + x.id, {volta:r.v, aplicado:r.v})); if (d) ops.push(upd('itens/' + r.it.id, {qtd:{__inc:d}})); });
     if (ops.length && await W(() => BE.db.batch(ops))){ closeModal(); toast('Balanço fechado. Estoque geral atualizado.'); }
   },
-
   'dec-open': el => { S.selEd = el.dataset.id; selPref = true; save(); go('decisoes'); },
   'dec-f': el => { U.dec.f = U.dec.f === el.dataset.id ? 'all' : el.dataset.id; render(); },
   'dec-copy': async () => { const ed = decEd(), c = ed && decCfg(ed.id); if (!c || !c.token) return; const u = decUrl(c.token); try { await navigator.clipboard.writeText(u); toast('Link copiado.'); } catch (e) { const t = document.createElement('textarea'); t.value = u; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); toast('Link copiado.'); } catch (x) { toast('Copie o link manualmente.'); } t.remove(); } },
@@ -1997,6 +2011,9 @@ const ACTS = {
 };
 const CHG = {
   'env-setor': el => { const sel = $('#ea-item'), q = $('#ea-q'); if (q) q.value = ''; if (sel) sel.innerHTML = itemOptsFor(visItems(), el.value); },
+  'env-set': el => { if (needAdmin()) return; const ed = decEd(), it = itemById(el.dataset.id), v = parseMoney(el.value); if (!ed || !it) return; if (isNaN(v) || v < 0){ toast('Informe um número válido.'); render(); return; } envSet(ed, it, v).then(() => render()); },
+  'bal-num': el => { if (needAdmin()) return; const ed = decEd(), x = ed && envOf(ed.id, el.dataset.id); if (!x) return; const t = el.value.trim(), f = el.dataset.f, v = t === '' ? (f === 'volta' ? null : 0) : parseMoney(t); if (v !== null && (isNaN(v) || v < 0)){ toast('Informe um número válido.'); render(); return; } const patch = {}; patch[f] = v; W(() => BE.db.update('envios/' + x.id, patch)); },
+  'enc-set': el => { if (needAdmin()) return; const ed = edById(el.dataset.id); if (!ed) return; const t = el.value.trim(), v = t === '' ? null : parseMoney(t); if (v !== null && (isNaN(v) || v < 0)){ toast('Informe um número válido.'); render(); return; } W(() => BE.db.update('edicoes/' + ed.id, {enc:v})); },
   'bal-volta': el => { if (needAdmin()) return; const ed = decEd(), x = ed && envOf(ed.id, el.dataset.id); if (!x) return; const t = el.value.trim(), v = t === '' ? null : parseMoney(t); if (v !== null && (isNaN(v) || v < 0)){ toast('Informe um número válido.'); render(); return; } W(() => BE.db.update('envios/' + x.id, {volta:v})); },
 
   'dec-imp-file': async el => {
