@@ -263,6 +263,35 @@ body{font-family:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
 .kpi .k-s{color:var(--muted)!important}
 .card{box-shadow:none!important;border:1px solid var(--line)}
 .top{box-shadow:none;border-bottom:1px solid var(--line)}
+
+.dgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (min-width:821px){.dgrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.dcard{min-height:84px;padding:12px 14px;border-radius:16px;border:2px solid var(--line);background:var(--surface);color:var(--ink);text-align:left;display:flex;flex-direction:column;justify-content:center;gap:4px;cursor:pointer;font:inherit}
+.dcard b{font-size:28px;line-height:1}
+.dcard span{font-size:13px;font-weight:700}
+.dcard.on{border-color:var(--c);color:var(--c)}
+.dchip{flex:none;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:800;color:#fff;background:var(--c)}
+.dchip-dot{flex:none;width:16px;height:16px;border-radius:50%;background:var(--c)}
+.lk-r{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.lk-r small{display:block;color:var(--muted);font-size:13px}
+.lk-u{padding:12px;border-radius:12px;background:var(--field);font-size:13px;word-break:break-all;margin-bottom:10px}
+.sw{flex:none;width:56px;height:32px;border:0;border-radius:999px;background:#C9C8C2;position:relative;cursor:pointer;padding:0}
+.sw i{position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff}
+.sw.on{background:var(--accent)}.sw.on i{left:27px}
+.decb{border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:10px;display:flex;flex-direction:column;gap:8px}
+.decb-t{display:flex;align-items:center;gap:10px}
+.decb-c{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sw-c{width:32px;height:32px;border-radius:50%;border:3px solid var(--surface);background:var(--c);box-shadow:0 0 0 1px var(--line);cursor:pointer;padding:0}
+.sw-c.on{border-color:var(--ink)}
+.decb-a{display:flex;gap:8px;flex-wrap:wrap}
+.pub{max-width:560px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:14px}
+.pub-h{display:flex;align-items:center;gap:12px}
+.pub-h b{display:block;font-size:20px}.pub-h small{color:var(--muted)}
+.pub-b{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.dbtn{min-height:72px;padding:10px 12px;border-radius:14px;border:2px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:16px;font-weight:800;text-align:left;cursor:pointer}
+.dbtn.on{border-color:var(--c);background:var(--c);color:#fff}
+.pub-q{height:56px;font-size:18px;border:2px solid var(--accent)!important}
+.pub-go{min-height:56px;font-size:16px;font-weight:800;margin-top:12px}
 .bnav{display:none}
 .hdr{position:sticky;top:0;z-index:35;background:var(--bg)}
 @media (max-width:820px){.hdr{position:static}}
@@ -374,7 +403,7 @@ const mixHex = (hex, t) => { const n = parseInt(hex.slice(1), 16), r = n >> 16, 
 const GERAL = '*geral';
 const MODS = ['edicoes', 'financeiro', 'estoque', 'organizacional', 'equipe', 'relatorios'];
 const MOD_ICON = {edicoes:'cal', financeiro:'wallet', estoque:'boxes', organizacional:'folder', equipe:'users', relatorios:'chart'};
-const DEF_MENU = {inicio:'Início', edicoes:'Edições', financeiro:'Financeiro', estoque:'Estoque', organizacional:'Organizacional', equipe:'Equipe', relatorios:'Relatórios', acessos:'Acessos', config:'Configurações'};
+const DEF_MENU = {inicio:'Início', edicoes:'Edições', financeiro:'Financeiro', estoque:'Estoque', organizacional:'Organizacional', equipe:'Equipe', relatorios:'Relatórios', acessos:'Acessos', decisoes:'Decisões', config:'Configurações'};
 const PRESETS = [['#7c6b50', 'Marrom'], ['#3b5f8a', 'Azul'], ['#2f6b57', 'Verde'], ['#7a4f6d', 'Ameixa'], ['#a4573d', 'Terracota'], ['#4f6378', 'Grafite']];
 const DEF_AREAS = [
   {nome:'Apoio', setores:['Templo', 'Placa', 'Silêncio']},
@@ -386,8 +415,8 @@ const DEF_AREAS = [
 /* ---------- estado e ligação com o Firebase ---------- */
 let BE = null, S = null, U = null, AU = null, phase = 'pre', fatalMsg = '';
 const PREFS = 'vv-gestao-prefs';
-const mkUI = () => ({view:'inicio', login:{modo:'entrar'}, fin:{tipo:'all', setor:'all', cat:'all', q:'', lim:12}, est:{setor:'all', sit:'all', aba:'geral'}, org:{pasta:'geral', open:{}, q:'', ord:'recentes'}, eq:{alvo:'all', q:''}, rel:{modo:'mensal', mes:null, ano:null}, search:''});
-const emptyState = () => ({cfg:null, users:[], convites:[], team:[], ed:[], lanc:[], items:[], movs:[], files:[], userId:null, selEd:'all', theme:'auto'});
+const mkUI = () => ({view:'inicio', login:{modo:'entrar'}, fin:{tipo:'all', setor:'all', cat:'all', q:'', lim:12}, est:{setor:'all', sit:'all', aba:'geral'}, dec:{f:'all', draft:null, imp:null}, org:{pasta:'geral', open:{}, q:'', ord:'recentes'}, eq:{alvo:'all', q:''}, rel:{modo:'mensal', mes:null, ano:null}, search:''});
+const emptyState = () => ({dec:[], dcfg:[], pess:[], cfg:null, users:[], convites:[], team:[], ed:[], lanc:[], items:[], movs:[], files:[], userId:null, selEd:'all', theme:'auto'});
 let selPref = false;
 function loadPrefs(){ try { const p = JSON.parse(localStorage.getItem(PREFS) || '{}'); if (p.theme) S.theme = p.theme; if (p.selEd){ S.selEd = p.selEd; selPref = true; } } catch (e) {} }
 function save(){ try { localStorage.setItem(PREFS, JSON.stringify({theme:S.theme, selEd:S.selEd})); } catch (e) {} }
@@ -444,6 +473,7 @@ let cfgSeeded = false;
 function startData(){
   stopAll(); cfgSeeded = false;
   permKey = JSON.stringify((ME() || {}).perm || {});
+  S.dec = []; S.dcfg = []; S.pess = [];
   S.lanc = []; S.items = []; S.movs = []; S.files = []; S.team = []; S.ed = []; S.convites = [];
   unsubs.push(BE.db.listenDoc('config/app', cfg => {
     if (cfg){ S.cfg = normCfg(cfg); applyBrand(); applyTheme(); scheduleRender(true); }
@@ -463,6 +493,11 @@ function startData(){
   }
   unsubs.push(BE.db.listenQuery('edicoes', null, d => { edDocs = d; mergeEd(); scheduleRender(); }, e => dataErr('edicoes', e)));
   if (planKeys(['financeiro', 'relatorios']) === 'all') unsubs.push(BE.db.listenQuery('edicoes_fin', null, d => { edFin = {}; d.forEach(x => { edFin[x.id] = x; }); mergeEd(); scheduleRender(); }, e => dataErr('edicoes_fin', e)));
+  if (isAdmin()){
+    unsubs.push(BE.db.listenQuery('decisoes', null, d => { S.dec = d; scheduleRender(); }, e => dataErr('decisoes', e)));
+    unsubs.push(BE.db.listenQuery('decisoes_cfg', null, d => { S.dcfg = d; scheduleRender(); }, e => dataErr('decisoes_cfg', e)));
+    unsubs.push(BE.db.listenQuery('encontristas', null, d => { S.pess = d; scheduleRender(); }, e => dataErr('encontristas', e)));
+  }
   watch('lancamentos', 'lanc', ['financeiro', 'relatorios'], 'chave');
   watch('itens', 'items', ['estoque', 'relatorios'], 'setor');
   watch('movimentos', 'movs', ['estoque', 'relatorios'], 'setor');
@@ -505,6 +540,8 @@ function startApp(backend, configOk){
   clearTimeout(window.__vvWatch);
   BE = backend; S = emptyState(); U = mkUI(); selPref = false; loadPrefs(); applyTheme();
   if (!backend || configOk === false){ phase = 'sem-config'; render(); return; }
+  const pm = (location.hash || '').match(/^#\/registro\/([A-Za-z0-9]{10,})/);
+  if (pm){ startPublic(pm[1]); return; }
   phase = 'boot'; render();
   BE.auth.onChange(u => { AU = u; resolveAccess(); });
 }
@@ -611,6 +648,7 @@ const ICON = {
   clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   chevR:'<path d="M9 6l6 6-6 6"/>',
   chevD:'<path d="M6 9l6 6 6-6"/>',
+  check:'<path d="M5 13l4 4L19 7"/>',
   menu:'<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
   logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/>',
   swap:'<path d="M7 4v14"/><path d="M3 14l4 4 4-4"/><path d="M17 20V6"/><path d="M13 10l4-4 4 4"/>'
@@ -702,7 +740,7 @@ const isDark = () => S.theme === 'dark' || (S.theme !== 'light' && window.matchM
 function shell(content){
   const u = ME(), c = S.cfg;
   const eds = S.ed.slice().sort((a, b) => { const o = {aberta:0, planejada:1, fechada:2}; return o[a.status] - o[b.status] || (a.status === 'fechada' ? b.ini.localeCompare(a.ini) : a.ini.localeCompare(b.ini)); });
-  const tabs = [['inicio', 'home']].concat(MODS.filter(can).map(m => [m, MOD_ICON[m]])).concat(isAdmin() ? [['acessos', 'key'], ['config', 'gear']] : []);
+  const tabs = [['inicio', 'home']].concat(MODS.filter(can).map(m => [m, MOD_ICON[m]])).concat(isAdmin() ? [['decisoes', 'check'], ['acessos', 'key'], ['config', 'gear']] : []);
   return '<div class="hdr"><header class="top"><div class="top-in"><div class="brand"><div class="logo">' + esc(c.sigla) + '</div><div class="brand-n"><b>' + esc(c.nome) + '</b><small>' + esc(c.sub) + '</small></div></div>'
     + '<form class="search" data-form="search" role="search">' + icon('search') + '<label class="sr" for="gs">Buscar</label><input id="gs" name="q" type="search" placeholder="Buscar lançamentos, itens, arquivos e pessoas" value="' + esc(U.search) + '"></form>'
     + '<div class="top-right"><label class="ed-sel"><span>Edição</span><select data-chg="ed" aria-label="Edição selecionada">' + opt('all', 'Todas as edições', S.selEd === 'all') + eds.map(e => opt(e.id, e.nome + ' · ' + e.status, S.selEd === e.id)).join('') + '</select></label>'
@@ -718,7 +756,7 @@ function bottomNav(){
     + '<button class="' + (maisOn ? 'on' : '') + '" data-act="nav" data-v="mais">' + icon('menu', 22) + '<span>Mais</span></button></nav>';
 }
 function viewMais(){
-  const u = ME(), items = ['organizacional', 'equipe', 'relatorios'].filter(can).map(m => [m, MOD_ICON[m], lab(m)]).concat(isAdmin() ? [['acessos', 'key', lab('acessos')], ['config', 'gear', lab('config')]] : []);
+  const u = ME(), items = ['organizacional', 'equipe', 'relatorios'].filter(can).map(m => [m, MOD_ICON[m], lab(m)]).concat(isAdmin() ? [['decisoes', 'check', lab('decisoes')], ['acessos', 'key', lab('acessos')], ['config', 'gear', lab('config')]] : []);
   const rows = items.map(t => '<button class="li" data-act="nav" data-v="' + t[0] + '">' + icon(t[1], 22) + '<span class="li-m"><b>' + esc(t[2]) + '</b></span>' + icon('chevR', 18) + '</button>').join('');
   return pageHead('Mais', esc(u.nome) + ' · ' + (u.papel === 'admin' ? 'Administrador' : 'Visitante'))
     + (rows ? '<div class="lst">' + rows + '</div>' : '<div class="empty">Nenhuma outra área liberada.</div>')
@@ -824,6 +862,7 @@ function viewEdicoes(){
     if (!np) a += '<button class="btn btn-sm" data-act="ed-rel" data-id="' + e.id + '">' + icon('chart', 16) + 'Relatório</button>';
     if (adm && e.status === 'planejada') a += '<button class="btn btn-sm btn-primary" data-act="ed-abrir" data-id="' + e.id + '">Abrir edição</button>';
     if (adm && e.status === 'aberta') a += '<button class="btn btn-sm" data-act="ed-fechar" data-id="' + e.id + '">' + icon('lock', 16) + 'Fechar edição</button>';
+    if (adm && !np) a += '<button class="btn btn-sm" data-act="dec-open" data-id="' + e.id + '">' + icon('check', 16) + 'Decisões</button>';
     if (adm) a += iconBtn('ed-edit', e.id, 'edit', 'Editar ' + e.nome) + iconBtn('ed-del', e.id, 'trash', 'Excluir ' + e.nome);
     return '<div class="ecard"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><div><h3>' + esc(e.nome) + '</h3><div class="muted small">Retiro ' + retiroLabel(e) + '</div></div>' + statusBadge(e.status) + '</div>'
       + (np ? '' : '<div class="eg"><div>Saldo inicial<b>' + (mf ? brl(e.saldoInicial) : 'Restrito') + '</b></div><div>Resultado<b class="' + (mf ? (tt.res >= 0 ? 'pos' : 'neg') : '') + '">' + (mf ? signed(tt.res) : 'Restrito') + '</b></div><div>Material<b>' + (stock ? mv + ' mov.' : 'Restrito') + '</b></div></div>')
@@ -1204,6 +1243,7 @@ function viewBusca(){
 
 function render(){
   const app = $('#app'); if (!app) return;
+  if (phase === 'publico'){ const sv = forceNext ? null : snapForms(app); forceNext = false; app.innerHTML = viewPublico(); if (sv) restoreForms(app, sv); if (P && P.link && P.vol) pubBtn(); return; }
   if (phase === 'app' && !ME()) phase = 'sem-acesso';
   if (phase === 'sem-config'){ app.innerHTML = gateView('Falta ligar ao seu Firebase', '<p>Abra o arquivo <b>index.html</b>, procure o bloco <b>“PASSO 1”</b> e cole ali o <b>firebaseConfig</b> do seu projeto (Firebase Console &gt; Configurações do projeto &gt; Seus apps &gt; Web).</p><p class="muted small">Se você já colou e esta mensagem continua, confira se não sobrou nenhum “COLE_AQUI”.</p>'); return; }
   if (phase === 'pre' || phase === 'boot' || phase === 'checando'){ app.innerHTML = gateView('Carregando…', '<p class="muted" style="text-align:center">Um instante.</p>'); return; }
@@ -1213,9 +1253,9 @@ function render(){
   if (phase === 'erro'){ app.innerHTML = gateView('Algo deu errado', '<p>Não consegui verificar seu acesso. Confira a conexão e se as regras do Firebase foram publicadas.</p><p class="muted small">Detalhe técnico: ' + esc(fatalMsg) + '</p><button class="btn btn-primary btn-block" data-act="retry-access">Tentar de novo</button><button class="link" data-act="logout">Sair</button>'); return; }
   if (!S.cfg){ app.innerHTML = gateView('Aguardando configuração', '<p>' + (isAdmin() ? 'Criando a configuração inicial…' : 'O administrador ainda está preparando a plataforma. Tente de novo em instantes.') + '</p><button class="link" data-act="logout">Sair</button>'); return; }
   if (selInit && S.selEd !== 'all' && !edById(S.selEd)) S.selEd = 'all';
-  if (U.view === 'acessos' || U.view === 'config'){ if (!isAdmin()) U.view = 'inicio'; }
+  if (U.view === 'acessos' || U.view === 'config' || U.view === 'decisoes'){ if (!isAdmin()) U.view = 'inicio'; }
   else if (U.view !== 'inicio' && U.view !== 'busca' && U.view !== 'mais' && !can(U.view)) U.view = 'inicio';
-  const V = {inicio:viewInicio, edicoes:viewEdicoes, financeiro:viewFinanceiro, estoque:viewEstoque, organizacional:viewOrg, equipe:viewEquipe, relatorios:viewRel, acessos:viewAcessos, config:viewConfig, busca:viewBusca, mais:viewMais};
+  const V = {inicio:viewInicio, edicoes:viewEdicoes, financeiro:viewFinanceiro, estoque:viewEstoque, organizacional:viewOrg, equipe:viewEquipe, relatorios:viewRel, acessos:viewAcessos, config:viewConfig, busca:viewBusca, mais:viewMais, decisoes:viewDecisoes};
   const keep = !forceNext; forceNext = false;
   const saved = keep ? snapForms(app) : null;
   app.innerHTML = shell((V[U.view] || viewInicio)());
@@ -1256,7 +1296,7 @@ function htmlDoc(title, blocks){
   return '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>' + esc(title) + '</title><style>body{font-family:Arial,Helvetica,sans-serif;color:#2e3138;max-width:900px;margin:32px auto;padding:0 20px}h1{font-size:24px}h2{font-size:18px;margin-top:28px}table{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}th,td{text-align:left;padding:8px;border-bottom:1px solid #d9dce1}td.n,th.n{text-align:right}small{color:#5f6672}</style></head><body><h1>' + esc(title) + '</h1><small>' + esc(S.cfg.nome) + ' · gerado em ' + dmy(today()) + '/' + today().slice(0, 4) + ' · por ' + esc(ME().nome) + '</small>' + blocks + '</body></html>';
 }
 const hTable = (head, rows) => '<table><thead><tr>' + head.map(h => '<th' + (h[1] ? ' class="n"' : '') + '>' + esc(h[0]) + '</th>').join('') + '</tr></thead><tbody>' + rows.map(r => '<tr>' + r.map((c, i) => '<td' + (head[i][1] ? ' class="n"' : '') + '>' + esc(c) + '</td>').join('') + '</tr>').join('') + '</tbody></table>';
-function relDoc(titulo, L, M){
+function relDoc(titulo, L, M, extra){
   const ent = entradas(L), sai = saidas(L), money = canMoney(), stock = canStock();
   let b = '';
   if (money){
@@ -1265,6 +1305,7 @@ function relDoc(titulo, L, M){
   }
   if (stock) b += '<h2>Movimentação de material</h2>' + (matRows(M).length ? hTable([['Item'], ['Setor'], ['Usado', 1], ['Reposto', 1], ['Saldo atual', 1]], matRows(M).map(x => [x.it.nome, x.it.setor, x.uso ? fmtQ(x.uso) + ' ' + x.it.un : '—', x.rep ? fmtQ(x.rep) + ' ' + x.it.un : '—', fmtQ(x.it.qtd) + ' ' + x.it.un])) : '<p>Sem movimentação.</p>');
   if (money) b += '<h2>Lançamentos</h2>' + (L.length ? hTable([['Data'], ['Edição'], ['Setor'], ['Categoria'], ['Descrição'], ['Valor', 1]], L.slice().sort((a, c) => a.data.localeCompare(c.data)).map(l => [dmy(l.data), edName(l.ed), l.setor || '—', l.cat, l.desc, (l.tipo === 'receita' ? '+ ' : '− ') + brl(l.valor)])) : '<p>Sem lançamentos.</p>');
+  b += extra || '';
   return htmlDoc(titulo, b || '<p>Você não tem áreas liberadas com dados para este relatório.</p>');
 }
 function edReportBody(e){
@@ -1276,6 +1317,7 @@ function edReportBody(e){
   } else if (canMoney()) rows.push(['Saídas nas áreas liberadas', brl(saidas(L))]);
   const st = porSetor(L).slice(0, 5);
   return '<table class="kv"><tbody>' + rows.map(r => '<tr><td>' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td></tr>').join('') + '</tbody></table>'
+    + decReportBody(e)
     + (canMoney() ? '<h3 style="font-size:17px;margin:18px 0 6px">Maiores gastos por setor</h3>' + (st.length ? '<table class="kv"><tbody>' + st.map(s => '<tr><td>' + esc(s.label) + '</td><td>' + brl(s.value) + '</td></tr>').join('') + '</tbody></table>' : '<p class="muted">Sem despesas.</p>') : '');
 }
 
@@ -1367,8 +1409,215 @@ function itemForm(i){
     + (i ? '<div class="note">Para corrigir a quantidade, registre um uso ou uma reposição. Assim o histórico fica certo.</div>' : '') + modalBtns(i ? 'Salvar' : 'Cadastrar') + '</form>';
 }
 const findRec = id => id.indexOf('c:') === 0 ? S.convites.find(c => c.id === id.slice(2)) : S.users.find(u => u.id === id);
+
+/* ---------- Decisões do chamado final ---------- */
+const DEC_DEF = [{id:'aceitou', nome:'Aceitou Jesus', cor:'#1F6F5C'}, {id:'batismo', nome:'Batismo', cor:'#2F6FA3'}, {id:'lider', nome:'Líder de célula', cor:'#8A5A9E'}, {id:'anfitriao', nome:'Anfitrião de célula', cor:'#B26A1E'}];
+const DEC_CORES = [['Verde', '#1F6F5C'], ['Azul', '#2F6FA3'], ['Roxo', '#8A5A9E'], ['Laranja', '#B26A1E'], ['Vermelho', '#B4442B']];
+const decCfg = ed => S.dcfg.find(x => x.id === ed) || null;
+const decBotoes = ed => { const c = decCfg(ed); return (c && c.botoes && c.botoes.length ? c.botoes : DEC_DEF).map(b => Object.assign({arq:false}, b)); };
+const decEd = () => S.selEd === 'all' ? null : edById(S.selEd);
+const decCount = (ed, bid) => S.dec.filter(d => d.ed === ed && d.botao === bid).length;
+function decRand(n){ const a = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'; const u = new Uint32Array(n); (window.crypto || window.msCrypto).getRandomValues(u); let r = ''; for (let i = 0; i < n; i++) r += a[u[i] % a.length]; return r; }
+const decUrl = tk => location.origin + location.pathname + '#/registro/' + tk;
+function decMirror(ed, cfg){ const bs = cfg.botoes.filter(b => !b.arq); return {ed:ed.id, nomeEd:ed.nome, ativo:!!cfg.ativo, botoes:bs.map(b => ({id:b.id, nome:b.nome, cor:b.cor})), botaoIds:bs.map(b => b.id)}; }
+function decDelOps(id){
+  const ops = [], cfg = decCfg(id);
+  S.dec.filter(d => d.ed === id).forEach(d => ops.push({t:'del', path:'decisoes/' + d.id}));
+  S.pess.filter(x => x.ed === id).forEach(x => { ops.push({t:'del', path:'encontristas/' + x.id}); if (cfg && cfg.token) ops.push({t:'del', path:'registro_links/' + cfg.token + '/pessoas/' + x.id}); });
+  if (cfg){ ops.push({t:'del', path:'decisoes_cfg/' + id}); if (cfg.token) ops.push({t:'del', path:'registro_links/' + cfg.token}); }
+  return ops;
+}
+function decTotais(ed){
+  return decBotoes(ed).map(b => ({b, n:decCount(ed, b.id)})).filter(x => !x.b.arq || x.n > 0);
+}
+function decReportBody(e){
+  if (!isAdmin()) return '';
+  const t = decTotais(e.id), tot = S.dec.filter(d => d.ed === e.id).length;
+  if (!tot) return '';
+  return '<h3 style="font-size:17px;margin:18px 0 6px">Decisões no chamado final</h3><table class="kv"><tbody>' + t.map(x => '<tr><td>' + esc(x.b.nome) + '</td><td>' + x.n + '</td></tr>').join('') + '<tr><td>Registros no total</td><td>' + tot + '</td></tr></tbody></table>';
+}
+function decReportHtml(e){
+  if (!isAdmin()) return '';
+  const t = decTotais(e.id); if (!S.dec.some(d => d.ed === e.id)) return '';
+  const enc = S.pess.filter(x => x.ed === e.id).length;
+  return '<h2>Decisões no chamado final</h2>' + hTable([['Decisão'], ['Pessoas', 1]].concat(enc ? [['% dos encontristas', 1]] : []), t.map(x => [x.b.nome, String(x.n)].concat(enc ? [Math.round(x.n / enc * 100) + '%'] : [])));
+}
+function viewDecisoes(){
+  const ed = decEd(), D = U.dec;
+  const head = pageHead(esc(lab('decisoes')), 'Chamado final do retiro: aceitou Jesus, batismo, células…', '');
+  if (!ed) return head + '<div class="note">Escolha uma edição no seletor “Edição”, no topo da tela, para ver e registrar as decisões dela.</div>';
+  const cfg = decCfg(ed.id), bs = decBotoes(ed.id), rec = S.dec.filter(d => d.ed === ed.id);
+  const tot = decTotais(ed.id);
+  const cards = '<div class="dgrid">' + tot.map(x => '<button class="dcard' + (D.f === x.b.id ? ' on' : '') + '" style="--c:' + esc(x.b.cor) + '" data-act="dec-f" data-id="' + esc(x.b.id) + '"><b>' + x.n + '</b><span>' + esc(x.b.nome) + (x.b.arq ? ' (arquivado)' : '') + '</span></button>').join('') + '</div>';
+  const link = cfg && cfg.token
+    ? '<div class="lk-r"><div><b>Aceitando registros</b><small>' + (cfg.ativo ? 'Ligado: os voluntários conseguem registrar' : 'Desligado: o link não abre para ninguém') + '</small></div><button class="sw' + (cfg.ativo ? ' on' : '') + '" data-act="dec-toggle" aria-label="Ligar ou desligar o link" aria-pressed="' + !!cfg.ativo + '"><i></i></button></div>'
+      + '<div class="lk-u">' + esc(decUrl(cfg.token)) + '</div>'
+      + '<div class="ph-a"><button class="btn" data-act="dec-copy">Copiar link</button><a class="btn btn-primary" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent('Registro de decisões · ' + ed.nome + ': ' + decUrl(cfg.token)) + '">Enviar no WhatsApp</a><button class="btn" data-act="dec-link-novo">Gerar novo link</button></div>'
+      + '<p class="muted small">Só quem tem este link consegue abrir. Se ele vazar, gere um novo: o antigo deixa de funcionar na hora e os registros ficam salvos.</p>'
+    : '<p class="muted">Gere o link e envie aos voluntários que anotam os nomes nas filas. Eles não precisam de login e só enxergam os nomes dos encontristas.</p><button class="btn btn-primary" data-act="dec-link-novo">Gerar link de registro</button>';
+  const por = {}; rec.forEach(d => { por[d.por] = (por[d.por] || 0) + 1; });
+  const vols = Object.keys(por).sort((a, b) => por[b] - por[a]).map(k => '<div class="li"><div class="li-m"><b>' + esc(k) + '</b></div><div class="li-r">' + por[k] + ' registros</div></div>').join('');
+  const byB = {}; bs.forEach(b => { byB[b.id] = b; });
+  const rows = rec.filter(d => D.f === 'all' || d.botao === D.f).sort((a, b) => (b.em || '').localeCompare(a.em || '')).slice(0, 200).map(d => {
+    const p = S.pess.find(x => x.id === d.pessoa) || {}, b = byB[d.botao] || {nome:d.botao, cor:'#888'};
+    const h = d.em ? new Date(d.em) : null;
+    return '<div class="li"><div class="li-m"><b>' + esc(d.nome) + '</b><small>' + esc([p.fone, p.end].filter(Boolean).join(' · ') || 'Sem telefone/endereço cadastrado') + '</small><small>Anotado por ' + esc(d.por) + (h && !isNaN(h) ? ' · ' + String(h.getHours()).padStart(2, '0') + ':' + String(h.getMinutes()).padStart(2, '0') : '') + '</small></div><span class="dchip" style="--c:' + esc(b.cor) + '">' + esc(b.nome) + '</span>' + iconBtn('dec-del', d.id, 'trash', 'Excluir registro de ' + d.nome) + '</div>';
+  }).join('');
+  const nPess = S.pess.filter(x => x.ed === ed.id).length;
+  return [head,
+    cards,
+    '<div class="sec-h"><span>Link de registro</span></div>' + card('', link),
+    '<div class="sec-h"><span>' + (D.f === 'all' ? 'Todos os registros · ' + rec.length : esc((byB[D.f] || {nome:''}).nome) + ' · ' + rec.filter(d => d.botao === D.f).length) + '</span><span class="ph-a"><button class="btn btn-sm" data-act="dec-csv">' + icon('download', 16) + 'Exportar</button></span></div>',
+    rows ? '<div class="lst">' + rows + '</div>' : '<div class="empty">Nenhuma decisão registrada nesta edição ainda.</div>',
+    '<div class="sec-h"><span>Botões do registro</span></div>' + card('', '<p class="muted">Os voluntários só escolhem entre estes botões. Só você pode renomear, mudar a cor, reordenar ou criar novos.</p><div class="chips" style="flex-wrap:wrap">' + bs.map(b => '<span class="dchip" style="--c:' + esc(b.cor) + '">' + esc(b.nome) + (b.arq ? ' · arquivado' : '') + '</span>').join('') + '</div><button class="btn" data-act="decb-edit">' + icon('edit', 16) + 'Editar botões</button>'),
+    '<div class="sec-h"><span>Encontristas desta edição · ' + nPess + '</span></div>' + card('', '<p class="muted">' + (nPess ? 'Os nomes alimentam a busca dos voluntários. Telefone e endereço ficam só aqui, para você.' : 'Importe a planilha dos encontristas para que a busca funcione. Dá para fazer isso quando a edição começar.') + '</p><div class="ph-a"><button class="btn btn-primary" data-act="dec-imp">' + icon('upload', 16) + 'Importar planilha</button><button class="btn" data-act="dec-pess-add">' + icon('plus', 16) + 'Adicionar pessoa</button></div>')
+  ].join('');
+}
+function decBodyBotoes(){
+  const d = U.dec.draft || [];
+  return '<form class="form" data-form="decb-save" novalidate><p class="muted small">Só você vê esta tela. Quem recebe o link apenas escolhe entre os botões.</p>' + d.map((b, i) => {
+    const n = b.n || 0;
+    return '<div class="decb"><div class="decb-t"><span class="dchip-dot" style="--c:' + esc(b.cor) + '"></span><input class="inp" data-bid="' + esc(b.id) + '" aria-label="Nome do botão" type="text" value="' + esc(b.nome) + '" maxlength="40"></div>'
+      + '<div class="decb-c">' + DEC_CORES.map(c => '<button type="button" class="sw-c' + (b.cor === c[1] ? ' on' : '') + '" style="--c:' + c[1] + '" data-act="decb-cor" data-id="' + i + '" data-cor="' + c[1] + '" aria-label="' + c[0] + '"></button>').join('') + '<small class="muted">' + (n ? n + ' registros' : 'nenhum registro') + (b.arq ? ' · arquivado' : '') + '</small></div>'
+      + '<div class="decb-a"><button type="button" class="btn btn-sm" data-act="decb-up" data-id="' + i + '">Subir</button><button type="button" class="btn btn-sm" data-act="decb-down" data-id="' + i + '">Descer</button><button type="button" class="btn btn-sm" data-act="decb-rm" data-id="' + i + '">' + (n ? (b.arq ? 'Restaurar' : 'Arquivar') : 'Apagar') + '</button></div></div>';
+  }).join('') + '<button type="button" class="btn" data-act="decb-add">' + icon('plus', 16) + 'Adicionar botão</button>' + modalBtns('Salvar botões') + '</form>';
+}
+function decDraftRead(){ document.querySelectorAll('#modal input[data-bid]').forEach(el => { const b = (U.dec.draft || []).find(x => x.id === el.dataset.bid); if (b) b.nome = el.value; }); }
+function decDraftShow(){ openModal({title:'Editar botões', body:decBodyBotoes()}); }
+async function decPublicar(ed, patch){
+  const cur = decCfg(ed.id) || {}; const cfg = Object.assign({token:'', ativo:false, botoes:decBotoes(ed.id)}, cur, patch); delete cfg.id;
+  const ops = [{t:'set', path:'decisoes_cfg/' + ed.id, data:cfg}];
+  if (cfg.token) ops.push({t:'set', path:'registro_links/' + cfg.token, data:decMirror(ed, cfg)});
+  return W(() => BE.db.batch(ops));
+}
+/* planilha de encontristas */
+function loadXlsx(){ return window.XLSX ? Promise.resolve(window.XLSX) : new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; sc.onload = () => ok(window.XLSX); sc.onerror = () => no(new Error('xlsx')); document.head.appendChild(sc); }); }
+const normTxt = t => String(t == null ? '' : t).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+function parseSheetRows(rows){
+  let hi = -1;
+  for (let i = 0; i < Math.min(rows.length, 15); i++){ if (rows[i].some(c => /nome/.test(normTxt(c)))){ hi = i; break; } }
+  if (hi < 0) return null;
+  const headers = rows[hi].map((c, i) => String(c || '').trim() || 'Coluna ' + (i + 1));
+  const find = (re, not) => { const i = headers.findIndex(h => re.test(normTxt(h)) && !(not && not.test(normTxt(h)))); return i; };
+  const map = {nome:find(/nome|encontrista/, /pai|mae|respons|conjuge|indic|apelido/), fone:find(/telefone|celular|fone|whats|contato/), end:find(/endereco|rua|logradouro/), bairro:find(/bairro/)};
+  if (map.nome < 0) map.nome = find(/nome/);
+  const data = rows.slice(hi + 1).filter(r => r.some(c => String(c || '').trim()));
+  return {headers, data, map};
+}
+function decImpBody(){
+  const I = U.dec.imp; if (!I) return '';
+  const sel = (nm, lb) => '<div class="fg"><label class="fl" for="im-' + nm + '">' + lb + '</label><select class="inp" id="im-' + nm + '" name="' + nm + '">' + opt('-1', nm === 'nome' ? 'Escolha a coluna' : '— não importar —', I.map[nm] < 0) + I.headers.map((h, i) => opt(String(i), h, I.map[nm] === i)).join('') + '</select></div>';
+  const ex = I.data.slice(0, 3).map(r => '<tr><td>' + esc(I.map.nome >= 0 ? r[I.map.nome] : '') + '</td><td>' + esc(I.map.fone >= 0 ? r[I.map.fone] : '') + '</td><td>' + esc(I.map.end >= 0 ? r[I.map.end] : '') + '</td></tr>').join('');
+  return '<form class="form" data-form="dec-imp-ok" novalidate><p><b>' + I.data.length + ' linhas</b> encontradas em “' + esc(I.file) + '”. Confira se as colunas estão certas:</p>' + sel('nome', 'Nome') + sel('fone', 'Telefone') + sel('end', 'Endereço') + sel('bairro', 'Bairro (ajuda a diferenciar nomes iguais)')
+    + (ex ? '<table class="kv"><tbody>' + ex + '</tbody></table>' : '') + '<div class="note">Telefone e endereço ficam só no painel dos administradores. Os voluntários veem apenas o nome' + '' + ' (e o bairro, se você escolher a coluna).</div>' + modalBtns('Importar') + '</form>';
+}
+const decPessKey = (ed, nome, fone) => ed + '|' + normTxt(nome) + '|' + String(fone || '').replace(/\D/g, '');
+async function decAddPessoas(ed, lista){
+  const cfg = decCfg(ed.id), have = new Set(S.pess.filter(x => x.ed === ed.id).map(x => decPessKey(x.ed, x.nome, x.fone)));
+  const ops = []; let n = 0, dup = 0;
+  lista.forEach(x => {
+    const k = decPessKey(ed.id, x.nome, x.fone); if (have.has(k)){ dup++; return; } have.add(k);
+    const id = BE.db.newId('encontristas'); n++;
+    ops.push({t:'set', path:'encontristas/' + id, data:{ed:ed.id, nome:x.nome, fone:x.fone || '', end:x.end || '', bairro:x.bairro || ''}});
+    if (cfg && cfg.token) ops.push({t:'set', path:'registro_links/' + cfg.token + '/pessoas/' + id, data:{nome:x.nome, info:x.bairro || ''}});
+  });
+  if (!n) return {n:0, dup};
+  return (await W(() => BE.db.batch(ops))) ? {n, dup} : null;
+}
+
+/* ---------- tela do voluntário (link aberto, sem login) ---------- */
+let P = null;
+const INP = {
+  'pub-q': el => { P.q = el.value; P.pick = null; const r = $('#pub-res'); if (r) r.innerHTML = pubRes(); pubBtn(); }
+};
+function startPublic(token){
+  phase = 'publico';
+  let vol = ''; try { vol = localStorage.getItem('vv_vol') || ''; } catch (e) {}
+  P = {token, link:null, pessoas:[], erro:'', vol, dec:null, q:'', pick:null, feitos:[]};
+  render();
+  BE.db.get('registro_links/' + token).then(l => {
+    if (!l){ P.erro = 'Este link não existe. Peça um novo ao responsável.'; render(); return; }
+    if (!l.ativo){ P.erro = 'Este link está desligado. Fale com o responsável.'; render(); return; }
+    P.link = l; render();
+    BE.db.listenQuery('registro_links/' + token + '/pessoas', null, d => { P.pessoas = d; scheduleRender(); }, () => { P.erro = 'O link foi desligado. Fale com o responsável.'; render(); });
+  }).catch(() => { P.erro = 'Não foi possível abrir. Confira a internet e tente de novo.'; render(); });
+}
+function pubRes(){
+  const q = normTxt(P.q);
+  if (P.pick || q.length < 2) return '';
+  const m = P.pessoas.filter(p => normTxt(p.nome).indexOf(q) >= 0).sort((a, b) => a.nome.localeCompare(b.nome)).slice(0, 8);
+  if (!m.length) return '<div class="lst"><div class="li"><div class="li-m"><small>Ninguém encontrado. Confira a grafia ou chame a secretaria.</small></div></div></div>';
+  return '<div class="lst">' + m.map(p => '<button type="button" class="li" data-act="pub-pick" data-id="' + esc(p.id) + '"><div class="li-m"><b>' + esc(p.nome) + '</b>' + (p.info ? '<small>' + esc(p.info) + '</small>' : '') + '</div></button>').join('') + '</div>';
+}
+function pubBtn(){
+  const b = $('#pub-go'); if (!b) return;
+  const bt = P.link.botoes.find(x => x.id === P.dec), ok = !!(P.pick && bt);
+  b.disabled = !ok; b.textContent = ok ? 'Registrar · ' + bt.nome : (P.dec ? 'Escolha o nome da pessoa' : 'Escolha a decisão acima');
+  b.style.background = ok ? bt.cor : ''; b.style.color = ok ? '#fff' : '';
+}
+function viewPublico(){
+  const L = P.link;
+  const head = '<div class="pub-h"><div class="logo">V</div><div><b>Registro de decisões</b><small>' + esc(L ? L.nomeEd : 'Vida Vitoriosa') + '</small></div></div>';
+  if (P.erro) return '<div class="pub">' + head + '<div class="card"><p>' + esc(P.erro) + '</p></div></div>';
+  if (!L) return '<div class="pub">' + head + '<p class="muted">Carregando…</p></div>';
+  if (!P.vol) return '<div class="pub">' + head + '<form class="card form" data-form="pub-vol" novalidate><h2>Quem está anotando?</h2><p class="muted">Digite seu nome uma vez. Ele fica gravado em cada registro que você fizer.</p><div class="fg"><label class="fl" for="pv-n">Seu nome</label><input class="inp" id="pv-n" name="vol" type="text" autocomplete="name" maxlength="60"></div><button class="btn btn-primary btn-block" type="submit">Começar</button></form></div>';
+  const feitos = P.feitos.slice(0, 5).map(f => '<div class="li"><div class="li-m"><b>' + esc(f.nome) + '</b><small>' + esc(f.bnome) + '</small></div><div class="li-r ' + (f.st === 'ok' ? 'pos' : f.st === 'pend' ? '' : 'neg') + '">' + (f.st === 'ok' ? 'Enviado' : f.st === 'pend' ? 'Aguardando envio' : f.st === 'dup' ? 'Já registrado' : 'Não enviado') + '</div></div>').join('');
+  return '<div class="pub">' + head
+    + '<p class="muted" style="margin:0">Escolha a decisão da fila e depois procure o nome da pessoa.</p>'
+    + '<div class="pub-b">' + L.botoes.map(b => '<button type="button" class="dbtn' + (P.dec === b.id ? ' on' : '') + '" style="--c:' + esc(b.cor) + '" data-act="pub-dec" data-id="' + esc(b.id) + '">' + esc(b.nome) + '</button>').join('') + '</div>'
+    + '<form class="form" data-form="pub-reg" novalidate><div class="fg"><label class="fl" for="pub-q">Nome da pessoa</label><input class="inp pub-q" id="pub-q" name="q" type="text" data-inp="pub-q" autocomplete="off" placeholder="Digite o nome…" value="' + esc(P.q) + '"></div><div id="pub-res">' + pubRes() + '</div><button class="btn btn-block pub-go" id="pub-go" type="submit" disabled>Escolha a decisão acima</button></form>'
+    + '<div class="sec-h"><span>Registrados neste aparelho</span><span>' + P.feitos.length + '</span></div>' + (feitos ? '<div class="lst">' + feitos + '</div>' : '<div class="muted small">Nenhum registro ainda.</div>')
+    + '<p class="muted small" style="margin-top:14px">Anotando como <b>' + esc(P.vol) + '</b> · <button class="link" data-act="pub-trocar">trocar</button></p></div>';
+}
+function pubRegistrar(){
+  const L = P.link, bt = L.botoes.find(x => x.id === P.dec), pk = P.pick;
+  if (!bt || !pk) return;
+  const id = L.ed + '_' + pk.id + '_' + bt.id;
+  if (P.feitos.some(f => f.id === id && f.st !== 'erro')){ toast('Esta pessoa já foi registrada nesta decisão.'); return; }
+  const rec = {ed:L.ed, pessoa:pk.id, nome:pk.nome, botao:bt.id, por:P.vol, em:new Date().toISOString(), token:P.token};
+  const item = {id, nome:pk.nome, bnome:bt.nome, st:'pend'};
+  P.feitos.unshift(item); P.pick = null; P.q = ''; forceNext = true; render();
+  const q = $('#pub-q'); if (q) q.focus();
+  BE.db.set('decisoes/' + id, rec).then(() => { item.st = 'ok'; scheduleRender(true); }).catch(e => { item.st = e && e.code === 'permission-denied' ? 'dup' : 'erro'; if (item.st === 'dup') toast('Já estava registrado (ou o link foi desligado).'); scheduleRender(true); });
+}
 const ACTS = {
   nav: el => go(el.dataset.v),
+  'dec-open': el => { S.selEd = el.dataset.id; selPref = true; save(); go('decisoes'); },
+  'dec-f': el => { U.dec.f = U.dec.f === el.dataset.id ? 'all' : el.dataset.id; render(); },
+  'dec-copy': async () => { const ed = decEd(), c = ed && decCfg(ed.id); if (!c || !c.token) return; const u = decUrl(c.token); try { await navigator.clipboard.writeText(u); toast('Link copiado.'); } catch (e) { const t = document.createElement('textarea'); t.value = u; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); toast('Link copiado.'); } catch (x) { toast('Copie o link manualmente.'); } t.remove(); } },
+  'dec-toggle': async () => { if (needAdmin()) return; const ed = decEd(), c = ed && decCfg(ed.id); if (!c) return; if (await decPublicar(ed, {ativo:!c.ativo})) toast(c.ativo ? 'Link desligado.' : 'Link ligado.'); },
+  'dec-link-novo': () => {
+    if (needAdmin()) return; const ed = decEd(), c = ed && decCfg(ed.id); if (!ed) return;
+    if (c && c.token) openModal({title:'Gerar um novo link?', body:'<p>O link atual deixa de funcionar na hora. Quem estiver com ele aberto não consegue mais registrar. Os registros já feitos continuam salvos.</p>', actions:[{label:'Cancelar', act:'close'}, {label:'Gerar novo link', act:'dec-link-ok', primary:true}]});
+    else ACTS['dec-link-ok']();
+  },
+  'dec-link-ok': async () => {
+    if (needAdmin()) return; const ed = decEd(); if (!ed) return; const cur = decCfg(ed.id), token = decRand(20);
+    const cfg = {token, ativo:true, botoes:decBotoes(ed.id)};
+    const ops = [{t:'set', path:'decisoes_cfg/' + ed.id, data:cfg}, {t:'set', path:'registro_links/' + token, data:decMirror(ed, cfg)}];
+    S.pess.filter(x => x.ed === ed.id).forEach(x => { ops.push({t:'set', path:'registro_links/' + token + '/pessoas/' + x.id, data:{nome:x.nome, info:x.bairro || ''}}); if (cur && cur.token) ops.push({t:'del', path:'registro_links/' + cur.token + '/pessoas/' + x.id}); });
+    if (cur && cur.token) ops.push(upd('registro_links/' + cur.token, {ativo:false}));
+    if (await W(() => BE.db.batch(ops))){ closeModal(); toast('Link gerado.'); }
+  },
+  'dec-del': el => { if (needAdmin()) return; const d = S.dec.find(x => x.id === el.dataset.id); if (!d) return; openModal({title:'Excluir este registro?', body:'<p>' + esc(d.nome) + ' deixa de contar nesta decisão.</p>', actions:[{label:'Cancelar', act:'close'}, {label:'Excluir', act:'dec-del-ok', id:d.id, primary:true}]}); },
+  'dec-del-ok': async el => { if (needAdmin()) return; if (await W(() => BE.db.del('decisoes/' + el.dataset.id))){ closeModal(); toast('Registro excluído.'); } },
+  'dec-csv': () => {
+    const ed = decEd(); if (!ed) return; const byB = {}; decBotoes(ed.id).forEach(b => { byB[b.id] = b; });
+    const rows = S.dec.filter(d => d.ed === ed.id).sort((a, b) => (a.em || '').localeCompare(b.em || '')).map(d => { const p = S.pess.find(x => x.id === d.pessoa) || {}; return [d.nome, (byB[d.botao] || {nome:d.botao}).nome, p.fone || '', p.end || '', p.bairro || '', d.por, d.em || '']; });
+    saveFile('decisoes-' + ed.id + '.csv', '﻿' + [['Nome', 'Decisão', 'Telefone', 'Endereço', 'Bairro', 'Anotado por', 'Data/hora']].concat(rows).map(r => r.map(csvCell).join(';')).join('\r\n'));
+  },
+  'decb-edit': () => { if (needAdmin()) return; const ed = decEd(); if (!ed) return; U.dec.draft = decBotoes(ed.id).map(b => Object.assign({}, b, {n:decCount(ed.id, b.id)})); decDraftShow(); },
+  'decb-add': () => { decDraftRead(); U.dec.draft.push({id:'b' + Date.now().toString(36), nome:'Novo botão', cor:'#2F6FA3', arq:false, n:0}); decDraftShow(); },
+  'decb-cor': el => { decDraftRead(); U.dec.draft[+el.dataset.id].cor = el.dataset.cor; decDraftShow(); },
+  'decb-up': el => { decDraftRead(); const d = U.dec.draft, i = +el.dataset.id; if (i > 0){ const t = d[i]; d[i] = d[i - 1]; d[i - 1] = t; } decDraftShow(); },
+  'decb-down': el => { decDraftRead(); const d = U.dec.draft, i = +el.dataset.id; if (i < d.length - 1){ const t = d[i]; d[i] = d[i + 1]; d[i + 1] = t; } decDraftShow(); },
+  'decb-rm': el => { decDraftRead(); const d = U.dec.draft, i = +el.dataset.id, b = d[i]; if (b.n) b.arq = !b.arq; else d.splice(i, 1); decDraftShow(); },
+  'dec-pess-add': () => { if (needAdmin()) return; if (!decEd()) return; openModal({title:'Adicionar pessoa', body:'<form class="form" data-form="dec-pess-add" novalidate><div class="fg"><label class="fl" for="pa-n">Nome</label><input class="inp" id="pa-n" name="nome" type="text"></div><div class="two"><div class="fg"><label class="fl" for="pa-f">Telefone</label><input class="inp" id="pa-f" name="fone" type="tel"></div><div class="fg"><label class="fl" for="pa-b">Bairro</label><input class="inp" id="pa-b" name="bairro" type="text"></div></div><div class="fg"><label class="fl" for="pa-e">Endereço</label><input class="inp" id="pa-e" name="end" type="text"></div>' + modalBtns('Adicionar') + '</form>'}); },
+  'dec-imp': () => { if (needAdmin()) return; if (!decEd()) return; U.dec.imp = null; openModal({title:'Importar encontristas', body:'<p>Escolha a planilha (Excel ou CSV) com os encontristas desta edição. Precisa ter pelo menos uma coluna de nome; telefone e endereço são opcionais.</p><div class="fg"><label class="fl" for="imp-f">Arquivo</label><input class="inp" id="imp-f" type="file" accept=".xlsx,.xls,.csv" data-chg="dec-imp-file"></div><p class="muted small" id="imp-st"></p>', actions:[{label:'Cancelar', act:'close'}]}); },
+  'pub-dec': el => { P.dec = el.dataset.id; render(); pubBtn(); },
+  'pub-pick': el => { const p = P.pessoas.find(x => x.id === el.dataset.id); if (!p) return; P.pick = p; P.q = p.nome; const q = $('#pub-q'); if (q) q.value = p.nome; const r = $('#pub-res'); if (r) r.innerHTML = ''; pubBtn(); },
+  'pub-trocar': () => { P.vol = ''; try { localStorage.removeItem('vv_vol'); } catch (e) {} render(); },
+
   'inv-import': () => {
     if (needAdmin()) return;
     const P = invPlan();
@@ -1438,13 +1687,13 @@ const ACTS = {
   'ed-del-ok': async el => {
     if (needAdmin()) return; const id = el.dataset.id;
     const ls = S.lanc.filter(l => l.ed === id), ms = S.movs.filter(m => m.ed === id);
-    const ops = ls.map(l => ({t:'del', path:'lancamentos/' + l.id})).concat(ms.map(m => ({t:'del', path:'movimentos/' + m.id})), [{t:'del', path:'edicoes/' + id}, {t:'del', path:'edicoes_fin/' + id}]);
+    const ops = ls.map(l => ({t:'del', path:'lancamentos/' + l.id})).concat(ms.map(m => ({t:'del', path:'movimentos/' + m.id})), [{t:'del', path:'edicoes/' + id}, {t:'del', path:'edicoes_fin/' + id}], decDelOps(id));
     if (await W(() => BE.db.batch(ops))){
       ls.forEach(l => { if (l.compPath) BE.storage.rm(l.compPath).catch(() => {}); });
       if (S.selEd === id) S.selEd = 'all'; closeModal(); toast('Edição excluída.');
     }
   },
-  'ed-rel': el => { const e = edById(el.dataset.id); const acts = []; if (canMoney()) acts.push({label:'Baixar planilha', act:'export-csv', id:'ed:' + e.id, icon:'download'}); if (canMoney() || canStock()) acts.push({label:'Baixar relatório', act:'export-html', id:'ed:' + e.id, icon:'download'}); acts.push({label:'Fechar', act:'close', primary:true}); openModal({title:'Relatório · ' + e.nome, body:edReportBody(e), actions:acts}); },
+  'ed-rel': el => { const e = edById(el.dataset.id); const acts = []; if (canMoney()) acts.push({label:'Baixar planilha', act:'export-csv', id:'ed:' + e.id, icon:'download'}); if (canMoney() || canStock() || isAdmin()) acts.push({label:'Baixar relatório', act:'export-html', id:'ed:' + e.id, icon:'download'}); acts.push({label:'Fechar', act:'close', primary:true}); openModal({title:'Relatório · ' + e.nome, body:edReportBody(e), actions:acts}); },
   'lanc-edit': el => {
     if (needAdmin()) return; const l = S.lanc.find(x => x.id === el.dataset.id); if (!l) return;
     const e = edById(l.ed); if (!e || e.status !== 'aberta'){ toast('Edição fechada: faça um ajuste em uma edição aberta.'); return; }
@@ -1532,10 +1781,21 @@ const ACTS = {
   'export-html': el => {
     const id = el.dataset.id;
     if (id === 'rel'){ const per = U.rel.modo === 'mensal' ? U.rel.mes : U.rel.ano; const L = visLanc().filter(l => l.data.indexOf(per) === 0), M = visMovs().filter(m => m.data.indexOf(per) === 0); saveFile('relatorio-' + per + '.html', relDoc('Relatório ' + (U.rel.modo === 'mensal' ? 'mensal · ' + mesLabel(per) : 'anual · ' + per), L, M)); }
-    else { const e = edById(id.slice(3)); saveFile('relatorio-' + e.id + '.html', relDoc('Relatório da edição · ' + e.nome, visLanc().filter(l => l.ed === e.id), visMovs().filter(m => m.ed === e.id))); }
+    else { const e = edById(id.slice(3)); saveFile('relatorio-' + e.id + '.html', relDoc('Relatório da edição · ' + e.nome, visLanc().filter(l => l.ed === e.id), visMovs().filter(m => m.ed === e.id), decReportHtml(e))); }
   }
 };
 const CHG = {
+  'dec-imp-file': async el => {
+    const f = el.files && el.files[0], st = $('#imp-st'); if (!f) return;
+    if (st) st.textContent = 'Lendo a planilha…';
+    try {
+      const X = await loadXlsx(); const buf = await f.arrayBuffer(); const wb = X.read(buf, {type:'array'});
+      let best = null;
+      wb.SheetNames.forEach(n => { const rows = X.utils.sheet_to_json(wb.Sheets[n], {header:1, defval:'', raw:false}); const r = parseSheetRows(rows); if (r && (!best || r.data.length > best.data.length)) best = r; });
+      if (!best){ if (st) st.textContent = 'Não achei uma coluna “Nome” nas primeiras linhas. Confira a planilha.'; return; }
+      best.file = f.name; U.dec.imp = best; openModal({title:'Importar encontristas', body:decImpBody()});
+    } catch (e) { console.error(e); if (st) st.textContent = 'Não consegui ler este arquivo. Tente salvar como .xlsx ou .csv.'; }
+  },
   ed: el => { S.selEd = el.value; selPref = true; save(); render(); },
   'fin-tipo': el => { U.fin.tipo = el.value; U.fin.lim = 12; render(); },
   'fin-setor': el => { U.fin.setor = el.value; U.fin.lim = 12; render(); },
@@ -1577,6 +1837,31 @@ async function addFiles(list){
 const fv = (f, n) => { const e = f.elements.namedItem(n); return e && e.value != null ? e.value : ''; };
 const checkedFile = (f, n) => f.elements[n] && f.elements[n].files && f.elements[n].files[0];
 const FORMS = {
+  'pub-vol': f => { const v = fv(f, 'vol').trim(); if (!v){ toast('Digite seu nome.'); return; } P.vol = v; try { localStorage.setItem('vv_vol', v); } catch (e) {} render(); },
+  'pub-reg': () => pubRegistrar(),
+  'decb-save': async f => {
+    if (needAdmin()) return; const ed = decEd(); if (!ed) return; decDraftRead();
+    const d = U.dec.draft || [], names = d.map(b => b.nome.trim());
+    if (!d.some(b => !b.arq)){ toast('Deixe pelo menos um botão ativo.'); return; }
+    if (names.some(n => !n)){ toast('Todo botão precisa de um nome.'); return; }
+    if (new Set(names.map(normTxt)).size !== names.length){ toast('Há dois botões com o mesmo nome.'); return; }
+    const botoes = d.map((b, i) => ({id:b.id, nome:names[i], cor:b.cor, arq:!!b.arq}));
+    if (await decPublicar(ed, {botoes})){ closeModal(); toast('Botões salvos.'); }
+  },
+  'dec-pess-add': async f => {
+    if (needAdmin()) return; const ed = decEd(); if (!ed) return; const nome = fv(f, 'nome').trim(); if (!nome){ toast('Informe o nome.'); return; }
+    const r = await decAddPessoas(ed, [{nome, fone:fv(f, 'fone').trim(), bairro:fv(f, 'bairro').trim(), end:fv(f, 'end').trim()}]);
+    if (r){ closeModal(); toast(r.n ? 'Pessoa adicionada.' : 'Essa pessoa já está na lista.'); }
+  },
+  'dec-imp-ok': async f => {
+    if (needAdmin()) return; const ed = decEd(), I = U.dec.imp; if (!ed || !I) return;
+    const ix = n => parseInt(fv(f, n), 10), ni = ix('nome'), fi = ix('fone'), ei = ix('end'), bi = ix('bairro');
+    if (!(ni >= 0)){ toast('Escolha a coluna do nome.'); return; }
+    const cell = (r, i) => i >= 0 ? String(r[i] == null ? '' : r[i]).trim() : '';
+    const lista = I.data.map(r => ({nome:cell(r, ni), fone:cell(r, fi), end:cell(r, ei), bairro:cell(r, bi)})).filter(x => x.nome);
+    const r = await decAddPessoas(ed, lista);
+    if (r){ U.dec.imp = null; closeModal(); toast(r.n + ' pessoas importadas' + (r.dup ? ' (' + r.dup + ' repetidas ignoradas).' : '.')); }
+  },
   login: async f => {
     const email = fv(f, 'email').trim(), senha = fv(f, 'senha');
     if (email.indexOf('@') < 1){ toast('Informe um e-mail válido.'); return; }
@@ -1762,6 +2047,7 @@ document.addEventListener('click', e => {
   const h = ACTS[el.dataset.act]; if (h){ h(el, e); }
 });
 document.addEventListener('input', e => { if (e.target.dataset && e.target.dataset.chg === 'mov-prev' && e.target.type === 'text') movPrev(); });
+document.addEventListener('input', e => { const k = e.target.dataset && e.target.dataset.inp; if (k && INP[k]) INP[k](e.target); });
 document.addEventListener('change', e => {
   const c = e.target.dataset && e.target.dataset.chg; if (c && CHG[c]) CHG[c](e.target);
 });
@@ -1783,7 +2069,7 @@ function applyTheme(){
 /* ---------- partida ---------- */
 S = emptyState(); U = mkUI(); render();
 window.__vvWatch = setTimeout(() => { if (phase === 'pre'){ phase = 'erro'; fatalMsg = 'o Firebase não carregou (confira a internet)'; render(); } }, 10000);
-window.VVApp = {start:startApp, fail:msg => { clearTimeout(window.__vvWatch); phase = 'erro'; fatalMsg = msg; render(); }, get S(){ return S; }, get U(){ return U; }, get phase(){ return phase; }, render, go};
+window.VVApp = {start:startApp, fail:msg => { clearTimeout(window.__vvWatch); phase = 'erro'; fatalMsg = msg; render(); }, get S(){ return S; }, get U(){ return U; }, get P(){ return P; }, get phase(){ return phase; }, render, go};
 })();
 </script>
 <script type="module">
