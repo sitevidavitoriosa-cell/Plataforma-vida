@@ -292,6 +292,26 @@ body{font-family:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
 .dbtn.on{border-color:var(--c);background:var(--c);color:#fff}
 .pub-q{height:56px;font-size:18px;border:2px solid var(--accent)!important}
 .pub-go{min-height:56px;font-size:16px;font-weight:800;margin-top:12px}
+
+.tg{display:inline-block;align-self:flex-start;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:800;margin-top:3px}
+.tg-c{background:#F8EBDA;color:#8E5414}.tg-v{background:#E1ECF6;color:#1F5A87}
+.stp2{display:flex;align-items:center;gap:6px}
+.stp2 button{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:22px;font-weight:700;cursor:pointer}
+.stp2 b{min-width:32px;text-align:center;font-size:18px}
+.bal-in{width:64px;height:44px;text-align:center;font-weight:800;font-size:18px;padding:0 4px}
+.bcard{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:8px;display:flex;flex-direction:column;gap:10px}
+.bc-h{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.bc-r{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;justify-content:space-between}
+.bc-k{display:flex;flex-direction:column;gap:3px}
+.bc-k>span{font-size:12px;font-weight:700;color:var(--muted)}
+.bc-k>b{font-size:18px;min-height:44px;display:flex;align-items:center}
+.al{padding:8px 10px;border-radius:10px;font-size:13px;font-weight:700}
+.al-bad{background:#F9E3DD;color:#8E2E18}.al-low{background:#FBF0D5;color:#7A5200}
+.bsum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:6px}
+.bsum>div{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column}
+.bsum b{font-size:20px}.bsum span{font-size:12px;color:var(--muted)}
+.chk{display:flex;align-items:center;gap:10px;min-height:44px;font-weight:600}
+.chk input{width:22px;height:22px}
 .bnav{display:none}
 .hdr{position:sticky;top:0;z-index:35;background:var(--bg)}
 @media (max-width:820px){.hdr{position:static}}
@@ -416,7 +436,7 @@ const DEF_AREAS = [
 let BE = null, S = null, U = null, AU = null, phase = 'pre', fatalMsg = '';
 const PREFS = 'vv-gestao-prefs';
 const mkUI = () => ({view:'inicio', login:{modo:'entrar'}, fin:{tipo:'all', setor:'all', cat:'all', q:'', lim:12}, est:{setor:'all', sit:'all', aba:'geral'}, dec:{f:'all', draft:null, imp:null}, org:{pasta:'geral', open:{}, q:'', ord:'recentes'}, eq:{alvo:'all', q:''}, rel:{modo:'mensal', mes:null, ano:null}, search:''});
-const emptyState = () => ({dec:[], dcfg:[], pess:[], cfg:null, users:[], convites:[], team:[], ed:[], lanc:[], items:[], movs:[], files:[], userId:null, selEd:'all', theme:'auto'});
+const emptyState = () => ({envios:[], dec:[], dcfg:[], pess:[], cfg:null, users:[], convites:[], team:[], ed:[], lanc:[], items:[], movs:[], files:[], userId:null, selEd:'all', theme:'auto'});
 let selPref = false;
 function loadPrefs(){ try { const p = JSON.parse(localStorage.getItem(PREFS) || '{}'); if (p.theme) S.theme = p.theme; if (p.selEd){ S.selEd = p.selEd; selPref = true; } } catch (e) {} }
 function save(){ try { localStorage.setItem(PREFS, JSON.stringify({theme:S.theme, selEd:S.selEd})); } catch (e) {} }
@@ -501,6 +521,7 @@ function startData(){
   watch('lancamentos', 'lanc', ['financeiro', 'relatorios'], 'chave');
   watch('itens', 'items', ['estoque', 'relatorios'], 'setor');
   watch('movimentos', 'movs', ['estoque', 'relatorios'], 'setor');
+  watch('envios', 'envios', ['estoque', 'relatorios'], 'setor');
   watch('arquivos', 'files', ['organizacional'], 'chave');
   watch('equipe', 'team', ['equipe'], 'chave');
 }
@@ -934,6 +955,8 @@ function viewFinanceiro(){
 /* inventário de outubro de 2026 (planilha do estoque geral), carregado pelo botão “Importar inventário” */
 const INV_SEED = [{"setor":"Secretaria 1","nome":"Anel Filho Pródigo","un":"un","qtd":53,"min":120},{"setor":"Secretaria 1","nome":"Bala Menta (caixa c/ 18)","un":"caixas","qtd":6,"min":0},{"setor":"Secretaria 1","nome":"Bloco (antigo caderno)","un":"un","qtd":1,"min":150},{"setor":"Secretaria 1","nome":"Bolsas (mochila preta kit do encontrista)","un":"un","qtd":1,"min":150},{"setor":"Secretaria 1","nome":"Bom-bom (pacote c/ 50)","un":"pacotes","qtd":6,"min":3},{"setor":"Secretaria 1","nome":"Caixa Preta com Tampa Grande","un":"un","qtd":1,"min":1},{"setor":"Secretaria 1","nome":"Caixa Preta com Tampa Pequena","un":"un","qtd":1,"min":1},{"setor":"Secretaria 1","nome":"Caneta Vida","un":"un","qtd":150,"min":150},{"setor":"Secretaria 1","nome":"Carregador de Rádio de Comunicação","un":"un","qtd":18,"min":18},{"setor":"Secretaria 1","nome":"Chinelos","un":"pares","qtd":1,"min":150},{"setor":"Secretaria 1","nome":"Colete para Consagração Roxo","un":"un","qtd":76,"min":0},{"setor":"Secretaria 1","nome":"Copos Personalizados","un":"un","qtd":1,"min":150},{"setor":"Secretaria 1","nome":"Cordão Fitilho","un":"rolos","qtd":5,"min":1},{"setor":"Secretaria 1","nome":"Cordão Preto","un":"rolos","qtd":1,"min":1},{"setor":"Secretaria 1","nome":"Crachá Equipe","un":"un","qtd":74,"min":100},{"setor":"Secretaria 1","nome":"Etiqueta A4256 (pacote c/ 100)","un":"pacotes","qtd":0.5,"min":1,"rev":"Metade"},{"setor":"Secretaria 1","nome":"Fita Adesiva (durex)","un":"un","qtd":4,"min":10},{"setor":"Secretaria 1","nome":"Fone de Rádio de Comunicação","un":"un","qtd":40,"min":18},{"setor":"Secretaria 1","nome":"Impressora","un":"un","qtd":1,"min":1},{"setor":"Secretaria 1","nome":"Jacaré do Crachá dos Encontristas","un":"un","qtd":99,"min":0},{"setor":"Secretaria 1","nome":"Lenço de Papel","un":"un","qtd":1,"min":150},{"setor":"Secretaria 1","nome":"Livro Uma Vida de Oração","un":"un","qtd":40,"min":130},{"setor":"Secretaria 1","nome":"Papel Vegetal","un":"rolos","qtd":1,"min":5},{"setor":"Secretaria 1","nome":"Plástico do Crachá dos Encontristas","un":"un","qtd":109,"min":0},{"setor":"Secretaria 1","nome":"Plástico Rolo p/ Kit Filho Pródigo (pacote c/ 500)","un":"pacotes","qtd":1,"min":0},{"setor":"Secretaria 1","nome":"Rádio de Comunicação","un":"un","qtd":18,"min":18},{"setor":"Secretaria 1","nome":"Sacola do Correio","un":"un","qtd":1,"min":150},{"setor":"Secretaria 1","nome":"Sacos para Celular 16x21 (pacote c/ 50)","un":"pacotes","qtd":1,"min":0},{"setor":"Secretaria 1","nome":"Tesoura","un":"un","qtd":2,"min":2},{"setor":"Secretaria 1","nome":"Tinta Impressora Amarela Epson L1250","un":"garrafas","qtd":1,"min":0},{"setor":"Secretaria 1","nome":"Tinta Impressora Azul Epson L1250","un":"garrafas","qtd":1,"min":0},{"setor":"Secretaria 1","nome":"Tinta Impressora Preta Epson L1250","un":"garrafas","qtd":1,"min":0},{"setor":"Secretaria 1","nome":"Tinta Impressora Vermelha Epson L1250","un":"garrafas","qtd":1,"min":0},{"setor":"Secretaria 1","nome":"Veste do Filho Pródigo (pacote c/ 10)","un":"pacotes","qtd":1,"min":150},{"setor":"Festa","nome":"Arcos","un":"un","qtd":16,"min":0},{"setor":"Festa","nome":"Caixa Branca com Tampa","un":"un","qtd":2,"min":2},{"setor":"Festa","nome":"Chapéu de Pano","un":"un","qtd":16,"min":0},{"setor":"Festa","nome":"Chapéu de Plástico","un":"un","qtd":27,"min":0},{"setor":"Festa","nome":"Cordão de Havaiana","un":"un","qtd":59,"min":0},{"setor":"Festa","nome":"Cordão Marabu Fino","un":"un","qtd":69,"min":0},{"setor":"Festa","nome":"Cortina Metálica na Cor da Rede","un":"un","qtd":0,"min":6},{"setor":"Festa","nome":"Globos de Luz Tomada","un":"un","qtd":4,"min":0},{"setor":"Festa","nome":"Gravatas","un":"un","qtd":13,"min":0},{"setor":"Festa","nome":"Máscara de Plástico","un":"un","qtd":4,"min":0},{"setor":"Festa","nome":"Óculos de Plástico","un":"un","qtd":24,"min":0},{"setor":"Festa","nome":"Perucas Diversas","un":"un","qtd":27,"min":0},{"setor":"Festa","nome":"Pom-pom","un":"un","qtd":11,"min":0},{"setor":"Festa","nome":"Pom-pom de Flor","un":"un","qtd":1,"min":0},{"setor":"Teatro","nome":"Cruz de Madeira","un":"un","qtd":1,"min":1},{"setor":"Teatro","nome":"Fantasias","un":"caixas","qtd":5,"min":5},{"setor":"Teatro","nome":"Vaso de Barro Grande","un":"un","qtd":1,"min":10},{"setor":"Teatro","nome":"Vasos de Barro Pequeno","un":"un","qtd":1,"min":1},{"setor":"Secretaria 2","nome":"Adesivos","un":"un","qtd":1,"min":1,"rev":"DIVERSOS"},{"setor":"Secretaria 2","nome":"Caixa com Cabo de Rede","un":"caixas","qtd":1,"min":1},{"setor":"Secretaria 2","nome":"Caixa com Tampa pequena e Tampa Cinza","un":"un","qtd":1,"min":1},{"setor":"Secretaria 2","nome":"Correios","un":"un","qtd":1,"min":1,"rev":"ADESIVOS"},{"setor":"Secretaria 2","nome":"Folha A4 Branca (pacote c/ 500)","un":"pacotes","qtd":6,"min":10},{"setor":"Secretaria 2","nome":"Grampeador","un":"un","qtd":1,"min":1},{"setor":"Secretaria 2","nome":"Grapos de Grampeador","un":"caixas","qtd":1,"min":1},{"setor":"Secretaria 2","nome":"Impressora Epson L1250","un":"un","qtd":1,"min":1},{"setor":"Secretaria 2","nome":"Plástico A4 (para cartas) (pacote c/ 50)","un":"pacotes","qtd":0,"min":2},{"setor":"Secretaria 2","nome":"Roteador","un":"caixas","qtd":1,"min":1},{"setor":"Secretaria 2","nome":"Tesoura","un":"un","qtd":4,"min":4},{"setor":"Material de Dinâmicas","nome":"Compressor","un":"un","qtd":1,"min":1,"dup":true},{"setor":"Material de Dinâmicas","nome":"Cesto de Plástico Preto","un":"un","qtd":1,"min":1},{"setor":"Material de Dinâmicas","nome":"Álcool Flamejante","un":"un","qtd":0,"min":3},{"setor":"Material de Dinâmicas","nome":"Bacias","un":"un","qtd":54,"min":60},{"setor":"Material de Dinâmicas","nome":"Bola nº 9 Branca (pacote c/ 50)","un":"pacotes","qtd":4,"min":6},{"setor":"Material de Dinâmicas","nome":"Bola nº 9 Colorida (pacote c/ 50)","un":"pacotes","qtd":1,"min":6},{"setor":"Material de Dinâmicas","nome":"Cachepô Branco Grande (pacote c/ 10)","un":"pacotes","qtd":0,"min":1},{"setor":"Material de Dinâmicas","nome":"Caixa Plástica Transparente sem Tampa","un":"un","qtd":1,"min":1},{"setor":"Material de Dinâmicas","nome":"Cruz Grande","un":"un","qtd":1,"min":1},{"setor":"Material de Dinâmicas","nome":"Fantasminha","un":"un","qtd":0,"min":120},{"setor":"Material de Dinâmicas","nome":"Fitilho Branco","un":"un","qtd":5,"min":2},{"setor":"Material de Dinâmicas","nome":"Fogos","un":"caixas","qtd":0,"min":4},{"setor":"Material de Dinâmicas","nome":"Gás Hélio 1m³","un":"cilindros","qtd":0,"min":1},{"setor":"Material de Dinâmicas","nome":"Jarras","un":"un","qtd":41,"min":60},{"setor":"Material de Dinâmicas","nome":"Led Ato Profético (rolo de 100 m)","un":"un","qtd":1,"min":1},{"setor":"Material de Dinâmicas","nome":"Mangueira de Água","un":"un","qtd":1,"min":1},{"setor":"Material de Dinâmicas","nome":"Papel Vegetal","un":"rolos","qtd":1,"min":4},{"setor":"Material de Dinâmicas","nome":"Toalhinhas de Papel de Pé (manicure) (pacote c/ 100)","un":"pacotes","qtd":0,"min":2},{"setor":"Som","nome":"Caixa de Som","un":"un","qtd":1,"min":1,"rev":"CAIXA EXTERNA"},{"setor":"Som","nome":"Canhão Parled","un":"un","qtd":4,"min":4},{"setor":"Som","nome":"Computador","un":"un","qtd":1,"min":1,"rev":"EXTERNA"},{"setor":"Som","nome":"Fita Adesiva Preta Super Fixação","un":"un","qtd":1,"min":1},{"setor":"Som","nome":"Mesa de Som","un":"un","qtd":1,"min":1,"rev":"CAIXA EXTERNA"},{"setor":"Som","nome":"Pilhas Alcalinas AA","un":"un","qtd":0,"min":10},{"setor":"Som","nome":"Pilhas Palitos","un":"un","qtd":0,"min":10},{"setor":"Som","nome":"Projeção","un":"un","qtd":1,"min":1,"rev":"CAIXA EXTERNA"},{"setor":"Saúde","nome":"Material Equipe Saúde","un":"un","qtd":1,"min":1},{"setor":"Templo","nome":"Abafador de Som","un":"un","qtd":2,"min":4},{"setor":"Templo","nome":"Bandeja Redonda de Inox","un":"un","qtd":2,"min":2},{"setor":"Templo","nome":"Bombonier para Balas Servos","un":"un","qtd":1,"min":1},{"setor":"Templo","nome":"Caixa de Acrílico para o Banheiro","un":"un","qtd":2,"min":2},{"setor":"Templo","nome":"Caixa Preta com Tampa Pequena","un":"un","qtd":1,"min":1},{"setor":"Templo","nome":"Caixa Preta Grande com Tampa","un":"un","qtd":1,"min":1},{"setor":"Templo","nome":"Cortina Porta de Vidro Preta","un":"un","qtd":1,"min":1},{"setor":"Templo","nome":"Garrafa Térmica Pequena","un":"un","qtd":1,"min":1},{"setor":"Templo","nome":"Placas da Visão","un":"un","qtd":4,"min":4},{"setor":"Templo","nome":"Placas do Tempo","un":"un","qtd":5,"min":5},{"setor":"Templo","nome":"Taças de Vidro","un":"un","qtd":5,"min":5},{"setor":"Templo","nome":"Toalhas Pretas para o Templo","un":"un","qtd":4,"min":4},{"setor":"Cozinha","nome":"Borrifador","un":"un","qtd":2,"min":2},{"setor":"Cozinha","nome":"Caixa de Mantimento com Tampa Preta","un":"un","qtd":4,"min":4},{"setor":"Cozinha","nome":"Caixa de Verdura sem Tampa Preta","un":"un","qtd":4,"min":4},{"setor":"Cozinha","nome":"Cesto de Vime Redondo - Grande","un":"un","qtd":4,"min":4},{"setor":"Cozinha","nome":"Cesto de Vime Redondo - Pequeno","un":"un","qtd":3,"min":3},{"setor":"Cozinha","nome":"Colher de Inox - Grande","un":"un","qtd":2,"min":2},{"setor":"Cozinha","nome":"Concha de Inox - Grande","un":"un","qtd":1,"min":1},{"setor":"Cozinha","nome":"Descascador de Legume Inox","un":"un","qtd":1,"min":1},{"setor":"Cozinha","nome":"Faca - Grande","un":"un","qtd":4,"min":4},{"setor":"Cozinha","nome":"Frigideira - Grande","un":"un","qtd":1,"min":1},{"setor":"Cozinha","nome":"Garrafa Térmica Pequena","un":"un","qtd":1,"min":1},{"setor":"Cozinha","nome":"Garrafão Azul","un":"un","qtd":2,"min":2},{"setor":"Cozinha","nome":"Garrafão Preto","un":"un","qtd":2,"min":2},{"setor":"Cozinha","nome":"Jarra com Tampa - Grande","un":"un","qtd":2,"min":2},{"setor":"Cozinha","nome":"Pegador de Inox","un":"un","qtd":2,"min":2},{"setor":"Cozinha","nome":"Pote Branco Redondo","un":"un","qtd":2,"min":2},{"setor":"Cozinha","nome":"Pote de Vidro c/ Tampa - Pequeno","un":"un","qtd":3,"min":3},{"setor":"Cozinha","nome":"Rechaud","un":"un","qtd":5,"min":5},{"setor":"Cozinha","nome":"Tábua de Cortar - Grande","un":"un","qtd":2,"min":2},{"setor":"Refeitório","nome":"Banner Refeitório","un":"un","qtd":3,"min":3},{"setor":"Refeitório","nome":"Borrifador","un":"un","qtd":2,"min":2},{"setor":"Refeitório","nome":"Caixa Azul com Tampa","un":"un","qtd":1,"min":1},{"setor":"Refeitório","nome":"Placas de Mesa Silêncio","un":"un","qtd":71,"min":71},{"setor":"Refeitório","nome":"Suplar","un":"un","qtd":6,"min":6},{"setor":"Refeitório","nome":"Toalhas Azul p/ Mesa Encontrista","un":"un","qtd":0,"min":26},{"setor":"Refeitório","nome":"Toalhas de Plástico Coloridas","un":"un","qtd":49,"min":49},{"setor":"Refeitório","nome":"Toalha de Plástico Transparente Grande","un":"un","qtd":2,"min":2},{"setor":"Descartáveis","nome":"Colher pequena (pacote c/ 50)","un":"pacotes","qtd":20,"min":30},{"setor":"Descartáveis","nome":"Caixa com Tampa","un":"un","qtd":1,"min":1},{"setor":"Descartáveis","nome":"Copo 200ml (pacote c/ 100)","un":"pacotes","qtd":6,"min":50},{"setor":"Descartáveis","nome":"Copo 50ml (café) (pacote c/ 100)","un":"pacotes","qtd":42,"min":30},{"setor":"Descartáveis","nome":"Faca Descartável (pacote c/ 100)","un":"pacotes","qtd":1,"min":15},{"setor":"Descartáveis","nome":"Guardanapo (pacote c/ 100)","un":"pacotes","qtd":5,"min":30},{"setor":"Descartáveis","nome":"Garfo pequeno (pacote c/ 50)","un":"pacotes","qtd":5,"min":15},{"setor":"Descartáveis","nome":"Luva Descartável","un":"un","qtd":100,"min":30},{"setor":"Descartáveis","nome":"Papel Alumínio","un":"un","qtd":6,"min":10},{"setor":"Descartáveis","nome":"Pratinho de Sobremesa (pacote c/ 10)","un":"pacotes","qtd":94,"min":35},{"setor":"Descartáveis","nome":"Rolo Film Grande","un":"un","qtd":0.5,"min":2,"rev":"METADE"},{"setor":"Descartáveis","nome":"Rolo Film Pequeno","un":"un","qtd":0.5,"min":0,"rev":"METADE"},{"setor":"Descartáveis","nome":"Saco Cachorro Quente (pacote c/ 500)","un":"pacotes","qtd":2,"min":2},{"setor":"Descartáveis","nome":"Touca Descartável (pacote c/ 10)","un":"pacotes","qtd":10,"min":20},{"setor":"Limpeza","nome":"Álcool 70%","un":"un","qtd":4,"min":4},{"setor":"Limpeza","nome":"Balde","un":"un","qtd":2,"min":2},{"setor":"Limpeza","nome":"Bom Ar","un":"un","qtd":4,"min":2,"dup":true},{"setor":"Limpeza","nome":"Bombril","un":"un","qtd":2,"min":2},{"setor":"Limpeza","nome":"Cesta Plástica Preta","un":"un","qtd":2,"min":2},{"setor":"Limpeza","nome":"Cloro 5 L","un":"un","qtd":3,"min":1},{"setor":"Limpeza","nome":"Desinfetante 2 L","un":"un","qtd":1,"min":1},{"setor":"Limpeza","nome":"Desinfetante 5 L","un":"un","qtd":1,"min":1},{"setor":"Limpeza","nome":"Detergente 5 L","un":"un","qtd":1,"min":1},{"setor":"Limpeza","nome":"Esponja de Lavar Louça","un":"un","qtd":2,"min":6},{"setor":"Limpeza","nome":"Inseticida","un":"un","qtd":1,"min":2},{"setor":"Limpeza","nome":"Pá de Lixo","un":"un","qtd":10,"min":10},{"setor":"Limpeza","nome":"Pano de Chão Pequeno","un":"un","qtd":2,"min":70},{"setor":"Limpeza","nome":"Papel Higiênico (pacote c/ 16)","un":"pacotes","qtd":6,"min":0},{"setor":"Limpeza","nome":"Papel Toalha para Mão (pacote c/ 100)","un":"pacotes","qtd":8,"min":4},{"setor":"Limpeza","nome":"Rodo","un":"un","qtd":10,"min":10},{"setor":"Limpeza","nome":"Saco de Lixo 100 L (pacote c/ 100)","un":"pacotes","qtd":1,"min":1},{"setor":"Limpeza","nome":"Saco de Lixo 200 L (pacote c/ 100)","un":"pacotes","qtd":1,"min":1},{"setor":"Limpeza","nome":"Vassoura","un":"un","qtd":14,"min":14},{"setor":"Limpeza","nome":"Veja","un":"un","qtd":3,"min":3},{"setor":"Intercessão","nome":"Arca da Aliança Grande Dourada","un":"un","qtd":1,"min":1},{"setor":"Intercessão","nome":"Armação de Barraca","un":"un","qtd":1,"min":1},{"setor":"Intercessão","nome":"Caixa Branca com Tampa","un":"un","qtd":1,"min":1},{"setor":"Intercessão","nome":"Caixa Preta com Tampa","un":"un","qtd":1,"min":1},{"setor":"Intercessão","nome":"Pisca-pisca","un":"un","qtd":10,"min":10},{"setor":"Intercessão","nome":"Pregadores para Fotos (pequeno)","un":"un","qtd":5,"min":30},{"setor":"Intercessão","nome":"Voal Branco","un":"metros","qtd":15,"min":15},{"setor":"Intercessão","nome":"Voal Marfim","un":"metros","qtd":5,"min":5},{"setor":"Recepção","nome":"Armação para Banner 3 m x 2,5 m","un":"un","qtd":1,"min":1},{"setor":"Recepção","nome":"Banner de Boas-vindas Branco Grande","un":"un","qtd":4,"min":4},{"setor":"Recepção","nome":"Banner de Boas-vindas do VV Preto","un":"un","qtd":1,"min":1},{"setor":"Recepção","nome":"Banner de Boas-vindas Roxo","un":"un","qtd":6,"min":6},{"setor":"Recepção","nome":"Barraca Dobrável Lona Azul","un":"un","qtd":1,"min":1},{"setor":"Recepção","nome":"Caixa Transparente sem Tampa","un":"un","qtd":1,"min":1},{"setor":"Recepção","nome":"Placas de Boas-vindas Roxo","un":"un","qtd":6,"min":6},{"setor":"Quarto","nome":"Absorvente (pacote c/ 10)","un":"pacotes","qtd":1,"min":1},{"setor":"Quarto","nome":"Desodorante","un":"un","qtd":10,"min":14},{"setor":"Quarto","nome":"Enxaguante Bucal","un":"un","qtd":1,"min":1},{"setor":"Quarto","nome":"Pasta de Dente","un":"un","qtd":15,"min":15},{"setor":"Quarto","nome":"Sabonete Líquido","un":"un","qtd":1,"min":2}];
 const INV_AREA = 'Logística';
+const INV_CONS_RE = /bom-bom|bala menta|balões|balao|bola nº|fogos|álcool|alcool|pilhas|papel vegetal|tinta|folha a4|plástico a4|plástico rolo|plástico do crach|etiqueta|fita adesiva|grapos|sacos para celular|veste do filho|anel filho|caneta|bloco|lenço|chinelos|copos personalizados|crach|jacaré|sacola do correio|gás hélio|toalhinhas|cachepô|fantasminha/i;
+const invCons = i => ['Descartáveis', 'Limpeza', 'Quarto'].indexOf(i.setor) >= 0 || INV_CONS_RE.test(i.nome);
 function invPlan(){
   const have = {}; S.items.forEach(i => { have[i.setor.toLowerCase() + '|' + i.nome.toLowerCase()] = 1; });
   const setNow = allSetores().map(x => x.toLowerCase());
@@ -941,7 +964,101 @@ function invPlan(){
   INV_SEED.forEach(i => { if (have[i.setor.toLowerCase() + '|' + i.nome.toLowerCase()]) return; novos.push(i); if (setNow.indexOf(i.setor.toLowerCase()) < 0 && novosSet.indexOf(i.setor) < 0) novosSet.push(i.setor); });
   const unNow = S.cfg.unidades.map(x => x.toLowerCase()), novasUn = [];
   novos.forEach(i => { if (unNow.indexOf(i.un.toLowerCase()) < 0 && novasUn.indexOf(i.un) < 0) novasUn.push(i.un); });
-  return {novos, novosSet, novasUn, ja:INV_SEED.length - novos.length};
+  const marcar = [];
+  INV_SEED.forEach(i => { const ex = S.items.find(x => x.setor.toLowerCase() === i.setor.toLowerCase() && x.nome.toLowerCase() === i.nome.toLowerCase()); if (ex && ex.cons === undefined) marcar.push({id:ex.id, cons:invCons(i)}); });
+  return {novos, novosSet, novasUn, marcar, ja:INV_SEED.length - novos.length};
+}
+
+/* ---------- Enviado para a edição e balanço ---------- */
+const envId = (ed, it) => ed + '_' + it;
+const envOf = (ed, it) => S.envios.find(x => x.id === envId(ed, it));
+const envBack = x => x.aplicado == null ? 0 : x.aplicado;
+const envTag = i => i.cons ? '<span class="tg tg-c">Consumível</span>' : '<span class="tg tg-v">Volta ao depósito</span>';
+const estNeedEd = () => '<div class="note">Escolha uma edição no seletor “Edição”, no topo da tela.</div>';
+function envDelOps(id){
+  const ops = [];
+  S.envios.filter(x => x.ed === id).forEach(x => { const it = itemById(x.item), back = x.env - envBack(x); if (it && back) ops.push(upd('itens/' + it.id, {qtd:{__inc:back}})); ops.push({t:'del', path:'envios/' + x.id}); });
+  return ops;
+}
+async function envSet(ed, it, novo){
+  const cur = envOf(ed.id, it.id), old = cur ? cur.env : 0, delta = novo - old;
+  if (novo < 0 || !delta) return;
+  if (cur && cur.aplicado != null){ toast('O balanço deste item já foi fechado.'); return; }
+  if (delta > it.qtd){ toast('Só há ' + fmtQ(it.qtd) + ' ' + it.un + ' no depósito.'); return; }
+  const ops = [];
+  if (novo === 0 && !(cur && cur.comp > 0)) ops.push({t:'del', path:'envios/' + envId(ed.id, it.id)});
+  else ops.push({t:'set', path:'envios/' + envId(ed.id, it.id), data:{ed:ed.id, item:it.id, setor:it.setor, env:novo, comp:cur ? cur.comp || 0 : 0, volta:cur && cur.volta != null ? cur.volta : null, aplicado:null}});
+  ops.push(upd('itens/' + it.id, {qtd:{__inc:-delta}}));
+  await W(() => BE.db.batch(ops));
+}
+function envForm(){
+  const items = visItems(), setores = allSetores().filter(st => items.some(i => i.setor === st));
+  items.forEach(i => { if (setores.indexOf(i.setor) < 0) setores.push(i.setor); });
+  return '<form class="form" data-form="env-add" novalidate><div class="note">Enviando para: <b>' + esc(edName(S.selEd)) + '</b>. O estoque geral desconta na hora.</div>'
+    + '<div class="fg"><label class="fl" for="ea-setor">Setor</label><select class="inp" id="ea-setor" name="msetor" data-chg="env-setor">' + opt('', 'Escolha o setor') + setores.map(st => opt(st, st)).join('') + '</select></div>'
+    + '<div class="fg"><label class="fl" for="ea-item">Item</label><select class="inp" id="ea-item" name="item">' + itemOptsFor(items, '') + '</select></div>'
+    + '<div class="fg"><label class="fl" for="ea-qtd">Quantidade enviada</label><input class="inp" id="ea-qtd" name="qtd" type="text" inputmode="decimal" placeholder="0"></div>' + modalBtns('Enviar') + '</form>';
+}
+const stp2 = (act, id, f, v, d0) => '<div class="stp2"><button type="button" data-act="' + act + '" data-id="' + esc(id) + '" data-f="' + f + '" data-d="-1" aria-label="Diminuir">−</button><b>' + v + '</b><button type="button" data-act="' + act + '" data-id="' + esc(id) + '" data-f="' + f + '" data-d="1" aria-label="Aumentar">+</button></div>';
+function estEnvio(F, adm){
+  const ed = decEd(); if (!ed) return estNeedEd();
+  const list = S.envios.filter(x => x.ed === ed.id).map(x => ({x, it:itemById(x.item)})).filter(r => r.it);
+  const sets = allSetores().filter(st => list.some(r => r.x.setor === st) && okCtx('stock', st) && (F.setor === 'all' || F.setor === st));
+  const tot = sum(list, r => r.x.env);
+  return '<p class="muted small" style="margin:2px 2px 4px">O que saiu do depósito para ' + esc(ed.nome) + '. O estoque geral já desconta o enviado. ' + fmtQ(tot) + ' unidades em ' + list.length + ' itens.</p>'
+    + (estAreas(sets, st => estSec('e:' + st, st, list.filter(r => r.x.setor === st).length, '<div class="lst">' + list.filter(r => r.x.setor === st).map(r => '<div class="li"><div class="li-m"><b>' + esc(r.it.nome) + '</b><small>No depósito: ' + fmtQ(r.it.qtd) + ' ' + esc(r.it.un) + '</small>' + envTag(r.it) + '</div>'
+      + (adm && r.x.aplicado == null ? '<div class="stp2"><button type="button" data-act="env-step" data-id="' + esc(r.it.id) + '" data-d="-1" aria-label="Diminuir">−</button><b>' + fmtQ(r.x.env) + '</b><button type="button" data-act="env-step" data-id="' + esc(r.it.id) + '" data-d="1" aria-label="Aumentar">+</button></div>' : '<div class="li-r">' + fmtQ(r.x.env) + ' ' + esc(r.it.un) + (r.x.aplicado != null ? '<small>balanço fechado</small>' : '') + '</div>') + '</div>').join('') + '</div>', F, true), F) || '<div class="empty">Nada enviado para esta edição ainda.' + (adm ? ' Toque em “Enviar item”.' : '') + '</div>');
+}
+function balCalc(){
+  const ed = decEd(); if (!ed) return null;
+  const list = S.envios.filter(x => x.ed === ed.id).map(x => ({x, it:itemById(x.item)})).filter(r => r.it);
+  let contados = 0, faltas = 0, comprar = 0;
+  list.forEach(r => {
+    const x = r.x; if (x.volta == null) return; contados++;
+    const cons = x.env + (x.comp || 0) - x.volta; r.cons = cons; r.falta = !r.it.cons && cons > 0;
+    r.depois = r.it.qtd + (x.volta - envBack(x)); r.baixo = r.depois < r.it.min;
+    if (r.falta) faltas++; if (r.baixo) comprar++;
+  });
+  return {ed, list, contados, faltas, comprar};
+}
+function estBal(F, adm){
+  const B = balCalc(); if (!B) return estNeedEd();
+  const {list} = B;
+  if (!list.length) return '<div class="empty">Nada foi enviado para esta edição, então não há o que contar. Registre antes em “Enviado”.</div>';
+  const sets = allSetores().filter(st => list.some(r => r.x.setor === st) && okCtx('stock', st) && (F.setor === 'all' || F.setor === st));
+  const card = r => {
+    const x = r.x, it = r.it, cons = x.volta == null ? null : x.env + (x.comp || 0) - x.volta;
+    return '<div class="bcard"><div class="bc-h"><div class="li-m"><b>' + esc(it.nome) + '</b>' + envTag(it) + '</div><div class="li-r">' + (cons == null ? '—' : fmtQ(cons)) + '<small>consumo</small></div></div>'
+      + '<div class="bc-r"><div class="bc-k"><span>Enviado</span><b>' + fmtQ(x.env) + '</b></div>'
+      + '<div class="bc-k"><span>Comprado</span>' + (adm ? stp2('bal-step', it.id, 'comp', fmtQ(x.comp || 0)) : '<b>' + fmtQ(x.comp || 0) + '</b>') + '</div>'
+      + '<div class="bc-k"><span>Voltou</span>' + (adm ? '<div class="stp2"><button type="button" data-act="bal-step" data-id="' + esc(it.id) + '" data-f="volta" data-d="-1" aria-label="Diminuir">−</button><input class="inp bal-in" type="text" inputmode="decimal" data-chg="bal-volta" data-id="' + esc(it.id) + '" value="' + (x.volta == null ? '' : fmtQ(x.volta)) + '" placeholder="—" aria-label="Quanto voltou"><button type="button" data-act="bal-step" data-id="' + esc(it.id) + '" data-f="volta" data-d="1" aria-label="Aumentar">+</button></div>' : '<b>' + (x.volta == null ? '—' : fmtQ(x.volta)) + '</b>') + '</div></div>'
+      + (adm && x.volta == null ? '<button type="button" class="btn btn-sm" data-act="bal-tudo" data-id="' + esc(it.id) + '">Voltou tudo (' + fmtQ(x.env + (x.comp || 0)) + ')</button>' : '')
+      + (r.falta ? '<div class="al al-bad">Faltou voltar ' + fmtQ(cons) + '. Este item não é consumível: confira antes de fechar.</div>' : '')
+      + (r.baixo ? '<div class="al al-low">O estoque geral ficará em ' + fmtQ(r.depois) + ' ' + esc(it.un) + ', abaixo do mínimo de ' + fmtQ(it.min) + '. Vale comprar.</div>' : '') + '</div>';
+  };
+  return '<div class="bsum"><div><b>' + B.contados + '/' + list.length + '</b><span>itens contados</span></div><div><b class="neg">' + B.faltas + '</b><span>não voltaram</span></div><div><b>' + B.comprar + '</b><span>abaixo do mínimo</span></div></div>'
+    + '<p class="muted small" style="margin:2px 2px 4px">Conte o que voltou de cada item. O consumo é calculado: enviado + comprado − voltou.</p>'
+    + estAreas(sets, st => estSec('b:' + st, st, list.filter(r => r.x.setor === st).length, list.filter(r => r.x.setor === st).map(card).join(''), F, true), F)
+    + (adm ? '<button class="btn btn-primary btn-block" data-act="bal-fechar" style="margin-top:14px">Fechar balanço e atualizar o estoque geral</button>' : '');
+}
+function matReportBody(e){
+  if (!canStock()) return '';
+  const l = S.envios.filter(x => x.ed === e.id).map(x => ({x, it:itemById(x.item)})).filter(r => r.it && r.x.volta != null);
+  const low = visItems().filter(i => i.qtd < i.min).sort((a, b) => (b.min - b.qtd) - (a.min - a.qtd)).slice(0, 8);
+  if (!l.length && !low.length) return '';
+  let h = '';
+  if (l.length) h += '<h3 style="font-size:17px;margin:18px 0 6px">Material da edição</h3><table class="kv"><tbody>' + l.map(r => '<tr><td>' + esc(r.it.nome) + '</td><td>' + fmtQ(r.x.env) + ' → ' + fmtQ(r.x.volta) + ' · consumo ' + fmtQ(r.x.env + (r.x.comp || 0) - r.x.volta) + '</td></tr>').join('') + '</tbody></table>';
+  if (low.length) h += '<h3 style="font-size:17px;margin:18px 0 6px">Para comprar</h3><table class="kv"><tbody>' + low.map(i => '<tr><td>' + esc(i.nome) + '</td><td>faltam ' + fmtQ(i.min - i.qtd) + ' ' + esc(i.un) + '</td></tr>').join('') + '</tbody></table>';
+  return h;
+}
+function matReportHtml(e){
+  if (!canStock()) return '';
+  const l = S.envios.filter(x => x.ed === e.id).map(x => ({x, it:itemById(x.item)})).filter(r => r.it);
+  const low = visItems().filter(i => i.qtd < i.min).sort((a, b) => (b.min - b.qtd) - (a.min - a.qtd));
+  let h = '';
+  if (l.length) h += '<h2>Material enviado e balanço</h2>' + hTable([['Item'], ['Setor'], ['Enviado', 1], ['Comprado', 1], ['Voltou', 1], ['Consumo', 1]], l.map(r => [r.it.nome, r.it.setor, fmtQ(r.x.env), fmtQ(r.x.comp || 0), r.x.volta == null ? 'não contado' : fmtQ(r.x.volta), r.x.volta == null ? '—' : fmtQ(r.x.env + (r.x.comp || 0) - r.x.volta)]));
+  if (low.length) h += '<h2>Para comprar antes da próxima edição</h2>' + hTable([['Item'], ['Setor'], ['Atual', 1], ['Mínimo', 1], ['Faltam', 1]], low.map(i => [i.nome, i.setor, fmtQ(i.qtd), fmtQ(i.min), fmtQ(i.min - i.qtd)]));
+  return h;
 }
 function itemOptsFor(items, setor){
   const list = items.filter(i => !setor || i.setor === setor);
@@ -968,8 +1085,8 @@ function movPrev(){
   const novo = it.qtd + (tp === 'rep' ? q : -q);
   box.textContent = novo < 0 ? 'Só há ' + fmtQ(it.qtd) + ' ' + it.un + ' no estoque geral.' : 'Estoque geral de ' + it.nome + ': ' + fmtQ(it.qtd) + ' → ' + fmtQ(novo) + ' ' + it.un;
 }
-function estSec(key, title, count, inner, F){
-  const open = !!(F.open && F.open[key]) || F.setor !== 'all' || F.sit === 'falta';
+function estSec(key, title, count, inner, F, def){
+  const o = F.open && F.open[key], open = (o === undefined ? !!def : !!o) || F.setor !== 'all' || F.sit === 'falta';
   return '<div class="acc"><button type="button" class="acc-h' + (open ? ' on' : '') + '" data-act="est-tog" data-id="' + esc(key) + '" aria-expanded="' + open + '"><span>' + esc(title) + '</span><span class="acc-n">' + count + '</span>' + icon(open ? 'chevD' : 'chevR', 18) + '</button>' + (open ? inner : '') + '</div>';
 }
 function estAreas(sets, build, F){
@@ -980,12 +1097,12 @@ function estAreas(sets, build, F){
 }
 function viewEstoque(){
   const adm = isAdmin(), F = U.est, items = visItems();
-  if (!F.aba) F.aba = 'geral';
+  if (!F.aba) F.aba = 'geral'; if (F.aba === 'ed') F.aba = 'mov';
   const low = items.filter(i => sit(i) !== 'ok');
   const M = visMovs().filter(inSel);
   const setoresAll = allSetores().filter(st => items.some(i => i.setor === st) && okCtx('stock', st));
   const chips = '<div class="chips"><button class="chip' + (F.setor === 'all' ? ' on' : '') + '" data-act="est-chip" data-id="all">Todos</button>' + setoresAll.map(st => '<button class="chip' + (F.setor === st ? ' on' : '') + '" data-act="est-chip" data-id="' + esc(st) + '">' + esc(st) + '</button>').join('') + '</div>';
-  const seg = '<div class="chips"><button class="chip' + (F.aba === 'geral' ? ' on' : '') + '" data-act="est-aba" data-id="geral">Estoque geral</button><button class="chip' + (F.aba === 'ed' ? ' on' : '') + '" data-act="est-aba" data-id="ed">Desta edição</button>'
+  const seg = '<div class="chips">' + [['geral', 'Estoque geral'], ['env', 'Enviado'], ['bal', 'Balanço'], ['mov', 'Ajustes']].map(a => '<button class="chip' + (F.aba === a[0] ? ' on' : '') + '" data-act="est-aba" data-id="' + a[0] + '">' + a[1] + '</button>').join('')
     + (F.aba === 'geral' ? '<button class="chip' + (F.sit === 'falta' ? ' on' : '') + '" data-act="est-falta">Em falta · ' + low.length + '</button>' : '') + '</div>';
   let body = '';
   if (F.aba === 'geral'){
@@ -1000,16 +1117,20 @@ function viewEstoque(){
           + (adm ? '<div class="acts-c">' + iconBtn('item-edit', i.id, 'edit', 'Editar ' + i.nome) + iconBtn('item-del', i.id, 'trash', 'Excluir ' + i.nome) + '</div>' : '') + '</div>';
       }).join('') + '</div>', F);
     }, F) || '<div class="empty">' + (items.length ? 'Nenhum item com esse filtro.' : 'Nenhum item cadastrado ainda.') + '</div>';
+  } else if (F.aba === 'env'){
+    body = estEnvio(F, adm);
+  } else if (F.aba === 'bal'){
+    body = estBal(F, adm);
   } else {
     const sc = S.selEd === 'all' ? 'todas as edições' : edName(S.selEd);
     const mv = M.filter(m => F.setor === 'all' || (itemById(m.item) || {}).setor === F.setor).sort((a, b) => b.data.localeCompare(a.data));
     const sets = Array.from(new Set(mv.map(m => (itemById(m.item) || {}).setor).filter(Boolean)));
-    body = '<p class="muted small" style="margin:2px 2px 4px">Movimentações de ' + esc(sc) + '. Cada uma já foi somada ou abatida do estoque geral.</p>'
+    body = '<p class="muted small" style="margin:2px 2px 4px">Ajustes avulsos de ' + esc(sc) + ' (usos e reposições). Cada um já foi somado ou abatido do estoque geral.</p>'
       + (estAreas(sets, st => estSec('m:' + st, st, mv.filter(m => (itemById(m.item) || {}).setor === st).length, '<div class="lst">' + mv.filter(m => (itemById(m.item) || {}).setor === st).map(m => { const it = itemById(m.item); return '<div class="li"><div class="li-m"><b>' + esc(it.nome) + '</b><small>' + dmy(m.data) + ' · ' + esc(m.por) + (S.selEd === 'all' ? ' · ' + esc(edName(m.ed)) : '') + '</small></div><div class="li-r ' + (m.tipo === 'uso' ? 'neg' : 'pos') + '">' + (m.tipo === 'uso' ? '− ' : '+ ') + fmtQ(m.qtd) + ' ' + esc(it.un) + '<small>' + (m.tipo === 'uso' ? 'Uso' : 'Reposição') + '</small></div></div>'; }).join('') + '</div>', F)) || '<div class="empty">Nenhuma movimentação nesta edição.</div>');
   }
   return pageHead(esc(lab('estoque')), 'Estoque geral contínuo entre as edições', adm ? '<button class="btn" data-act="inv-import">' + icon('upload', 16) + 'Importar inventário</button><button class="btn" data-act="item-novo">' + icon('plus', 16) + 'Novo item</button>' : '')
     + seg + chips + '<div class="accs">' + body + '</div>'
-    + (adm ? '<button class="fab" data-act="mov-novo">' + icon('plus', 20) + 'Registrar</button>' : '');
+    + (adm && F.aba === 'env' ? '<button class="fab" data-act="env-novo">' + icon('plus', 20) + 'Enviar item</button>' : adm && F.aba !== 'bal' ? '<button class="fab" data-act="mov-novo">' + icon('plus', 20) + (F.aba === 'mov' ? 'Ajuste' : 'Registrar') + '</button>' : '');
 }
 
 /* ---------- Organizacional ---------- */
@@ -1317,7 +1438,7 @@ function edReportBody(e){
   } else if (canMoney()) rows.push(['Saídas nas áreas liberadas', brl(saidas(L))]);
   const st = porSetor(L).slice(0, 5);
   return '<table class="kv"><tbody>' + rows.map(r => '<tr><td>' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td></tr>').join('') + '</tbody></table>'
-    + decReportBody(e)
+    + matReportBody(e) + decReportBody(e)
     + (canMoney() ? '<h3 style="font-size:17px;margin:18px 0 6px">Maiores gastos por setor</h3>' + (st.length ? '<table class="kv"><tbody>' + st.map(s => '<tr><td>' + esc(s.label) + '</td><td>' + brl(s.value) + '</td></tr>').join('') + '</tbody></table>' : '<p class="muted">Sem despesas.</p>') : '');
 }
 
@@ -1406,6 +1527,7 @@ const edForm = e => '<form class="form" data-form="ed-edit" novalidate><input ty
 function itemForm(i){
   return '<form class="form" data-form="item-save" id="item-form" novalidate><input type="hidden" name="id" value="' + esc(i ? i.id : '') + '"><div class="fg"><label class="fl" for="it-nome">Nome do item</label><input class="inp" id="it-nome" name="nome" type="text" value="' + esc(i ? i.nome : '') + '" placeholder="Ex.: Fita crepe"></div><div class="fg"><label class="fl" for="it-setor">Setor</label><select class="inp" id="it-setor" name="setor">' + setorOptions(i ? i.setor : '') + '</select></div>'
     + '<div class="two"><div class="fg"><label class="fl" for="it-un">Unidade</label><select class="inp" id="it-un" name="un">' + S.cfg.unidades.map(u => opt(u, u, i && i.un === u)).join('') + '</select></div>' + (i ? '' : '<div class="fg"><label class="fl" for="it-qtd">Quantidade atual</label><input class="inp" id="it-qtd" name="qtd" type="text" inputmode="decimal" value="0"></div>') + '<div class="fg"><label class="fl" for="it-min">Mínimo</label><input class="inp" id="it-min" name="min" type="text" inputmode="decimal" value="' + (i ? String(i.min).replace('.', ',') : '0') + '"></div></div>'
+    + '<label class="chk"><input type="checkbox" name="cons"' + (i && i.cons ? ' checked' : '') + '> É consumível (acaba com o uso, como descartáveis e limpeza)</label>'
     + (i ? '<div class="note">Para corrigir a quantidade, registre um uso ou uma reposição. Assim o histórico fica certo.</div>' : '') + modalBtns(i ? 'Salvar' : 'Cadastrar') + '</form>';
 }
 const findRec = id => id.indexOf('c:') === 0 ? S.convites.find(c => c.id === id.slice(2)) : S.users.find(u => u.id === id);
@@ -1582,6 +1704,22 @@ function pubRegistrar(){
 }
 const ACTS = {
   nav: el => go(el.dataset.v),
+  'env-novo': () => { if (needAdmin()) return; if (!decEd()){ toast('Escolha uma edição no seletor do topo.'); return; } openModal({title:'Enviar item para a edição', body:envForm()}); },
+  'env-step': el => { if (needAdmin()) return; const ed = decEd(), it = itemById(el.dataset.id); if (!ed || !it) return; const cur = envOf(ed.id, it.id); envSet(ed, it, (cur ? cur.env : 0) + Number(el.dataset.d)); },
+  'bal-step': el => { if (needAdmin()) return; const ed = decEd(), x = ed && envOf(ed.id, el.dataset.id); if (!x) return; const f = el.dataset.f, v = Math.max(0, (x[f] == null ? 0 : x[f]) + Number(el.dataset.d)); const patch = {}; patch[f] = v; W(() => BE.db.update('envios/' + x.id, patch)); },
+  'bal-tudo': el => { if (needAdmin()) return; const ed = decEd(), x = ed && envOf(ed.id, el.dataset.id); if (!x) return; W(() => BE.db.update('envios/' + x.id, {volta:x.env + (x.comp || 0)})); },
+  'bal-fechar': () => {
+    if (needAdmin()) return; const B = balCalc(); if (!B) return;
+    const ap = B.list.filter(r => r.x.volta != null && (r.x.aplicado == null || r.x.volta !== r.x.aplicado)), pend = B.list.length - B.contados;
+    if (!ap.length){ toast(B.contados ? 'O balanço já está fechado para os itens contados.' : 'Conte pelo menos um item antes de fechar.'); return; }
+    openModal({title:'Fechar o balanço?', body:'<p>' + ap.length + ' itens vão devolver ao estoque geral o que voltou.' + (pend ? ' <b>' + pend + ' itens ainda não foram contados</b> e ficam de fora (dá para fechar depois).' : '') + (B.faltas ? ' <b>' + B.faltas + ' itens não consumíveis não voltaram inteiros.</b>' : '') + '</p><p class="muted small">O consumo fica registrado no relatório da edição. Dá para corrigir uma contagem e fechar de novo.</p>', actions:[{label:'Cancelar', act:'close'}, {label:'Fechar balanço', act:'bal-fechar-ok', primary:true}]});
+  },
+  'bal-fechar-ok': async () => {
+    if (needAdmin()) return; const B = balCalc(); if (!B) return; const ops = [];
+    B.list.forEach(r => { const x = r.x; if (x.volta == null) return; const d = x.volta - envBack(x); if (d === 0 && x.aplicado != null) return; ops.push(upd('envios/' + x.id, {aplicado:x.volta})); if (d) ops.push(upd('itens/' + r.it.id, {qtd:{__inc:d}})); });
+    if (ops.length && await W(() => BE.db.batch(ops))){ closeModal(); toast('Balanço fechado. Estoque geral atualizado.'); }
+  },
+
   'dec-open': el => { S.selEd = el.dataset.id; selPref = true; save(); go('decisoes'); },
   'dec-f': el => { U.dec.f = U.dec.f === el.dataset.id ? 'all' : el.dataset.id; render(); },
   'dec-copy': async () => { const ed = decEd(), c = ed && decCfg(ed.id); if (!c || !c.token) return; const u = decUrl(c.token); try { await navigator.clipboard.writeText(u); toast('Link copiado.'); } catch (e) { const t = document.createElement('textarea'); t.value = u; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); toast('Link copiado.'); } catch (x) { toast('Copie o link manualmente.'); } t.remove(); } },
@@ -1621,16 +1759,16 @@ const ACTS = {
   'inv-import': () => {
     if (needAdmin()) return;
     const P = invPlan();
-    if (!P.novos.length){ openModal({title:'Importar inventário', body:'<p>Todos os ' + INV_SEED.length + ' itens do inventário já estão no estoque. Nada a importar.</p>', actions:[{label:'Fechar', act:'close', primary:true}]}); return; }
+    if (!P.novos.length && !P.marcar.length){ openModal({title:'Importar inventário', body:'<p>Todos os ' + INV_SEED.length + ' itens do inventário já estão no estoque. Nada a importar.</p>', actions:[{label:'Fechar', act:'close', primary:true}]}); return; }
     const por = {}; P.novos.forEach(i => { por[i.setor] = (por[i.setor] || 0) + 1; });
     const lista = Object.keys(por).map(k => '<tr><td>' + esc(k) + (P.novosSet.indexOf(k) >= 0 ? ' <span class="badge b-info">setor novo</span>' : '') + '</td><td>' + por[k] + '</td></tr>').join('');
-    openModal({title:'Importar inventário de outubro', body:'<p><b>' + P.novos.length + ' itens</b> serão cadastrados no estoque geral, com a quantidade atual e o mínimo (a “necessidade” da planilha).' + (P.ja ? ' ' + P.ja + ' já existem e serão mantidos como estão.' : '') + '</p>'
+    openModal({title:'Importar inventário de outubro', body:'<p><b>' + P.novos.length + ' itens</b> serão cadastrados no estoque geral, com a quantidade atual e o mínimo (a “necessidade” da planilha).' + (P.marcar.length ? ' Também vou marcar quais dos ' + P.marcar.length + ' itens já cadastrados são consumíveis.' : '') + (P.ja ? ' ' + P.ja + ' já existem e serão mantidos como estão.' : '') + '</p>'
       + (P.novosSet.length ? '<div class="note">Setores novos, criados na área “' + INV_AREA + '”: <b>' + esc(P.novosSet.join(', ')) + '</b>. Você pode mover ou renomear depois em Configurações.</div>' : '')
-      + '<table class="kv" style="margin-top:12px">' + lista + '</table>', actions:[{label:'Cancelar', act:'close'}, {label:'Importar ' + P.novos.length + ' itens', act:'inv-import-ok', primary:true}]});
+      + '<table class="kv" style="margin-top:12px">' + lista + '</table>', actions:[{label:'Cancelar', act:'close'}, {label:P.novos.length ? 'Importar ' + P.novos.length + ' itens' : 'Marcar consumíveis', act:'inv-import-ok', primary:true}]});
   },
   'inv-import-ok': async () => {
     if (needAdmin()) return;
-    const P = invPlan(); if (!P.novos.length){ closeModal(); return; }
+    const P = invPlan(); if (!P.novos.length && !P.marcar.length){ closeModal(); return; }
     const ops = [];
     if (P.novosSet.length || P.novasUn.length){
       const patch = {};
@@ -1643,14 +1781,15 @@ const ACTS = {
       if (P.novasUn.length) patch.unidades = S.cfg.unidades.concat(P.novasUn);
       ops.push(upd('config/app', patch));
     }
-    P.novos.forEach(i => ops.push({t:'set', path:'itens/' + BE.db.newId('itens'), data:{nome:i.nome, setor:i.setor, un:i.un, qtd:i.qtd, min:i.min}}));
-    if (await W(() => BE.db.batch(ops))){ closeModal(); toast(P.novos.length + ' itens importados.'); scheduleRender(true); }
+    P.novos.forEach(i => ops.push({t:'set', path:'itens/' + BE.db.newId('itens'), data:{nome:i.nome, setor:i.setor, un:i.un, qtd:i.qtd, min:i.min, cons:invCons(i)}}));
+    P.marcar.forEach(m => ops.push(upd('itens/' + m.id, {cons:m.cons})));
+    if (await W(() => BE.db.batch(ops))){ closeModal(); toast(P.novos.length ? P.novos.length + ' itens importados.' : 'Consumíveis marcados.'); scheduleRender(true); }
   },
   'mov-novo': () => { openModal({title:'Registrar no estoque', body:movForm()}); movPrev(); },
   'lanc-novo': () => openModal({title:'Lançar valor', body:lancForm()}),
   'ed-novo': () => openModal({title:'Nova edição', body:edNovaForm()}),
   'est-chip': el => { U.est.setor = el.dataset.id; render(); },
-    'est-tog': el => { const o = U.est.open = U.est.open || {}; o[el.dataset.id] = !o[el.dataset.id]; render(); },
+    'est-tog': el => { const o = U.est.open = U.est.open || {}; o[el.dataset.id] = el.getAttribute('aria-expanded') !== 'true'; render(); },
   'est-aba': el => { U.est.aba = el.dataset.id; render(); },
   'est-falta': () => { U.est.sit = U.est.sit === 'falta' ? 'all' : 'falta'; render(); },
   'qtd-step': el => { const i = $('#mv-qtd'); if (!i) return; const v = Math.max(0, (parseMoney(i.value) || 0) + Number(el.dataset.id)); i.value = String(v).replace('.', ','); movPrev(); },
@@ -1687,7 +1826,7 @@ const ACTS = {
   'ed-del-ok': async el => {
     if (needAdmin()) return; const id = el.dataset.id;
     const ls = S.lanc.filter(l => l.ed === id), ms = S.movs.filter(m => m.ed === id);
-    const ops = ls.map(l => ({t:'del', path:'lancamentos/' + l.id})).concat(ms.map(m => ({t:'del', path:'movimentos/' + m.id})), [{t:'del', path:'edicoes/' + id}, {t:'del', path:'edicoes_fin/' + id}], decDelOps(id));
+    const ops = ls.map(l => ({t:'del', path:'lancamentos/' + l.id})).concat(ms.map(m => ({t:'del', path:'movimentos/' + m.id})), [{t:'del', path:'edicoes/' + id}, {t:'del', path:'edicoes_fin/' + id}], decDelOps(id), envDelOps(id));
     if (await W(() => BE.db.batch(ops))){
       ls.forEach(l => { if (l.compPath) BE.storage.rm(l.compPath).catch(() => {}); });
       if (S.selEd === id) S.selEd = 'all'; closeModal(); toast('Edição excluída.');
@@ -1781,10 +1920,13 @@ const ACTS = {
   'export-html': el => {
     const id = el.dataset.id;
     if (id === 'rel'){ const per = U.rel.modo === 'mensal' ? U.rel.mes : U.rel.ano; const L = visLanc().filter(l => l.data.indexOf(per) === 0), M = visMovs().filter(m => m.data.indexOf(per) === 0); saveFile('relatorio-' + per + '.html', relDoc('Relatório ' + (U.rel.modo === 'mensal' ? 'mensal · ' + mesLabel(per) : 'anual · ' + per), L, M)); }
-    else { const e = edById(id.slice(3)); saveFile('relatorio-' + e.id + '.html', relDoc('Relatório da edição · ' + e.nome, visLanc().filter(l => l.ed === e.id), visMovs().filter(m => m.ed === e.id), decReportHtml(e))); }
+    else { const e = edById(id.slice(3)); saveFile('relatorio-' + e.id + '.html', relDoc('Relatório da edição · ' + e.nome, visLanc().filter(l => l.ed === e.id), visMovs().filter(m => m.ed === e.id), matReportHtml(e) + decReportHtml(e))); }
   }
 };
 const CHG = {
+  'env-setor': el => { const sel = $('#ea-item'); if (sel) sel.innerHTML = itemOptsFor(visItems(), el.value); },
+  'bal-volta': el => { if (needAdmin()) return; const ed = decEd(), x = ed && envOf(ed.id, el.dataset.id); if (!x) return; const t = el.value.trim(), v = t === '' ? null : parseMoney(t); if (v !== null && (isNaN(v) || v < 0)){ toast('Informe um número válido.'); render(); return; } W(() => BE.db.update('envios/' + x.id, {volta:v})); },
+
   'dec-imp-file': async el => {
     const f = el.files && el.files[0], st = $('#imp-st'); if (!f) return;
     if (st) st.textContent = 'Lendo a planilha…';
@@ -1837,6 +1979,12 @@ async function addFiles(list){
 const fv = (f, n) => { const e = f.elements.namedItem(n); return e && e.value != null ? e.value : ''; };
 const checkedFile = (f, n) => f.elements[n] && f.elements[n].files && f.elements[n].files[0];
 const FORMS = {
+  'env-add': async f => {
+    if (needAdmin()) return; const ed = decEd(), it = itemById(fv(f, 'item')), q = parseMoney(fv(f, 'qtd'));
+    if (!ed){ toast('Escolha uma edição.'); return; } if (!it){ toast('Escolha um item.'); return; } if (!(q > 0)){ toast('Informe uma quantidade maior que zero.'); return; }
+    const cur = envOf(ed.id, it.id); await envSet(ed, it, (cur ? cur.env : 0) + q); closeModal();
+  },
+
   'pub-vol': f => { const v = fv(f, 'vol').trim(); if (!v){ toast('Digite seu nome.'); return; } P.vol = v; try { localStorage.setItem('vv_vol', v); } catch (e) {} render(); },
   'pub-reg': () => pubRegistrar(),
   'decb-save': async f => {
@@ -1956,8 +2104,8 @@ const FORMS = {
     if (isNaN(qtd) || qtd < 0 || isNaN(min) || min < 0){ toast('Quantidade e mínimo precisam ser números.'); return; }
     if (S.items.some(i => i !== it && i.setor === setor && i.nome.toLowerCase() === nome.toLowerCase())){ toast('Esse item já existe nesse setor.'); return; }
     let ok;
-    if (it){ const ops = [upd('itens/' + it.id, {nome, setor, un:fv(f, 'un'), min})]; if (setor !== it.setor) S.movs.filter(m => m.item === it.id).forEach(m => ops.push(upd('movimentos/' + m.id, {setor}))); ok = await W(() => BE.db.batch(ops)); }
-    else ok = await W(() => BE.db.set('itens/' + BE.db.newId('itens'), {nome, setor, un:fv(f, 'un'), qtd, min}));
+    if (it){ const cons = !!(f.elements.namedItem('cons') && f.elements.namedItem('cons').checked); const ops = [upd('itens/' + it.id, {nome, setor, un:fv(f, 'un'), min, cons})]; if (setor !== it.setor) S.movs.filter(m => m.item === it.id).forEach(m => ops.push(upd('movimentos/' + m.id, {setor}))); ok = await W(() => BE.db.batch(ops)); }
+    else ok = await W(() => BE.db.set('itens/' + BE.db.newId('itens'), {nome, setor, un:fv(f, 'un'), qtd, min, cons:!!(f.elements.namedItem('cons') && f.elements.namedItem('cons').checked)}));
     if (ok){ closeModal(); toast(it ? 'Item atualizado.' : 'Item cadastrado.'); }
   },
   'file-edit': async f => {
