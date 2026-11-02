@@ -357,6 +357,12 @@ body{overflow-x:clip}
 .pr{display:flex;align-items:center;gap:4px;color:var(--muted);font-weight:700}.pr .bal-in{width:84px;height:44px;font-size:16px}
 .fstrip.fst3 b{font-size:17px}
 @media (min-width:821px){.fstrip{display:flex;justify-content:space-between;align-items:flex-end;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px 18px;margin-bottom:12px}.fstrip span{display:block;font-size:12px;font-weight:700;color:var(--muted)}.fstrip b{font-size:20px}.fstrip .fs-r{text-align:right}}
+.envtop{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+.envq{flex:1;min-width:0;display:flex;align-items:center;gap:8px;min-height:48px;padding:0 12px;background:var(--surface);border:1px solid var(--line);border-radius:14px;color:var(--muted)}
+.envqi{flex:1;min-width:0;border:0;background:transparent;outline:none;font-size:16px;color:var(--ink)}
+.eit.on{background:#E3F1EA;border-color:#A9D3C2}
+.envbar{position:sticky;bottom:calc(76px + env(safe-area-inset-bottom,0px));margin-top:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+@media (min-width:821px){.envbar{bottom:12px}}
 .bnav{display:none}
 .hdr{position:sticky;top:0;z-index:35;background:var(--bg)}
 @media (max-width:820px){.hdr{position:sticky;top:0;padding-top:env(safe-area-inset-top,0px)}}
@@ -803,7 +809,7 @@ function loginView(){
     : '<button type="button" class="link" data-act="login-modo" data-id="entrar">Voltar para entrar</button>';
   return '<div class="login"><section class="login-photo" aria-hidden="true"></section><section class="login-wrap"><form class="card login-card form" data-form="' + (m === 'entrar' ? 'login' : m === 'criar' ? 'signup' : 'reset') + '" novalidate><div><h1>' + head[0] + '</h1><p class="muted small" style="margin-top:6px">' + head[1] + '</p></div>' + fields + '<button class="btn btn-primary btn-block" type="submit">' + btn + '</button>' + links + '</form></section></div>';
 }
-const APP_VER = '2 nov 2026 · 11:05';
+const APP_VER = '2 nov 2026 · 11:20';
 const MQ = window.matchMedia ? window.matchMedia('(max-width:820px)') : null;
 const isMob = () => !!(MQ && MQ.matches);
 if (MQ && MQ.addEventListener) MQ.addEventListener('change', () => { if (S && U) render(); });
@@ -1107,14 +1113,34 @@ const numIn = (chg, id, f, v, ph) => '<input class="inp bal-in" type="text" inpu
 const stpBtn = (act, id, f, d, label) => '<button type="button" data-act="' + act + '" data-id="' + esc(id) + '"' + (f ? ' data-f="' + f + '"' : '') + ' data-d="' + d + '" aria-label="' + label + '">' + (d < 0 ? '−' : '+') + '</button>';
 const stp2 = (act, chg, id, f, v) => '<div class="stp2">' + stpBtn(act, id, f, -1, 'Diminuir') + numIn(chg, id, f, v) + stpBtn(act, id, f, 1, 'Aumentar') + '</div>';
 const balV = x => x.volta == null ? x.env + (x.comp || 0) : x.volta;
+function envPrev(ed){
+  const prev = S.ed.filter(e => e.id !== ed.id && (e.ini || '') <= (ed.ini || '') && S.envios.some(x => x.ed === e.id)).sort((a, b) => b.ini.localeCompare(a.ini))[0];
+  return prev || null;
+}
+function envListHtml(ed, adm){
+  const q = normTxt(U.est.q || '');
+  const all = visItems().filter(i => okCtx('stock', i.setor) && (!q || normTxt(i.nome + ' ' + i.setor).indexOf(q) >= 0));
+  const eo = i => envOf(ed.id, i.id);
+  const sent = all.filter(i => eo(i)).sort((a, b) => a.setor.localeCompare(b.setor) || a.nome.localeCompare(b.nome));
+  const rest = all.filter(i => !eo(i)).sort((a, b) => a.setor.localeCompare(b.setor) || a.nome.localeCompare(b.nome));
+  const row = i => {
+    const x = eo(i), v = x ? x.env : 0, closed = x && x.aplicado != null;
+    return '<div class="li li-nc eit' + (v > 0 ? ' on' : '') + '"><div class="li-m"><b>' + esc(i.nome) + '</b><small>' + esc(i.setor) + ' · no depósito ' + (v > 0 && !closed ? fmtQ(i.qtd + v) + ' → ' + fmtQ(i.qtd) : fmtQ(i.qtd)) + '</small></div>'
+      + (adm && !closed ? stp2('env-step', 'env-set', i.id, '', fmtQ(v)) : '<div class="li-r">' + fmtQ(v) + ' ' + esc(i.un) + (closed ? '<small>balanço fechado</small>' : '') + '</div>') + '</div>';
+  };
+  const tot = sum(S.envios.filter(x => x.ed === ed.id), x => x.env), nS = S.envios.filter(x => x.ed === ed.id).length;
+  if (!all.length) return '<div class="empty">Nenhum item com esse nome.</div>';
+  return (sent.length ? '<div class="sec-h"><span>Enviados · ' + sent.length + '</span></div><div class="lst">' + sent.map(row).join('') + '</div>' : '')
+    + (rest.length ? '<div class="sec-h"><span>' + (sent.length ? 'Todo o estoque' : 'Estoque geral') + '</span></div><div class="lst">' + rest.map(row).join('') + '</div>' : '')
+    + '<div class="envbar"><b>' + nS + ' itens · ' + fmtQ(tot) + ' un.</b><small>O estoque geral já desconta o que foi enviado</small></div>';
+}
 function estEnvio(F, adm){
   const ed = decEd(); if (!ed) return estNeedEd();
-  const list = S.envios.filter(x => x.ed === ed.id).map(x => ({x, it:itemById(x.item)})).filter(r => r.it);
-  const sets = allSetores().filter(st => list.some(r => r.x.setor === st) && okCtx('stock', st) && (F.setor === 'all' || F.setor === st));
-  const tot = sum(list, r => r.x.env);
-  return '<p class="muted small" style="margin:2px 2px 4px">O que saiu do depósito para ' + esc(ed.nome) + '. O estoque geral já desconta o enviado. ' + fmtQ(tot) + ' unidades em ' + list.length + ' itens.</p>'
-    + (estAreas(sets, st => estSec('e:' + st, st, list.filter(r => r.x.setor === st).length, '<div class="lst">' + list.filter(r => r.x.setor === st).map(r => '<div class="li li-nc"><div class="li-m"><b>' + esc(r.it.nome) + '</b><small>No depósito: ' + fmtQ(r.it.qtd) + ' ' + esc(r.it.un) + '</small>' + envTag(r.it) + '</div>'
-      + (adm && r.x.aplicado == null ? stp2('env-step', 'env-set', r.it.id, '', fmtQ(r.x.env)) : '<div class="li-r">' + fmtQ(r.x.env) + ' ' + esc(r.it.un) + (r.x.aplicado != null ? '<small>balanço fechado</small>' : '') + '</div>') + '</div>').join('') + '</div>', F, true), F) || '<div class="empty">Nada enviado para esta edição ainda.' + (adm ? ' Toque em “Enviar item”.' : '') + '</div>');
+  const prev = adm ? envPrev(ed) : null, mine = S.envios.filter(x => x.ed === ed.id).length;
+  return '<div class="envtop"><div class="envq">' + icon('search', 18) + '<input type="search" class="envqi" data-inp="env-q" value="' + esc(U.est.q || '') + '" placeholder="Buscar item pelo nome" aria-label="Buscar item pelo nome" autocomplete="off"></div>'
+    + (prev ? '<button type="button" class="btn btn-primary" data-act="env-copy" data-id="' + esc(prev.id) + '">Copiar da última</button>' : '') + '</div>'
+    + (prev && !mine ? '<p class="muted small" style="margin:0 2px 6px">“Copiar da última” traz o que foi enviado em ' + esc(prev.nome) + '. Depois é só ajustar.</p>' : '')
+    + '<div id="env-list">' + envListHtml(ed, adm) + '</div>';
 }
 function balCalc(){
   const ed = decEd(); if (!ed) return null;
@@ -1240,7 +1266,7 @@ function viewEstoque(){
   }
   return pageHead(esc(lab('estoque')), 'Estoque geral contínuo entre as edições', adm ? '<button class="btn" data-act="inv-import">' + icon('upload', 16) + 'Importar inventário</button><button class="btn" data-act="item-novo">' + icon('plus', 16) + 'Novo item</button>' : '', true)
     + seg + chips + '<div class="accs">' + body + '</div>'
-    + (adm && F.aba === 'geral' && isMob() ? '<button class="fab" data-act="est-fab">' + icon('plus', 20) + 'Registrar</button>' : adm && F.aba === 'env' ? '<button class="fab" data-act="env-novo">' + icon('plus', 20) + 'Enviar item</button>' : adm && F.aba !== 'bal' ? '<button class="fab" data-act="mov-novo">' + icon('plus', 20) + (F.aba === 'mov' ? 'Ajuste' : 'Registrar') + '</button>' : '');
+    + (adm && F.aba === 'geral' && isMob() ? '<button class="fab" data-act="est-fab">' + icon('plus', 20) + 'Registrar</button>' : adm && F.aba !== 'env' && F.aba !== 'bal' ? '<button class="fab" data-act="mov-novo">' + icon('plus', 20) + (F.aba === 'mov' ? 'Ajuste' : 'Registrar') + '</button>' : '');
 }
 
 /* ---------- Organizacional ---------- */
@@ -1810,6 +1836,7 @@ async function decAddPessoas(ed, lista){
 /* ---------- tela do voluntário (link aberto, sem login) ---------- */
 let P = null;
 const INP = {
+  'env-q': el => { U.est.q = el.value; const ed = decEd(), box = $('#env-list'); if (ed && box) box.innerHTML = envListHtml(ed, isAdmin()); },
   'item-busca': el => { const sel = $('#' + el.dataset.sel); if (!sel) return; const q = el.value.trim(); sel.innerHTML = itemOptsFor(visItems(), ($('#' + el.dataset.setor) || {}).value || '', q); if (sel.dataset.chg === 'mov-prev' || sel.id === 'mv-item') movPrev(); },
   'pub-q': el => { P.q = el.value; P.pick = null; const r = $('#pub-res'); if (r) r.innerHTML = pubRes(); pubBtn(); }
 };
@@ -1868,6 +1895,18 @@ const ACTS = {
   'est-fab': () => openModal({title:'O que você quer fazer?', body:'<div class="big2"><button type="button" class="btn btn-primary" data-act="mov-novo">Registrar uso ou reposição</button><button type="button" class="btn" data-act="item-novo">Cadastrar item novo</button></div>'}),
   'home-go': el => { const a = el.dataset.aba; if (a){ U.est.aba = a; U.est.setor = 'all'; U.est.sit = 'all'; } go(el.dataset.v); },
   'env-novo': () => { if (needAdmin()) return; if (!decEd()){ toast('Escolha uma edição no seletor do topo.'); return; } openModal({title:'Enviar item para a edição', body:envForm()}); },
+  'env-copy': async el => {
+    if (needAdmin()) return; const ed = decEd(), prev = edById(el.dataset.id); if (!ed || !prev) return;
+    const ops = []; let n = 0, cut = 0, skip = 0;
+    S.envios.filter(x => x.ed === prev.id).forEach(x => {
+      const it = itemById(x.item); if (!it || envOf(ed.id, it.id)) return;
+      const q = Math.min(x.env, it.qtd); if (q <= 0){ skip++; return; } if (q < x.env) cut++;
+      ops.push({t:'set', path:'envios/' + envId(ed.id, it.id), data:{ed:ed.id, item:it.id, setor:it.setor, env:q, comp:0, volta:null, aplicado:null}});
+      ops.push(upd('itens/' + it.id, {qtd:{__inc:-q}})); n++;
+    });
+    if (!n){ toast(skip ? 'O estoque geral não tem esses itens agora.' : 'Já está tudo copiado.'); return; }
+    if (await W(() => BE.db.batch(ops))) toast(n + ' itens copiados de ' + prev.nome + (cut ? '. ' + cut + ' ficaram com menos, por falta de estoque.' : '.'));
+  },
   'env-step': el => { if (needAdmin()) return; const ed = decEd(), it = itemById(el.dataset.id); if (!ed || !it) return; const cur = envOf(ed.id, it.id); envSet(ed, it, (cur ? cur.env : 0) + Number(el.dataset.d)); },
   'bal-step': el => { if (needAdmin()) return; const ed = decEd(), x = ed && envOf(ed.id, el.dataset.id); if (!x) return; const f = el.dataset.f, base = f === 'volta' ? balV(x) : (x.comp || 0), v = Math.max(0, base + Number(el.dataset.d)), patch = {}; patch[f] = v; W(() => BE.db.update('envios/' + x.id, patch)); },
   'enc-step': el => { if (needAdmin()) return; const ed = edById(el.dataset.id); if (!ed) return; W(() => BE.db.update('edicoes/' + ed.id, {enc:Math.max(0, (ed.enc || 0) + Number(el.dataset.d))})); },
