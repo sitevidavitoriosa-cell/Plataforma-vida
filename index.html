@@ -1669,7 +1669,7 @@ function viewDecisoes(){
   const rows = rec.filter(d => D.f === 'all' || d.botao === D.f).sort((a, b) => (b.em || '').localeCompare(a.em || '')).slice(0, 200).map(d => {
     const p = S.pess.find(x => x.id === d.pessoa) || {}, b = byB[d.botao] || {nome:d.botao, cor:'#888'};
     const h = d.em ? new Date(d.em) : null;
-    return '<div class="li"><div class="li-m"><b>' + esc(d.nome) + '</b><small>' + esc([p.fone, p.end].filter(Boolean).join(' · ') || 'Sem telefone/endereço cadastrado') + '</small><small>Anotado por ' + esc(d.por) + (h && !isNaN(h) ? ' · ' + String(h.getHours()).padStart(2, '0') + ':' + String(h.getMinutes()).padStart(2, '0') : '') + '</small></div><span class="dchip" style="--c:' + esc(b.cor) + '">' + esc(b.nome) + '</span>' + iconBtn('dec-del', d.id, 'trash', 'Excluir registro de ' + d.nome) + '</div>';
+    return '<div class="li"><div class="li-m"><b>' + esc(d.nome) + '</b><small>' + (p.cod ? 'Inscrição ' + esc(p.cod) + ' · ' : '') + esc([p.fone, p.end].filter(Boolean).join(' · ') || 'Sem telefone/endereço cadastrado') + '</small><small>Anotado por ' + esc(d.por) + (h && !isNaN(h) ? ' · ' + String(h.getHours()).padStart(2, '0') + ':' + String(h.getMinutes()).padStart(2, '0') : '') + '</small></div><span class="dchip" style="--c:' + esc(b.cor) + '">' + esc(b.nome) + '</span>' + iconBtn('dec-del', d.id, 'trash', 'Excluir registro de ' + d.nome) + '</div>';
   }).join('');
   const nPess = S.pess.filter(x => x.ed === ed.id).length;
   return [head,
@@ -1707,7 +1707,7 @@ function parseSheetRows(rows){
   if (hi < 0) return null;
   const headers = rows[hi].map((c, i) => String(c || '').trim() || 'Coluna ' + (i + 1));
   const find = (re, not) => { const i = headers.findIndex(h => re.test(normTxt(h)) && !(not && not.test(normTxt(h)))); return i; };
-  const map = {nome:find(/nome|encontrista/, /pai|mae|respons|conjuge|indic|apelido/), fone:find(/telefone|celular|fone|whats|contato/), end:find(/endereco|rua|logradouro/), bairro:find(/bairro/)};
+  const map = {nome:find(/nome|encontrista/, /pai|mae|respons|conjuge|indic|apelido/), fone:find(/telefone|celular|fone|whats|contato/), end:find(/endereco|rua|logradouro/), bairro:find(/bairro/), cod:find(/codigo|inscric|inscri|matricula|^cod\b|^id\b/)};
   if (map.nome < 0) map.nome = find(/nome/);
   const data = rows.slice(hi + 1).filter(r => r.some(c => String(c || '').trim()));
   return {headers, data, map};
@@ -1715,8 +1715,8 @@ function parseSheetRows(rows){
 function decImpBody(){
   const I = U.dec.imp; if (!I) return '';
   const sel = (nm, lb) => '<div class="fg"><label class="fl" for="im-' + nm + '">' + lb + '</label><select class="inp" id="im-' + nm + '" name="' + nm + '">' + opt('-1', nm === 'nome' ? 'Escolha a coluna' : '— não importar —', I.map[nm] < 0) + I.headers.map((h, i) => opt(String(i), h, I.map[nm] === i)).join('') + '</select></div>';
-  const ex = I.data.slice(0, 3).map(r => '<tr><td>' + esc(I.map.nome >= 0 ? r[I.map.nome] : '') + '</td><td>' + esc(I.map.fone >= 0 ? r[I.map.fone] : '') + '</td><td>' + esc(I.map.end >= 0 ? r[I.map.end] : '') + '</td></tr>').join('');
-  return '<form class="form" data-form="dec-imp-ok" novalidate><p><b>' + I.data.length + ' linhas</b> encontradas em “' + esc(I.file) + '”. Confira se as colunas estão certas:</p>' + sel('nome', 'Nome') + sel('fone', 'Telefone') + sel('end', 'Endereço') + sel('bairro', 'Bairro (ajuda a diferenciar nomes iguais)')
+  const ex = I.data.slice(0, 3).map(r => '<tr><td>' + esc(I.map.cod >= 0 ? r[I.map.cod] : '') + '</td><td>' + esc(I.map.nome >= 0 ? r[I.map.nome] : '') + '</td><td>' + esc(I.map.fone >= 0 ? r[I.map.fone] : '') + '</td><td>' + esc(I.map.end >= 0 ? r[I.map.end] : '') + '</td></tr>').join('');
+  return '<form class="form" data-form="dec-imp-ok" novalidate><p><b>' + I.data.length + ' linhas</b> encontradas em “' + esc(I.file) + '”. Confira se as colunas estão certas:</p>' + sel('nome', 'Nome') + sel('fone', 'Telefone') + sel('end', 'Endereço') + sel('cod', 'Código de inscrição') + sel('bairro', 'Bairro (ajuda a diferenciar nomes iguais)')
     + (ex ? '<table class="kv"><tbody>' + ex + '</tbody></table>' : '') + '<div class="note">Telefone e endereço ficam só no painel dos administradores. Os voluntários veem apenas o nome' + '' + ' (e o bairro, se você escolher a coluna).</div>' + modalBtns('Importar') + '</form>';
 }
 const decPessKey = (ed, nome, fone) => ed + '|' + normTxt(nome) + '|' + String(fone || '').replace(/\D/g, '');
@@ -1724,12 +1724,12 @@ async function decAddPessoas(ed, lista){
   const cfg = decCfg(ed.id), have = new Set(S.pess.filter(x => x.ed === ed.id).map(x => decPessKey(x.ed, x.nome, x.fone)));
   const ops = []; let n = 0, dup = 0;
   lista.forEach(x => {
-    const k = decPessKey(ed.id, x.nome, x.fone); if (have.has(k)){ dup++; return; } have.add(k);
+    const k = decPessKey(ed.id, x.nome, x.fone); if (have.has(k)){ dup++; const ex = S.pess.find(y => y.ed === ed.id && decPessKey(y.ed, y.nome, y.fone) === k); if (ex && !ex.cod && x.cod) ops.push(upd('encontristas/' + ex.id, {cod:x.cod})); return; } have.add(k);
     const id = BE.db.newId('encontristas'); n++;
-    ops.push({t:'set', path:'encontristas/' + id, data:{ed:ed.id, nome:x.nome, fone:x.fone || '', end:x.end || '', bairro:x.bairro || ''}});
+    ops.push({t:'set', path:'encontristas/' + id, data:{ed:ed.id, nome:x.nome, cod:x.cod || '', fone:x.fone || '', end:x.end || '', bairro:x.bairro || ''}});
     if (cfg && cfg.token) ops.push({t:'set', path:'registro_links/' + cfg.token + '/pessoas/' + id, data:{nome:x.nome, info:x.bairro || ''}});
   });
-  if (!n) return {n:0, dup};
+  if (!n && !ops.length) return {n:0, dup};
   return (await W(() => BE.db.batch(ops))) ? {n, dup} : null;
 }
 
@@ -1830,8 +1830,8 @@ const ACTS = {
   'dec-del-ok': async el => { if (needAdmin()) return; if (await W(() => BE.db.del('decisoes/' + el.dataset.id))){ closeModal(); toast('Registro excluído.'); } },
   'dec-csv': () => {
     const ed = decEd(); if (!ed) return; const byB = {}; decBotoes(ed.id).forEach(b => { byB[b.id] = b; });
-    const rows = S.dec.filter(d => d.ed === ed.id).sort((a, b) => (a.em || '').localeCompare(b.em || '')).map(d => { const p = S.pess.find(x => x.id === d.pessoa) || {}; return [d.nome, (byB[d.botao] || {nome:d.botao}).nome, p.fone || '', p.end || '', p.bairro || '', d.por, d.em || '']; });
-    saveFile('decisoes-' + ed.id + '.csv', '﻿' + [['Nome', 'Decisão', 'Telefone', 'Endereço', 'Bairro', 'Anotado por', 'Data/hora']].concat(rows).map(r => r.map(csvCell).join(';')).join('\r\n'));
+    const rows = S.dec.filter(d => d.ed === ed.id).sort((a, b) => (a.em || '').localeCompare(b.em || '')).map(d => { const p = S.pess.find(x => x.id === d.pessoa) || {}; return [d.nome, (byB[d.botao] || {nome:d.botao}).nome, p.cod || '', p.fone || '', p.end || '', p.bairro || '', d.por, d.em || '']; });
+    saveFile('decisoes-' + ed.id + '.csv', '﻿' + [['Nome', 'Decisão', 'Código de inscrição', 'Telefone', 'Endereço', 'Bairro', 'Anotado por', 'Data/hora']].concat(rows).map(r => r.map(csvCell).join(';')).join('\r\n'));
   },
   'decb-edit': () => { if (needAdmin()) return; const ed = decEd(); if (!ed) return; U.dec.draft = decBotoes(ed.id).map(b => Object.assign({}, b, {n:decCount(ed.id, b.id)})); decDraftShow(); },
   'decb-add': () => { decDraftRead(); U.dec.draft.push({id:'b' + Date.now().toString(36), nome:'Novo botão', cor:'#2F6FA3', arq:false, n:0}); decDraftShow(); },
@@ -1839,7 +1839,7 @@ const ACTS = {
   'decb-up': el => { decDraftRead(); const d = U.dec.draft, i = +el.dataset.id; if (i > 0){ const t = d[i]; d[i] = d[i - 1]; d[i - 1] = t; } decDraftShow(); },
   'decb-down': el => { decDraftRead(); const d = U.dec.draft, i = +el.dataset.id; if (i < d.length - 1){ const t = d[i]; d[i] = d[i + 1]; d[i + 1] = t; } decDraftShow(); },
   'decb-rm': el => { decDraftRead(); const d = U.dec.draft, i = +el.dataset.id, b = d[i]; if (b.n) b.arq = !b.arq; else d.splice(i, 1); decDraftShow(); },
-  'dec-pess-add': () => { if (needAdmin()) return; if (!decEd()) return; openModal({title:'Adicionar pessoa', body:'<form class="form" data-form="dec-pess-add" novalidate><div class="fg"><label class="fl" for="pa-n">Nome</label><input class="inp" id="pa-n" name="nome" type="text"></div><div class="two"><div class="fg"><label class="fl" for="pa-f">Telefone</label><input class="inp" id="pa-f" name="fone" type="tel"></div><div class="fg"><label class="fl" for="pa-b">Bairro</label><input class="inp" id="pa-b" name="bairro" type="text"></div></div><div class="fg"><label class="fl" for="pa-e">Endereço</label><input class="inp" id="pa-e" name="end" type="text"></div>' + modalBtns('Adicionar') + '</form>'}); },
+  'dec-pess-add': () => { if (needAdmin()) return; if (!decEd()) return; openModal({title:'Adicionar pessoa', body:'<form class="form" data-form="dec-pess-add" novalidate><div class="fg"><label class="fl" for="pa-n">Nome</label><input class="inp" id="pa-n" name="nome" type="text"></div><div class="two"><div class="fg"><label class="fl" for="pa-f">Telefone</label><input class="inp" id="pa-f" name="fone" type="tel"></div><div class="fg"><label class="fl" for="pa-b">Bairro</label><input class="inp" id="pa-b" name="bairro" type="text"></div></div><div class="fg"><label class="fl" for="pa-c">Código de inscrição</label><input class="inp" id="pa-c" name="cod" type="text"></div><div class="fg"><label class="fl" for="pa-e">Endereço</label><input class="inp" id="pa-e" name="end" type="text"></div>' + modalBtns('Adicionar') + '</form>'}); },
   'dec-imp': () => { if (needAdmin()) return; if (!decEd()) return; U.dec.imp = null; openModal({title:'Importar encontristas', body:'<p>Escolha a planilha (Excel ou CSV) com os encontristas desta edição. Precisa ter pelo menos uma coluna de nome; telefone e endereço são opcionais.</p><div class="fg"><label class="fl" for="imp-f">Arquivo</label><input class="inp" id="imp-f" type="file" accept=".xlsx,.xls,.csv" data-chg="dec-imp-file"></div><p class="muted small" id="imp-st"></p>', actions:[{label:'Cancelar', act:'close'}]}); },
   'pub-dec': el => { P.dec = el.dataset.id; render(); pubBtn(); },
   'pub-pick': el => { const p = P.pessoas.find(x => x.id === el.dataset.id); if (!p) return; P.pick = p; P.q = p.nome; const q = $('#pub-q'); if (q) q.value = p.nome; const r = $('#pub-res'); if (r) r.innerHTML = ''; pubBtn(); },
@@ -2090,15 +2090,15 @@ const FORMS = {
   },
   'dec-pess-add': async f => {
     if (needAdmin()) return; const ed = decEd(); if (!ed) return; const nome = fv(f, 'nome').trim(); if (!nome){ toast('Informe o nome.'); return; }
-    const r = await decAddPessoas(ed, [{nome, fone:fv(f, 'fone').trim(), bairro:fv(f, 'bairro').trim(), end:fv(f, 'end').trim()}]);
+    const r = await decAddPessoas(ed, [{nome, fone:fv(f, 'fone').trim(), bairro:fv(f, 'bairro').trim(), end:fv(f, 'end').trim(), cod:fv(f, 'cod').trim()}]);
     if (r){ closeModal(); toast(r.n ? 'Pessoa adicionada.' : 'Essa pessoa já está na lista.'); }
   },
   'dec-imp-ok': async f => {
     if (needAdmin()) return; const ed = decEd(), I = U.dec.imp; if (!ed || !I) return;
-    const ix = n => parseInt(fv(f, n), 10), ni = ix('nome'), fi = ix('fone'), ei = ix('end'), bi = ix('bairro');
+    const ix = n => parseInt(fv(f, n), 10), ni = ix('nome'), fi = ix('fone'), ei = ix('end'), bi = ix('bairro'), ci = ix('cod');
     if (!(ni >= 0)){ toast('Escolha a coluna do nome.'); return; }
     const cell = (r, i) => i >= 0 ? String(r[i] == null ? '' : r[i]).trim() : '';
-    const lista = I.data.map(r => ({nome:cell(r, ni), fone:cell(r, fi), end:cell(r, ei), bairro:cell(r, bi)})).filter(x => x.nome);
+    const lista = I.data.map(r => ({nome:cell(r, ni), fone:cell(r, fi), end:cell(r, ei), bairro:cell(r, bi), cod:cell(r, ci)})).filter(x => x.nome);
     const r = await decAddPessoas(ed, lista);
     if (r){ U.dec.imp = null; closeModal(); toast(r.n + ' pessoas importadas' + (r.dup ? ' (' + r.dup + ' repetidas ignoradas).' : '.')); }
   },
