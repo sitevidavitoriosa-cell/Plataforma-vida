@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --color-fundo: #f6f6f3;
+  --color-cartao: #ffffff;
+  --color-borda: #e7e6e1;
+  --color-texto: #1e2a2e;
+  --color-suave: #5b6a6f;
+  --color-marca: #1f6f5c;
+  --color-marca-esc: #14513f;
+  --color-marca-clara: #e3f1ea;
+  --color-alerta: #b4442b;
+  --color-alerta-clara: #f9e3dd;
+  --color-aviso: #8a5a00;
+  --color-aviso-clara: #fff1d6;
+}
+
+html, body { background: var(--color-fundo); color: var(--color-texto); font-family: var(--font-sans); }
+body { margin: 0; -webkit-text-size-adjust: 100%; }
+input, select, textarea, button { font-family: inherit; }
+input, select, textarea { font-size: 16px; }
+button { cursor: pointer; }
+button:disabled { cursor: default; }
+* { -webkit-tap-highlight-color: transparent; }
