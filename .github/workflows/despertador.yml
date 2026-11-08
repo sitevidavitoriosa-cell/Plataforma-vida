@@ -1,0 +1,18 @@
+# Despertador do Supabase: consulta o banco todo dia para o plano grátis não pausar o projeto (7 dias sem uso).
+# Usa só a URL e a chave PUBLICÁVEL (públicas por natureza). Quando o projeto for para o plano Pro, pode apagar este arquivo.
+name: Despertador do Supabase
+on:
+  schedule:
+    - cron: "0 11 * * *"
+  workflow_dispatch: {}
+jobs:
+  acordar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consultar o banco
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://qlnutqoekuwyndooaedp.supabase.co/rest/v1/equipes?select=id&limit=1" \
+            -H "apikey: sb_publishable_GN6fFY5q5LRDunlS1GzgYw_qxwDlT_a")
+          echo "Resposta do Supabase: $code"
+          test "$code" = "200"
