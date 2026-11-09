@@ -41,16 +41,18 @@ export default function Registro() {
     if (n.length < 2) return [];
     return (info?.pessoas ?? []).filter((p) => norm(p.nome + " " + (p.cod ?? "")).includes(n)).slice(0, 8);
   }, [info, q]);
-  // Lista de baixo: quem já foi registrado com o botão escolhido (os mais recentes primeiro).
-  const registrados = useMemo(() => {
-    if (!bt) return [];
+  // Lista de baixo: separada por decisão (os mais recentes primeiro).
+  const grupos = useMemo(() => {
     const por = new Map((info?.pessoas ?? []).map((p) => [p.id, p]));
-    const ordem = meus.filter((m) => m.b === bt.id).map((m) => m.p);
-    const ids = [...ordem, ...Array.from(feitas).filter((k) => k.endsWith("|" + bt.id)).map((k) => k.split("|")[0]).filter((id) => !ordem.includes(id))];
-    return ids.map((id) => por.get(id)).filter((p): p is { id: string; nome: string; cod: string | null } => !!p);
-  }, [info, feitas, meus, bt]);
+    return (info?.botoes ?? []).map((b) => {
+      const ordem = meus.filter((m) => m.b === b.id).map((m) => m.p);
+      const ids = [...ordem, ...Array.from(feitas).filter((k) => k.endsWith("|" + b.id)).map((k) => k.split("|")[0]).filter((id) => !ordem.includes(id))];
+      return { b, pessoas: ids.map((id) => por.get(id)).filter((p): p is { id: string; nome: string; cod: string | null } => !!p) };
+    });
+  }, [info, feitas, meus]);
 
-  async function marcar(p: { id: string; nome: string }, marcar: boolean) {
+  async function marcar(p: { id: string; nome: string }, marcar: boolean, botaoId?: string) {
+    const bt = info?.botoes?.find((b) => b.id === (botaoId ?? botao));
     if (!bt) return;
     const k = p.id + "|" + bt.id;
     const { data, error } = await supabase.rpc("registrar_decisao", { p_token: token, p_pessoa: p.id, p_botao: bt.id, p_marcar: marcar, p_por: nome });
@@ -108,17 +110,21 @@ export default function Registro() {
         </div>
       )}
       {q.trim().length >= 2 && lista.length === 0 && <p className="mt-2 text-sm text-suave">Ninguém com esse nome.</p>}
-      <div className="mt-6">
-        <b>{bt ? `${bt.nome}: ${registrados.length} registrado${registrados.length === 1 ? "" : "s"}` : "Registrados"}</b>
-        <div className="mt-2 flex flex-col gap-1.5">
-          {registrados.length === 0 && <p className="m-0 text-sm text-suave">Busque o nome acima e toque para registrar. A lista aparece aqui.</p>}
-          {registrados.map((p) => (
-            <div key={p.id} className="flex items-center justify-between gap-3 rounded-xl bg-fundo px-3 py-2 text-sm">
-              <span className="min-w-0 truncate font-bold">{p.nome}</span>
-              <button type="button" onClick={() => marcar(p, false)} className="shrink-0 font-bold text-suave">desfazer</button>
+      <div className="mt-6 flex flex-col gap-4">
+        {grupos.map(({ b, pessoas }) => (
+          <section key={b.id}>
+            <div className="flex items-center justify-between rounded-xl px-3 py-2 text-sm font-extrabold text-white" style={{ background: b.cor }}><span>{b.nome}</span><span>{pessoas.length}</span></div>
+            <div className="mt-1.5 flex flex-col gap-1.5">
+              {pessoas.length === 0 && <p className="m-0 px-1 text-sm text-suave">Ninguém ainda.</p>}
+              {pessoas.map((p) => (
+                <div key={p.id} className="flex items-center justify-between gap-3 rounded-xl bg-fundo px-3 py-2 text-sm">
+                  <span className="min-w-0 truncate font-bold">{p.nome}</span>
+                  <button type="button" onClick={() => marcar(p, false, b.id)} className="shrink-0 font-bold text-suave">desfazer</button>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </section>
+        ))}
       </div>
     </>
   );

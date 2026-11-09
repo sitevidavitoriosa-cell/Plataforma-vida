@@ -299,6 +299,17 @@ function QuartoJanela({ q, ocupantes, candidatos, lotado, onFechar, onMudou }: {
   const aviso = useAviso();
   const [busca, setBusca] = useState("");
   const [del, setDel] = useState(false);
+  const [token, setToken] = useState<string | null | undefined>(undefined);
+  useEffect(() => { supabase.from("quarto_links").select("token").eq("quarto_id", q.id).eq("ativo", true).order("criado_em", { ascending: false }).limit(1).then(({ data }) => setToken(data?.[0]?.token ?? null)); }, [q.id]);
+  const url = token ? `${typeof window !== "undefined" ? window.location.origin : ""}/q/${token}` : "";
+  async function gerarLink() {
+    await supabase.from("quarto_links").update({ ativo: false }).eq("quarto_id", q.id);
+    const { data, error } = await supabase.from("quarto_links").insert({ quarto_id: q.id }).select("token").single();
+    if (error) { aviso(msgErro(error)); return; }
+    setToken(data.token);
+  }
+  async function desligarLink() { await supabase.from("quarto_links").update({ ativo: false }).eq("quarto_id", q.id); setToken(null); aviso("Link desligado."); }
+  async function copiar() { try { await navigator.clipboard.writeText(url); aviso("Link copiado."); } catch { aviso("Copie o link na tela."); } }
   async function add(n: Nome) { const { error } = await supabase.from("quarto_ocupantes").insert({ encontrista_id: n.id, quarto_id: q.id }); if (error) aviso(msgErro(error)); onMudou(); }
   async function tirar(n: Nome) { const { error } = await supabase.from("quarto_ocupantes").delete().eq("encontrista_id", n.id); if (error) aviso(msgErro(error)); onMudou(); }
   async function excluir() { const { error } = await supabase.from("quartos").delete().eq("id", q.id); if (error) { aviso(msgErro(error)); return; } onMudou(); onFechar(); }
@@ -317,6 +328,20 @@ function QuartoJanela({ q, ocupantes, candidatos, lotado, onFechar, onMudou }: {
             {cand.map((n) => <button key={n.id} type="button" onClick={() => add(n)} className="min-h-11 rounded-2xl border border-borda bg-white px-3 text-left">{n.nome}</button>)}
           </>
         )}
+        <div className="flex flex-col gap-2 rounded-2xl border border-borda p-3">
+          <b className="text-sm">Link do anjo (perfil dos encontristas do quarto)</b>
+          {token === undefined ? null : token ? (
+            <>
+              <input readOnly value={url} onFocus={(e) => e.currentTarget.select()} className="min-h-11 rounded-xl border border-borda px-3 text-sm" />
+              <div className="flex flex-wrap gap-2">
+                <Botao v="sec" onClick={copiar} className="!min-h-11">Copiar</Botao>
+                <a className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-marca px-5 text-[15px] font-extrabold text-white" target="_blank" rel="noopener noreferrer" href={`https://wa.me/?text=${encodeURIComponent(`${q.nome}: perfil dos encontristas do seu quarto (reservado, não repasse): ${url}`)}`}>WhatsApp</a>
+                <Botao v="sec" onClick={gerarLink} className="!min-h-11">Gerar novo</Botao>
+                <Botao v="sec" onClick={desligarLink} className="!min-h-11 !text-alerta">Desligar</Botao>
+              </div>
+            </>
+          ) : <Botao v="suave" onClick={gerarLink} className="!min-h-11">Gerar link do quarto</Botao>}
+        </div>
         {!del ? <Botao v="sec" bloco className="!text-alerta" onClick={() => setDel(true)}>Excluir quarto</Botao> : <Botao v="perigo" bloco onClick={excluir}>Confirmar exclusão</Botao>}
       </div>
     </Janela>
