@@ -433,17 +433,22 @@ function Quartos() {
 }
 
 /** Anjo do quarto (servo) em lista: depois de escolher um, a caixa "Existe outro servo nesse quarto?" abre mais uma escolha. */
-function AnjosCampo({ valores, onChange, servos, usadosFora }: { valores: string[]; onChange: (v: string[]) => void; servos: Nome[]; usadosFora: Set<string> }) {
+/** Quarto feminino só mostra mulheres e masculino só homens. Quem está sem sexo informado aparece (marcado) para ninguém sumir. */
+const ehSexo = (n: Nome, sexo: string) => { const x = (n.sexo ?? "").trim().toLowerCase(); return !x || x.startsWith(sexo[0].toLowerCase()); };
+const semSexo = (n: Nome) => !(n.sexo ?? "").trim();
+
+function AnjosCampo({ valores, onChange, servos: todos, usadosFora, sexo }: { valores: string[]; onChange: (v: string[]) => void; servos: Nome[]; usadosFora: Set<string>; sexo: string }) {
+  const servos = todos.filter((x) => ehSexo(x, sexo) || valores.includes(x.id));
   const mudar = (i: number, id: string) => onChange(valores.map((x, k) => (k === i ? id : x)));
   return (
     <div className="flex flex-col gap-2.5">
       {valores.map((v, i) => (
         <div key={i} className="flex flex-col gap-2">
-          <Seletor rotulo={i === 0 ? "Anjo do quarto (servos)" : `Outro servo do quarto (${i + 1})`} value={v} onChange={(e) => mudar(i, e.target.value)}>
+          <Seletor rotulo={(i === 0 ? "Anjo do quarto" : `Outro servo do quarto (${i + 1})`) + (sexo === "Feminino" ? " · só servas" : " · só servos")} value={v} onChange={(e) => mudar(i, e.target.value)}>
             <option value="">{i === 0 ? "Escolher depois" : "Escolher"}</option>
             {servos.map((x) => {
               const ocupado = (usadosFora.has(x.id) || valores.some((o, k) => k !== i && o === x.id));
-              return <option key={x.id} value={x.id} disabled={ocupado}>{x.nome}{usadosFora.has(x.id) ? " (já é anjo de outro quarto)" : ocupado ? " (já escolhido)" : ""}</option>;
+              return <option key={x.id} value={x.id} disabled={ocupado}>{x.nome}{semSexo(x) ? " (sexo não informado)" : ""}{usadosFora.has(x.id) ? " (já é anjo de outro quarto)" : ocupado ? " (já escolhido)" : ""}</option>;
             })}
           </Seletor>
           {v && valores.length < 4 && (
@@ -476,10 +481,11 @@ function FormQuarto({ edicaoId, servos, anjosUsados, enc, candidatos, onFechar, 
       if (!nomes.length) { aviso("Não encontrei nomes. Use a coluna “Encontrista” do modelo."); return; }
       const novos = [...marcados]; const rel: string[] = []; let add = 0;
       for (const nome of nomes) {
-        const p = acharPessoa(nome, candidatos);
+        const p = acharPessoa(nome, candidatos.filter(doSexo));
         if (!p) {
           const outro = acharPessoa(nome, enc);
-          rel.push(outro ? `${nome}: já está em outro quarto` : `${nome}: não encontrado (ou há mais de uma pessoa com esse nome)`);
+          const doOutroSexo = acharPessoa(nome, candidatos);
+          rel.push(doOutroSexo ? `${nome}: é do sexo ${f.sexo === "Feminino" ? "masculino" : "feminino"}, não entra em quarto ${f.sexo.toLowerCase()}` : outro ? `${nome}: já está em outro quarto` : `${nome}: não encontrado (ou há mais de uma pessoa com esse nome)`);
           continue;
         }
         if (novos.some((m) => m.id === p.id)) { rel.push(`${nome}: repetido na planilha`); continue; }
@@ -490,11 +496,18 @@ function FormQuarto({ edicaoId, servos, anjosUsados, enc, candidatos, onFechar, 
       aviso(`${add} encontrista(s) marcado(s).${rel.length ? ` ${rel.length} ficaram de fora.` : ""}`);
     } catch (er) { aviso("Não consegui ler o arquivo: " + (er instanceof Error ? er.message : "erro")); }
   }
-  const doSexo = (n: Nome) => (n.sexo ?? "").toLowerCase().startsWith(f.sexo[0].toLowerCase());
+  const doSexo = (n: Nome) => ehSexo(n, f.sexo);
+  function trocarSexo(novo: string) {
+    const ok = (n: Nome) => ehSexo(n, novo);
+    const anjosOk = anjos.filter((id) => !id || ok(servos.find((x) => x.id === id) ?? { id, cod: "", nome: "", categoria: null, sexo: null }));
+    const marcadosOk = marcados.filter(ok);
+    if (anjosOk.length !== anjos.length || marcadosOk.length !== marcados.length) aviso("Tirei da lista quem não combina com o quarto " + novo.toLowerCase() + ".");
+    setAnjos(anjosOk.length ? anjosOk : [""]); setMarcados(marcadosOk); setF({ ...f, sexo: novo });
+  }
   const achados = useMemo(() => {
     const t = norm(busca);
     if (t.length < 2) return [];
-    return candidatos.filter((n) => !marcados.some((m) => m.id === n.id) && norm(n.nome).includes(t)).sort((a, b) => Number(doSexo(b)) - Number(doSexo(a))).slice(0, 8);
+    return candidatos.filter((n) => doSexo(n) && !marcados.some((m) => m.id === n.id) && norm(n.nome).includes(t)).slice(0, 8);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [busca, candidatos, marcados, f.sexo]);
   function marcar(n: Nome) {
@@ -522,15 +535,15 @@ function FormQuarto({ edicaoId, servos, anjosUsados, enc, candidatos, onFechar, 
     <Janela titulo="Novo quarto" onFechar={onFechar}>
       <form onSubmit={salvar} className="flex flex-col gap-3.5">
         <Campo rotulo="Número ou nome do quarto" value={f.nome} onChange={(e) => setF({ ...f, nome: e.target.value })} placeholder="Ex.: Quarto 1" />
-        <div className="grid grid-cols-2 gap-2">{["Feminino", "Masculino"].map((s) => <Chip key={s} ativo={f.sexo === s} onClick={() => setF({ ...f, sexo: s })}>{s}</Chip>)}</div>
+        <div className="grid grid-cols-2 gap-2">{["Feminino", "Masculino"].map((s) => <Chip key={s} ativo={f.sexo === s} onClick={() => trocarSexo(s)}>{s}</Chip>)}</div>
         <Campo rotulo="Vagas" inputMode="numeric" value={f.cap} onChange={(e) => setF({ ...f, cap: e.target.value })} />
-        <AnjosCampo valores={anjos} onChange={setAnjos} servos={servos} usadosFora={anjosUsados} />
+        <AnjosCampo valores={anjos} onChange={setAnjos} servos={servos} usadosFora={anjosUsados} sexo={f.sexo} />
         <div className="flex flex-col gap-2">
           <b className="text-sm">Encontristas do quarto ({marcados.length}/{Number.isFinite(cap) ? cap : 0})</b>
           <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Digite o nome do encontrista" className="min-h-12 rounded-2xl border border-borda bg-white px-4 outline-none focus:border-marca" />
           {achados.map((n) => (
             <button key={n.id} type="button" onClick={() => marcar(n)} className="flex min-h-11 items-center justify-between gap-2 rounded-2xl border border-borda bg-white px-3 text-left">
-              <span className="truncate">{n.nome}</span><span className="shrink-0 text-xs font-bold text-marca">{n.sexo ?? ""} · marcar</span>
+              <span className="truncate">{n.nome}</span><span className="shrink-0 text-xs font-bold text-marca">{n.sexo || "sexo não informado"} · marcar</span>
             </button>
           ))}
           {busca.trim().length >= 2 && achados.length === 0 && <p className="m-0 text-sm text-suave">Ninguém sem quarto com esse nome.</p>}
@@ -583,7 +596,7 @@ function QuartoJanela({ q, servos, anjosUsados, anjosAtuais, ocupantes, candidat
   async function add(n: Nome) { const { error } = await supabase.from("quarto_ocupantes").insert({ encontrista_id: n.id, quarto_id: q.id }); if (error) aviso(msgErro(error)); onMudou(); }
   async function tirar(n: Nome) { const { error } = await supabase.from("quarto_ocupantes").delete().eq("encontrista_id", n.id); if (error) aviso(msgErro(error)); onMudou(); }
   async function excluir() { const { error } = await supabase.from("quartos").delete().eq("id", q.id); if (error) { aviso(msgErro(error)); return; } onMudou(); onFechar(); }
-  const cand = candidatos.filter((n) => !busca || norm(n.nome).includes(norm(busca))).slice(0, 40);
+  const cand = candidatos.filter((n) => ehSexo(n, q.sexo) && (!busca || norm(n.nome).includes(norm(busca)))).slice(0, 40);
   return (
     <Janela titulo={`${q.nome} · ${ocupantes.length}/${q.capacidade}`} onFechar={onFechar}>
       <div className="flex flex-col gap-3">
@@ -601,7 +614,7 @@ function QuartoJanela({ q, servos, anjosUsados, anjosAtuais, ocupantes, candidat
             </>
           ) : <Botao v="suave" onClick={gerarLink} className="!min-h-11">Gerar link do quarto</Botao>}
         </div>
-        <AnjosCampo valores={anjosSel} onChange={trocarAnjos} servos={servos} usadosFora={new Set(Array.from(anjosUsados).filter((id) => !anjosAtuais.includes(id)))} />
+        <AnjosCampo valores={anjosSel} onChange={trocarAnjos} servos={servos} usadosFora={new Set(Array.from(anjosUsados).filter((id) => !anjosAtuais.includes(id)))} sexo={q.sexo} />
         {ocupantes.length === 0 && <Vazio>Ninguém neste quarto.</Vazio>}
         {ocupantes.map((n) => (
           <div key={n.id} className="flex items-center justify-between rounded-2xl border border-borda px-3 py-2"><span>{n.nome}</span><button type="button" onClick={() => tirar(n)} className="min-h-10 px-2 text-sm font-bold text-alerta">Tirar</button></div>
