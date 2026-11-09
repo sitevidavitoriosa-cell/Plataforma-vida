@@ -26,7 +26,9 @@ Deno.serve(async (req) => {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  const { data: p } = await admin.from('pessoas').select('*').ilike('email', email).eq('ativo', true).maybeSingle();
+  // escapa % _ \ para o e-mail digitado não virar curinga na busca
+  const emailExato = email.replace(/[\\%_]/g, (c) => '\\' + c);
+  const { data: p } = await admin.from('pessoas').select('*').ilike('email', emailExato).eq('ativo', true).maybeSingle();
   if (!p || !p.codigo) return resp({ erro: 'codigo_invalido' }, 400);
   if (p.tentativas >= 5) return resp({ erro: 'bloqueado' }, 429);
   if (p.codigo !== codigo) {

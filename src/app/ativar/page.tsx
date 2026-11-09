@@ -3,7 +3,6 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase, SUPABASE_URL, CHAVE_PUBLICA } from "@/lib/supabase";
-import { PERFIS, type Perfil } from "@/lib/perm";
 import { useAviso } from "@/components/provedores";
 import { Botao, Campo } from "@/components/ui";
 
@@ -17,7 +16,7 @@ const ERROS: Record<string, string> = {
 export default function Ativar() {
   const [passo, setPasso] = useState<"email" | "dados" | "nao">("email");
   const [email, setEmail] = useState("");
-  const [quem, setQuem] = useState<{ nome: string; perfil: Perfil; ativado: boolean } | null>(null);
+  const [quem, setQuem] = useState<{ nome: string; ativado: boolean } | null>(null);
   const [codigo, setCodigo] = useState("");
   const [senha, setSenha] = useState("");
   const [senha2, setSenha2] = useState("");
@@ -93,7 +92,6 @@ export default function Ativar() {
             <div className="rounded-2xl bg-marca-clara p-4">
               <div className="text-xs font-extrabold uppercase tracking-wide text-marca-esc">Encontramos você</div>
               <div className="text-lg font-extrabold">{quem.nome}</div>
-              <div className="text-sm text-marca-esc">{PERFIS[quem.perfil]?.nome}</div>
             </div>
             <Campo rotulo="Código do convite" value={codigo} onChange={(e) => setCodigo(e.target.value.toUpperCase())} autoComplete="one-time-code" autoCapitalize="characters" placeholder="Ex.: 9F3A1C7B" dica="O administrador te envia esse código (por WhatsApp, por exemplo)." />
             <Campo rotulo="Nova senha" type="password" autoComplete="new-password" value={senha} onChange={(e) => setSenha(e.target.value)} dica="Pelo menos 6 caracteres." />
