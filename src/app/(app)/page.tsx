@@ -51,6 +51,13 @@ export default function Painel() {
         <span className="text-xl font-extrabold text-marca">→</span>
       </Link>
 
+      {acesso.perfil === "admin" && (
+        <Link href="/relatorio-anual" className="flex items-center justify-between gap-3 rounded-3xl border border-borda bg-white p-4">
+          <div><b className="block text-base">Relatório anual</b><span className="text-sm text-suave">Todas as edições do ano: redes, quando as pessoas se inscrevem e comparativo. Só administrador geral.</span></div>
+          <span className="text-xl font-extrabold text-marca">→</span>
+        </Link>
+      )}
+
       {podeVerEstoque(acesso) && <Cartao className="overflow-hidden">
         <div className="flex items-center justify-between px-4 pb-2 pt-4"><b className="text-base">Precisa de atenção</b>{falta.length > 0 && <Selo tom="alerta">{falta.length}</Selo>}</div>
         {falta.length === 0 && <Vazio>Nada abaixo do mínimo.</Vazio>}

@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useLista } from "@/lib/dados";
 import { dmy, fmtN, type Envio, type Item } from "@/lib/tipos";
@@ -53,6 +54,7 @@ export default function Relatorio() {
   const saude = ativos.filter((e) => um(e.encontrista_saude)?.tem_necessidade).length;
   const porBotao = conta(dec, (d) => d.botao);
   const insc = resumoInscricoes(principais.map((e) => e.data_inscricao));
+  const redes2 = conta(principais, (e) => um(e.encontrista_espiritual)?.rede ?? "").map(([a, b]) => [a || "Sem rede", b] as [string, number]);
 
   async function excel() {
     const XLSX = await import("xlsx");
@@ -173,6 +175,22 @@ export default function Relatorio() {
         sexos.slice(0, 2).forEach(([nome, v], i) => dado(sl, `${Math.round((v / totS) * 100)}%`, nome, 9.1 + i * 2.0, 4.4, 2.0, 40, i ? COR.det : COR.marca));
       }
     }
+    // ---- redes (pizza) e inscrições (linha)
+    if (sec.pessoas && admin && (redes2.length || insc.comData)) {
+      const sl = base(String(n++).padStart(2, "0"), "Perfil", "Redes e inscrições", "De onde vêm os encontristas e quando se inscreveram");
+      if (redes2.length) {
+        sl.addText("REDES", { x: 0.9, y: 2.0, w: 4, h: 0.3, fontFace: COR_TXT, fontSize: 11, bold: true, color: COR.det, charSpacing: 5 });
+        sl.addChart("doughnut" as never, [{ name: "Redes", labels: redes2.map((x) => x[0]), values: redes2.map((x) => x[1]) }],
+          { x: 0.7, y: 2.3, w: 5.4, h: 4.6, holeSize: 55, chartColors: redes2.map((x) => corDaRede(x[0]).replace("#", "")), showLegend: true, legendPos: "r", legendFontSize: 12, legendFontFace: COR_TXT, showPercent: true, showValue: false, dataLabelColor: "FFFFFF", dataLabelFontSize: 11, dataBorder: { pt: 1.5, color: "FFFFFF" } } as never);
+      }
+      if (insc.comData) {
+        sl.addText("INSCRIÇÕES ACUMULADAS", { x: 6.6, y: 2.0, w: 6, h: 0.3, fontFace: COR_TXT, fontSize: 11, bold: true, color: COR.det, charSpacing: 5 });
+        let ac = 0;
+        sl.addChart("line" as never, [{ name: "Inscrições", labels: insc.dias.map((d) => fmtDia(d.data)), values: insc.dias.map((d) => (ac += d.n)) }],
+          { x: 6.5, y: 2.3, w: 6.3, h: 3.6, chartColors: [COR.marca], lineSize: 3, lineDataSymbolSize: 6, catAxisLabelFontSize: 10, valAxisLabelFontSize: 10, catAxisLabelColor: COR.suave, valAxisLabelColor: COR.suave, valGridLine: { color: COR.linha, size: 0.5 }, showLegend: false } as never);
+        sl.addText(`Mês com mais inscrições: ${insc.mesTopNome} (${insc.mesTop?.n})   ·   Dia de pico: ${insc.pico ? fmtDia(insc.pico.data) : "–"} (${insc.pico?.n})`, { x: 6.6, y: 6.05, w: 6.2, h: 0.7, fontFace: COR_TXT, fontSize: 13, color: COR.esc, valign: "top" });
+      }
+    }
     // ---- decisões
     if (sec.decisoes) {
       const sl = pp.addSlide(); sl.background = { color: COR.esc };
@@ -228,6 +246,7 @@ export default function Relatorio() {
           <Botao onClick={() => window.print()} className="!min-h-11">Imprimir / salvar PDF</Botao>
           <Botao v="sec" onClick={excel} className="!min-h-11">Baixar Excel</Botao>
           <Botao v="sec" onClick={slides} className="!min-h-11">Baixar apresentação (slides)</Botao>
+          {acesso?.perfil === "admin" && <Link href="/relatorio-anual" className="inline-flex min-h-11 items-center rounded-2xl border border-borda bg-white px-4 text-sm font-bold text-marca">Relatório anual →</Link>}
         </div>
       </div>
 
