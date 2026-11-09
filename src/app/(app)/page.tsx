@@ -76,6 +76,7 @@ export default function Painel() {
 function KpisEncontristas({ edicaoId, nItens, nFalta }: { edicaoId: string; nItens: number; nFalta: number }) {
   const lista = useLista<Enc>("encontristas", "id, edicao_id, nome, idade, data_inscricao, categoria, cancelada, encontrista_saude(tem_necessidade), encontrista_espiritual(batizado, rede, igreja, em_celula, celula, lider_celula)", "nome");
   const [rede, setRede] = useState<string | null>(null);
+  const [grupo, setGrupo] = useState<string | null>(null);
   const [acum, setAcum] = useState(false);
   const { ed } = useEdicao();
   if (!lista.dados) return <Carregando />;
@@ -94,12 +95,18 @@ function KpisEncontristas({ edicaoId, nItens, nFalta }: { edicaoId: string; nIte
   const nCel = encs.filter((e) => um(e.encontrista_espiritual)?.em_celula === true).length;
   const nIgr = encs.filter((e) => um(e.encontrista_espiritual)?.igreja).length;
   const nSemRede = redes.get("Sem rede") ?? 0;
-  const perfilEsp = [
-    { t: "Batizados", v: bat, p: pct(bat) }, { t: "Não batizados", v: encs.length - bat, p: pct(encs.length - bat) },
-    { t: "Em célula", v: nCel, p: pct(nCel) }, { t: "Sem célula", v: encs.length - nCel, p: pct(encs.length - nCel) },
-    { t: "Com igreja", v: nIgr, p: pct(nIgr) }, { t: "Sem igreja", v: encs.length - nIgr, p: pct(encs.length - nIgr) },
-    { t: "Sem rede", v: nSemRede, p: pct(nSemRede) },
+  const esp = (e: Enc) => um(e.encontrista_espiritual);
+  const celulaTxt = (e: Enc) => { const x = esp(e); return x?.em_celula ? `Célula: ${x.celula || "sim"}${x.lider_celula ? " · líder " + x.lider_celula : ""}` : x?.em_celula === false ? "Não tem célula" : "Célula não informada"; };
+  const grupos: { k: string; t: string; pessoas: Enc[]; linha: (e: Enc) => string }[] = [
+    { k: "bat", t: "Batizados", pessoas: encs.filter((e) => esp(e)?.batizado === true), linha: (e) => `Rede ${esp(e)?.rede || "não informada"}` },
+    { k: "nbat", t: "Não batizados", pessoas: encs.filter((e) => esp(e)?.batizado !== true), linha: (e) => (esp(e)?.batizado === false ? "Não é batizado" : "Batismo não informado") },
+    { k: "cel", t: "Em célula", pessoas: encs.filter((e) => esp(e)?.em_celula === true), linha: celulaTxt },
+    { k: "scel", t: "Sem célula", pessoas: encs.filter((e) => esp(e)?.em_celula !== true), linha: celulaTxt },
+    { k: "igr", t: "Com igreja", pessoas: encs.filter((e) => esp(e)?.igreja), linha: (e) => `Igreja: ${esp(e)?.igreja}` },
+    { k: "sigr", t: "Sem igreja", pessoas: encs.filter((e) => !esp(e)?.igreja), linha: () => "Sem igreja informada" },
+    { k: "srede", t: "Sem rede", pessoas: encs.filter((e) => (esp(e)?.rede || "Sem rede") === "Sem rede"), linha: () => "Sem rede informada" },
   ];
+  const aberto = grupos.find((g) => g.k === grupo) ?? null;
   const daRede = rede ? encs.filter((e) => (um(e.encontrista_espiritual)?.rede || "Sem rede") === rede) : [];
   const kpis = [
     { t: "Encontristas", v: encs.length, href: "/encontristas" },
@@ -122,11 +129,11 @@ function KpisEncontristas({ edicaoId, nItens, nFalta }: { edicaoId: string; nIte
           {redes.size === 0 ? <Vazio>Importe a planilha em “Encontristas”.</Vazio> : (
             <div className="flex flex-col items-center gap-3">
               <Pizza fatias={fatias} onEscolher={setRede} />
-              <div className="flex w-full flex-col gap-0.5">
+              <div className="grid w-full grid-cols-4 gap-1">
                 {fatias.map((f) => (
-                  <button key={f.nome} type="button" onClick={() => setRede(f.nome)} aria-label={`Ver encontristas da rede ${f.nome}`} className="flex min-h-9 items-center gap-2 rounded-xl px-1 text-left text-sm hover:bg-fundo">
-                    <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: f.cor }} /><span className="min-w-0 flex-1 truncate font-bold">{f.nome}</span>
-                    <b>{f.valor}</b><span className="w-10 text-right text-xs text-suave">{Math.round((f.valor / Math.max(1, encs.length)) * 100)}%</span><span className="text-suave">›</span>
+                  <button key={f.nome} type="button" onClick={() => setRede(f.nome)} aria-label={`Ver encontristas da rede ${f.nome}`} className="flex min-w-0 flex-col items-start rounded-xl px-1.5 py-1.5 text-left hover:bg-fundo">
+                    <span className="flex w-full items-center gap-1"><span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: f.cor }} /><span className="truncate text-sm font-bold">{f.nome}</span></span>
+                    <span className="pl-3.5 text-sm"><b>{f.valor}</b> <span className="text-xs text-suave">{Math.round((f.valor / Math.max(1, encs.length)) * 100)}%</span></span>
                   </button>
                 ))}
               </div>
@@ -153,8 +160,23 @@ function KpisEncontristas({ edicaoId, nItens, nFalta }: { edicaoId: string; nIte
         </div>
       </Cartao>
       <Cartao className="grid grid-cols-2 gap-3 p-4 md:grid-cols-4">
-        {perfilEsp.map((k) => (<div key={k.t}><div className="text-[22px] font-extrabold leading-none">{k.v}<span className="ml-1 text-sm font-bold text-suave">{k.p}%</span></div><div className="mt-1 text-sm text-suave">{k.t}</div></div>))}
+        {grupos.map((g) => (
+          <button key={g.k} type="button" onClick={() => setGrupo(g.k)} aria-label={`Ver quem são: ${g.t}`} className="flex flex-col items-start rounded-2xl p-2 text-left hover:bg-fundo">
+            <span className="text-[22px] font-extrabold leading-none">{g.pessoas.length}<span className="ml-1 text-sm font-bold text-suave">{pct(g.pessoas.length)}%</span></span>
+            <span className="mt-1 text-sm text-suave">{g.t} ›</span>
+          </button>
+        ))}
       </Cartao>
+      {aberto && (
+        <Janela titulo={`${aberto.t} · ${aberto.pessoas.length}`} onFechar={() => setGrupo(null)}>
+          <div className="flex flex-col gap-2">
+            {aberto.pessoas.length === 0 && <Vazio>Ninguém neste grupo.</Vazio>}
+            {aberto.pessoas.slice().sort((a, b) => a.nome.localeCompare(b.nome)).map((e) => (
+              <div key={e.id} className="flex flex-col rounded-2xl border border-borda px-3 py-2"><b>{e.nome}</b><span className="text-sm text-suave">{aberto.linha(e)}</span></div>
+            ))}
+          </div>
+        </Janela>
+      )}
       {rede && (
         <Janela titulo={`Rede ${rede} · ${daRede.length}`} onFechar={() => setRede(null)}>
           <div className="flex flex-col gap-2.5">
