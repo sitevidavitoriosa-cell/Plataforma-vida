@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { msgErro, useLista } from "@/lib/dados";
 import { dmy, fmtN, num, type Edicao, type Envio } from "@/lib/tipos";
 import { podeEscrever } from "@/lib/perm";
-import { CORES, NOMES_COR, TIPOS, corDe, nomeAuto } from "@/lib/cores";
+import { CORES, ESCOLHAS, NOMES_COR, TIPOS, bolinha, descricaoEd, escolhaDe, nomeAuto } from "@/lib/cores";
 import { useAuth, useAviso, useEdicao } from "@/components/provedores";
 import { Botao, Campo, Carregando, Cartao, Icone, Janela, Selo, Titulo, Vazio } from "@/components/ui";
 
@@ -40,7 +40,7 @@ export default function Edicoes() {
           return (
             <Cartao key={e.id} className="flex flex-col gap-3 p-4">
               <div className="flex items-start justify-between gap-2">
-                <div><b className="flex items-center gap-2 text-lg"><span className="h-3 w-3 rounded-full" style={{ background: corDe(e.cor).hex }} />{e.nome}</b><div className="text-sm text-suave">Vida {TIPOS[e.tipo]} · rede {e.cor} · {dmy(e.data_ini)}{e.data_fim ? ` a ${dmy(e.data_fim)}` : ""}{e.local ? ` · ${e.local}` : ""}</div></div>
+                <div><b className="flex items-center gap-2 text-lg"><span className="h-3 w-3 rounded-full" style={{ background: bolinha(e) }} />{e.nome}</b><div className="text-sm text-suave">{descricaoEd(e)} · {dmy(e.data_ini)}{e.data_fim ? ` a ${dmy(e.data_fim)}` : ""}{e.local ? ` · ${e.local}` : ""}</div></div>
                 <Selo tom={TOM[e.status]}>{ROTULO[e.status]}</Selo>
               </div>
               <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
@@ -67,10 +67,10 @@ export default function Edicoes() {
 
 function FormEdicao({ ed, onFechar, onSalvo }: { ed: Edicao | null; onFechar: () => void; onSalvo: () => void }) {
   const aviso = useAviso();
-  const [f, setF] = useState({ nome: ed?.nome ?? nomeAuto("base", "Roxa"), ini: ed?.data_ini ?? "", fim: ed?.data_fim ?? "", local: ed?.local ?? "", resp: ed?.resp ?? "", enc: String(ed?.enc ?? 0), tipo: ed?.tipo ?? "base", cor: ed?.cor ?? "Roxa" });
+  const [f, setF] = useState({ nome: ed?.nome ?? nomeAuto("Roxa"), ini: ed?.data_ini ?? "", fim: ed?.data_fim ?? "", local: ed?.local ?? "", resp: ed?.resp ?? "", enc: String(ed?.enc ?? 0), esc: ed ? escolhaDe(ed) : "Roxa", junto: !!ed?.rede2, rede2: ed?.rede2 ?? "" });
   const [del, setDel] = useState(false);
   const [nomeManual, setNomeManual] = useState(!!ed);
-  const mudar = (p: Partial<typeof f>) => { const n = { ...f, ...p }; if (!nomeManual) n.nome = nomeAuto(n.tipo, n.cor); setF(n); };
+  const mudar = (p: Partial<typeof f>) => { const n = { ...f, ...p }; if (!nomeManual) n.nome = nomeAuto(n.esc, n.junto && NOMES_COR.includes(n.esc) ? n.rede2 || null : null); setF(n); };
 
   async function salvar(e: React.FormEvent) {
     e.preventDefault();
@@ -79,7 +79,9 @@ function FormEdicao({ ed, onFechar, onSalvo }: { ed: Edicao | null; onFechar: ()
     if (f.fim < f.ini) { aviso("O fim não pode ser antes do início."); return; }
     const enc = num(f.enc || "0");
     if (!isFinite(enc) || enc < 0) { aviso("Número de encontristas inválido."); return; }
-    const d = { tipo: f.tipo, cor: f.cor, nome: f.nome.trim(), data_ini: f.ini, data_fim: f.fim, local: f.local.trim() || null, resp: f.resp.trim() || null, enc: Math.round(enc) };
+    const ehRede = NOMES_COR.includes(f.esc);
+    if (ehRede && f.junto && (!f.rede2 || f.rede2 === f.esc)) { aviso("Escolha a outra rede."); return; }
+    const d = { tipo: ehRede ? "rede" : f.esc, cor: ehRede ? f.esc : null, rede2: ehRede && f.junto ? f.rede2 : null, nome: f.nome.trim(), data_ini: f.ini, data_fim: f.fim, local: f.local.trim() || null, resp: f.resp.trim() || null, enc: Math.round(enc) };
     const r = ed ? await supabase.from("edicoes").update(d).eq("id", ed.id) : await supabase.from("edicoes").insert(d);
     if (r.error) { aviso(msgErro(r.error)); return; }
     aviso(ed ? "Edição atualizada." : `${d.nome} criada como planejada.`); onSalvo();
@@ -94,13 +96,19 @@ function FormEdicao({ ed, onFechar, onSalvo }: { ed: Edicao | null; onFechar: ()
   return (
     <Janela titulo={ed ? "Editar edição" : "Nova edição"} onFechar={onFechar}>
       <form onSubmit={salvar} className="flex flex-col gap-3.5">
-        <Campo rotulo="Nome (automático: o da cor da rede)" value={f.nome} onChange={(e) => { setNomeManual(true); setF({ ...f, nome: e.target.value }); }} placeholder="Vida Roxa" />
-        <div className="grid grid-cols-3 gap-2">
-          {Object.entries(TIPOS).map(([k, v]) => <button key={k} type="button" onClick={() => mudar({ tipo: k as Edicao["tipo"] })} className={`min-h-12 rounded-2xl border font-extrabold ${f.tipo === k ? "border-marca bg-marca-clara text-marca-esc" : "border-borda bg-white text-suave"}`}>Vida {v}</button>)}
-        </div>
-        <div><div className="mb-1.5 text-sm font-bold">Rede (cor)</div><div className="flex flex-wrap gap-2">
-          {NOMES_COR.map((n) => <button key={n} type="button" onClick={() => mudar({ cor: n })} aria-label={n} className={`flex min-h-11 items-center gap-2 rounded-full border px-3 text-sm font-bold ${f.cor === n ? "border-texto" : "border-borda"}`}><span className="h-4 w-4 rounded-full border border-borda" style={{ background: CORES[n].hex }} />{n}</button>)}
+        <Campo rotulo="Nome (preenchido sozinho)" value={f.nome} onChange={(e) => { setNomeManual(true); setF({ ...f, nome: e.target.value }); }} placeholder="Vida Roxa" />
+        <div><div className="mb-1.5 text-sm font-bold">Edição</div><div className="flex flex-wrap gap-2">
+          {ESCOLHAS.map((k) => <button key={k} type="button" onClick={() => mudar({ esc: k, rede2: k === f.rede2 ? "" : f.rede2 })} className={`flex min-h-11 items-center gap-2 rounded-full border px-3.5 text-sm font-bold ${f.esc === k ? "border-texto bg-marca-clara" : "border-borda bg-white"}`}>{CORES[k] && <span className="h-4 w-4 rounded-full border border-borda" style={{ background: CORES[k].hex }} />}Vida {TIPOS[k] ?? k}</button>)}
         </div></div>
+        {NOMES_COR.includes(f.esc) && (
+          <div className="flex flex-col gap-2">
+            <label className="flex min-h-12 items-center gap-3 rounded-2xl border border-borda bg-white px-4">
+              <input type="checkbox" checked={f.junto} onChange={(e) => mudar({ junto: e.target.checked })} className="h-5 w-5" />
+              <span className="font-bold">É junto com outra rede?</span>
+            </label>
+            {f.junto && <div className="flex flex-wrap gap-2">{NOMES_COR.filter((n) => n !== f.esc).map((n) => <button key={n} type="button" onClick={() => mudar({ rede2: n })} className={`flex min-h-11 items-center gap-2 rounded-full border px-3 text-sm font-bold ${f.rede2 === n ? "border-texto bg-marca-clara" : "border-borda"}`}><span className="h-4 w-4 rounded-full border border-borda" style={{ background: CORES[n].hex }} />{n}</button>)}</div>}
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-3">
           <Campo rotulo="Início" type="date" value={f.ini} onChange={(e) => setF({ ...f, ini: e.target.value })} />
           <Campo rotulo="Fim" type="date" value={f.fim} onChange={(e) => setF({ ...f, fim: e.target.value })} />

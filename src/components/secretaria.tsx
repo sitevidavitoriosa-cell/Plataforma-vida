@@ -69,8 +69,10 @@ function Crachas() {
     if (c.data) setCfg(c.data as Cfg);
   }, []);
   useEffect(() => { carregar(); }, [carregar]);
+  useEffect(() => { setCorSel(""); }, [ed?.id]);
 
-  const cor = ed?.cor ?? "Roxa";
+  const [corSel, setCorSel] = useState("");
+  const cor = corSel || ed?.cor || "Roxa";
   const temModelo = !!modelos[cor];
 
   const urlModelo = useCallback(async (c: string) => {
@@ -147,7 +149,8 @@ function Crachas() {
       </Cartao>
 
       <Cartao className="flex flex-col gap-3 p-4">
-        <div className="flex items-center justify-between"><b>Rede em vigor</b><Selo tom="ok">{cor}</Selo></div>
+        <div className="flex items-center justify-between"><b>Modelo de crachá desta edição</b><Selo tom="ok">{cor}</Selo></div>
+        <div className="flex gap-2 overflow-x-auto">{NOMES_COR.map((c) => <Chip key={c} ativo={cor === c} onClick={() => setCorSel(c)}>{c}</Chip>)}</div>
         {!temModelo && <p className="m-0 text-sm text-alerta">Falta enviar o modelo da rede {cor}.</p>}
         {previa && (
           <div className="relative mx-auto w-full max-w-xs overflow-hidden rounded-2xl border border-borda" style={{ containerType: "inline-size" }}>

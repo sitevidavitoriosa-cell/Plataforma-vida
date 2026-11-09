@@ -33,10 +33,10 @@ function EdicaoProvider({ children }: { children: React.ReactNode }) {
   const trocar = useCallback((novo: string) => { setId(novo); try { localStorage.setItem("vv-edicao", novo); } catch {} }, []);
 
   useEffect(() => {
-    const t = temaDe(ed?.tipo, ed?.cor), r = document.documentElement.style;
+    const t = temaDe(ed), r = document.documentElement.style;
     r.setProperty("--color-marca", t.marca); r.setProperty("--color-marca-esc", t.esc); r.setProperty("--color-marca-clara", t.clara);
     r.setProperty("--color-detalhe", t.detalhe); r.setProperty("--color-fundo", t.fundo);
-  }, [ed?.tipo, ed?.cor]);
+  }, [ed?.tipo, ed?.cor, ed?.rede2]);
 
   return <EdicaoCtx.Provider value={{ eds, ed, carregou, trocar, recarregar }}>{children}</EdicaoCtx.Provider>;
 }

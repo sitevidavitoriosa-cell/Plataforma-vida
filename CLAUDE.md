@@ -17,7 +17,7 @@ O site antigo (arquivo único, Firebase) está em `legado/index.html` e serve s�
 - Só a chave publicável do Supabase vai no código (`.env.production`). Nunca chaves secretas.
 
 ## Edições (temporadas)
-- Tipos: Vida Base, Vida Kids, Vida BeOne. Cada edição tem a cor da rede (Roxa, Azul, Amarela, Laranja, Vermelha, Verde, Branca); o site inteiro usa essa cor como destaque (`EdicaoProvider`, `useEdicao`, `src/lib/cores.ts`).
+- Tipos: Vida Base, Vida Kids, Vida BeOne. Uma edição é uma rede (Vida Roxa, Azul, Amarela, Laranja, Vermelha, Verde, Branca), ou Vida Base, Vida Kids, Vida BeOne; pode ser junto com outra rede (`rede2`, ex.: Vida Branca e Roxa). Visual: redes na própria cor (Branca = cinza), Base azul+amarelo, Kids azul+roxo, BeOne preto e branco (`EdicaoProvider`, `src/lib/cores.ts`).
 - A edição escolhida no topo vale para estoque, saúde, encontristas e secretaria.
 
 ## Setores (`/setores`, abas por permissão)

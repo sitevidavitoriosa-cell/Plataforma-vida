@@ -13,13 +13,25 @@ export const TIPOS: Record<string, string> = { base: "Base", kids: "Kids", beone
 export const corDe = (nome?: string | null) => CORES[nome ?? ""] ?? CORES.Roxa;
 
 export type Tema = { marca: string; esc: string; clara: string; detalhe: string; fundo: string };
+type EdLike = { tipo?: string | null; cor?: string | null; rede2?: string | null };
 const AZUL = { marca: "#16294d", esc: "#0e1c38", clara: "#e8edf7", fundo: "#fafaf9" };
-/** Tema do site: o tipo da edição decide o visual; rede Branca deixa tudo em cinza e branco. */
-export function temaDe(tipo?: string | null, cor?: string | null): Tema {
-  if (cor === "Branca") return { marca: "#5a5a56", esc: "#3a3a37", clara: "#efefed", detalhe: "#9a9a95", fundo: "#f4f4f3" };
-  if (tipo === "beone") return { marca: "#111111", esc: "#000000", clara: "#efefef", detalhe: "#111111", fundo: "#ffffff" };
-  if (tipo === "kids") return { ...AZUL, detalhe: "#7c4dcc" };
-  return { ...AZUL, detalhe: "#f2b705" };
+const CINZA: Tema = { marca: "#5a5a56", esc: "#3a3a37", clara: "#efefed", detalhe: "#9a9a95", fundo: "#f4f4f3" };
+
+/** Visual do site: Base azul/amarelo, Kids azul/roxo, BeOne preto e branco, redes na cor delas (Branca = cinza). */
+export function temaDe(e?: EdLike | null): Tema {
+  if (!e) return { ...AZUL, detalhe: "#f2b705" };
+  if (e.tipo === "beone") return { marca: "#111111", esc: "#000000", clara: "#efefef", detalhe: "#111111", fundo: "#ffffff" };
+  if (e.tipo === "kids") return { ...AZUL, detalhe: "#7c4dcc" };
+  if (e.tipo === "base") return { ...AZUL, detalhe: "#f2b705" };
+  if (e.cor === "Branca") return CINZA;
+  const c = corDe(e.cor);
+  return { marca: c.hex, esc: c.esc, clara: c.clara, detalhe: c.hex, fundo: "#fafaf9" };
 }
-/** Nome sugerido: sempre o da cor da rede. */
-export const nomeAuto = (tipo: string, cor: string) => (tipo === "base" ? `Vida ${cor}` : `Vida ${TIPOS[tipo]} ${cor}`);
+/** Escolha única do formulário: uma rede ou Base/Kids/BeOne. */
+export const ESCOLHAS = [...NOMES_COR, "base", "kids", "beone"];
+export const escolhaDe = (e: EdLike) => (e.tipo === "rede" || !e.tipo ? e.cor ?? "Roxa" : e.tipo);
+/** Nome sugerido: Vida Roxa, Vida Base, Vida Branca e Roxa… */
+export const nomeAuto = (escolha: string, rede2?: string | null) => `Vida ${TIPOS[escolha] ?? escolha}${rede2 ? ` e ${rede2}` : ""}`;
+export const descricaoEd = (e: EdLike) => (e.tipo === "rede" || !e.tipo ? `Rede ${e.cor}${e.rede2 ? ` e ${e.rede2}` : ""}` : `Vida ${TIPOS[e.tipo]}`);
+/** Cor da bolinha da edição. */
+export const bolinha = (e: EdLike) => (e.tipo === "rede" || !e.tipo ? corDe(e.cor).hex : temaDe(e).marca);

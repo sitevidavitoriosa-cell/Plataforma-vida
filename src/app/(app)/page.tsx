@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useLista } from "@/lib/dados";
 import { dmy, fmtN, type Envio, type Item } from "@/lib/tipos";
 import { PERFIS, podeVerFicha } from "@/lib/perm";
-import { TIPOS } from "@/lib/cores";
+import { descricaoEd } from "@/lib/cores";
 import { useAuth, useEdicao } from "@/components/provedores";
 import { Carregando, Cartao, Selo, Vazio } from "@/components/ui";
 
@@ -29,7 +29,7 @@ export default function Painel() {
 
       {ed ? (
         <Cartao className="flex flex-col gap-1 border-t-4 !border-t-detalhe p-5">
-          <div className="text-xs font-extrabold uppercase tracking-wide text-marca">Vida {TIPOS[ed.tipo]} · rede {ed.cor}</div>
+          <div className="text-xs font-extrabold uppercase tracking-wide text-marca">{descricaoEd(ed)}</div>
           <div className="text-2xl font-extrabold">{ed.nome}</div>
           <div className="text-sm text-suave">{dmy(ed.data_ini)}{ed.data_fim ? ` a ${dmy(ed.data_fim)}` : ""}{ed.local ? ` · ${ed.local}` : ""}</div>
         </Cartao>
