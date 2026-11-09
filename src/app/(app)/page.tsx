@@ -1,15 +1,16 @@
 "use client";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLista } from "@/lib/dados";
 import { dmy, fmtN, type Envio, type Item } from "@/lib/tipos";
 import { PERFIS, podeVerEstoque, podeVerFicha } from "@/lib/perm";
 import { descricaoEd } from "@/lib/cores";
 import { useAuth, useEdicao } from "@/components/provedores";
-import { Carregando, Cartao, Selo, Vazio } from "@/components/ui";
+import { Carregando, Cartao, Janela, Selo, Vazio } from "@/components/ui";
 
-type Enc = { id: string; edicao_id: string; categoria: string | null; cancelada: boolean; encontrista_saude: { tem_necessidade: boolean } | { tem_necessidade: boolean }[] | null; encontrista_espiritual: { batizado: boolean | null; rede: string | null } | { batizado: boolean | null; rede: string | null }[] | null };
+type Esp = { batizado: boolean | null; rede: string | null; igreja: string | null; em_celula: boolean | null; celula: string | null; lider_celula: string | null };
+type Enc = { id: string; edicao_id: string; nome: string; idade: number | null; categoria: string | null; cancelada: boolean; encontrista_saude: { tem_necessidade: boolean } | { tem_necessidade: boolean }[] | null; encontrista_espiritual: Esp | Esp[] | null };
 const um = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? v[0] ?? null : v ?? null);
 
 export default function Painel() {
@@ -64,7 +65,7 @@ export default function Painel() {
 }
 
 function KpisEncontristas({ edicaoId, nItens, nFalta }: { edicaoId: string; nItens: number; nFalta: number }) {
-  const lista = useLista<Enc>("encontristas", "id, edicao_id, categoria, cancelada, encontrista_saude(tem_necessidade), encontrista_espiritual(batizado, rede)", "nome");
+  const lista = useLista<Enc>("encontristas", "id, edicao_id, nome, idade, categoria, cancelada, encontrista_saude(tem_necessidade), encontrista_espiritual(batizado, rede, igreja, em_celula, celula, lider_celula)", "nome");
   if (!lista.dados) return <Carregando />;
   const todos = lista.dados.filter((e) => e.edicao_id === edicaoId && !e.cancelada);
   const encs = todos.filter((e) => (e.categoria ?? "").trim() === "Encontrista");
@@ -74,6 +75,8 @@ function KpisEncontristas({ edicaoId, nItens, nFalta }: { edicaoId: string; nIte
   const redes = new Map<string, number>();
   encs.forEach((e) => { const r = um(e.encontrista_espiritual)?.rede || "Sem rede"; redes.set(r, (redes.get(r) ?? 0) + 1); });
   const max = Math.max(1, ...redes.values());
+  const [rede, setRede] = useState<string | null>(null);
+  const daRede = rede ? encs.filter((e) => (um(e.encontrista_espiritual)?.rede || "Sem rede") === rede) : [];
   const kpis = [
     { t: "Encontristas", v: encs.length, href: "/encontristas" },
     { t: "Equipe", v: equipe, href: "/encontristas" },
@@ -93,10 +96,33 @@ function KpisEncontristas({ edicaoId, nItens, nFalta }: { edicaoId: string; nIte
         <div className="flex items-center justify-between"><b>Redes dos encontristas</b><span className="text-sm text-suave">{bat} batizados · {nItens} itens enviados</span></div>
         {redes.size === 0 && <Vazio>Importe a planilha em “Encontristas”.</Vazio>}
         {Array.from(redes.entries()).sort((a, b) => b[1] - a[1]).map(([r, n]) => (
-          <div key={r} className="flex items-center gap-3 text-sm"><span className="w-24 shrink-0 font-bold">{r}</span>
-            <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-fundo"><div className="h-full rounded-full bg-marca" style={{ width: `${(n / max) * 100}%` }} /></div><b className="w-8 text-right">{n}</b></div>
+          <button key={r} type="button" onClick={() => setRede(r)} aria-label={`Ver encontristas da rede ${r}`} className="flex min-h-9 items-center gap-3 rounded-xl text-left text-sm hover:bg-fundo"><span className="w-24 shrink-0 font-bold">{r}</span>
+            <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-fundo"><div className="h-full rounded-full bg-marca" style={{ width: `${(n / max) * 100}%` }} /></div><b className="w-8 text-right">{n}</b><span className="text-suave">›</span></button>
         ))}
+        {redes.size > 0 && <p className="m-0 text-xs text-suave">Toque numa rede para ver quem é, a célula, se é batizado e a igreja.</p>}
       </Cartao>
+      {rede && (
+        <Janela titulo={`Rede ${rede} · ${daRede.length}`} onFechar={() => setRede(null)}>
+          <div className="flex flex-col gap-2.5">
+            <div className="flex flex-wrap gap-2 text-sm">
+              <Selo tom="ok">{daRede.filter((e) => um(e.encontrista_espiritual)?.batizado === true).length} batizados</Selo>
+              <Selo tom="neutro">{daRede.filter((e) => um(e.encontrista_espiritual)?.em_celula === true).length} em célula</Selo>
+              <Selo tom="neutro">{daRede.filter((e) => um(e.encontrista_espiritual)?.igreja).length} com igreja</Selo>
+            </div>
+            {daRede.map((e) => {
+              const x = um(e.encontrista_espiritual);
+              return (
+                <div key={e.id} className="flex flex-col gap-1 rounded-2xl border border-borda p-3">
+                  <div className="flex items-center justify-between gap-2"><b>{e.nome}</b>{x?.batizado === true ? <Selo tom="ok">Batizado</Selo> : x?.batizado === false ? <Selo tom="aviso">Não batizado</Selo> : <Selo tom="neutro">Batismo ?</Selo>}</div>
+                  <span className="text-xs text-suave">{e.idade ? e.idade + " anos · " : ""}Rede {x?.rede || "não informada"}</span>
+                  <span className="text-sm">{x?.em_celula ? `Célula: ${x.celula || "sim"}${x.lider_celula ? " · líder " + x.lider_celula : ""}` : x?.em_celula === false ? "Não tem célula" : "Célula não informada"}</span>
+                  <span className="text-sm">{x?.igreja ? `Igreja: ${x.igreja}` : "Sem igreja informada"}</span>
+                </div>
+              );
+            })}
+          </div>
+        </Janela>
+      )}
     </>
   );
 }
