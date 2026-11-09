@@ -6,17 +6,17 @@ export type Acesso = {
 
 export const PERFIS: Record<Perfil, { nome: string; desc: string }> = {
   admin: { nome: "Administrador", desc: "Tudo, inclusive pessoas e equipes" },
-  coordenacao: { nome: "Coordenação", desc: "Edições, estoque, financeiro e decisões" },
+  coordenacao: { nome: "Coordenação", desc: "Edições, estoque, financeiro e decisões (sem a ficha dos encontristas)" },
   financeiro: { nome: "Financeiro", desc: "Lançamentos e relatórios do caixa" },
   estoque: { nome: "Estoque", desc: "Estoque de todos os setores" },
   decisoes: { nome: "Decisões", desc: "Encontristas e registro de decisões" },
-  saude: { nome: "Saúde", desc: "Ficha de saúde dos encontristas" },
+  saude: { nome: "Saúde", desc: "Só dados de saúde dos encontristas" },
   visitante: { nome: "Visitante", desc: "Só consulta (edições e estoque)" },
 };
 
 const ESCREVE: Record<Perfil, string[] | "*"> = {
   admin: "*",
-  coordenacao: ["edicoes", "estoque", "financeiro", "decisoes", "encontristas"],
+  coordenacao: ["edicoes", "estoque", "financeiro", "decisoes"],
   financeiro: ["financeiro"],
   estoque: ["estoque"],
   decisoes: ["decisoes"],
@@ -26,7 +26,7 @@ const ESCREVE: Record<Perfil, string[] | "*"> = {
 const VE: Record<string, Perfil[]> = {
   financeiro: ["admin", "coordenacao", "financeiro"],
   decisoes: ["admin", "coordenacao", "decisoes"],
-  encontristas: ["admin", "coordenacao", "decisoes", "saude"],
+  encontristas: ["admin"],
   pessoas: ["admin"],
 };
 
@@ -34,6 +34,7 @@ export const setoresDaEquipe = (a: Acesso | null) => (a ? a.equipes.flatMap((e) 
 
 export function podeVer(a: Acesso | null, modulo: string): boolean {
   if (!a) return false;
+  if (modulo === "setores") return ["admin", "coordenacao", "estoque", "saude"].includes(a.perfil) || setoresDaEquipe(a).length > 0;
   const l = VE[modulo];
   return !l || l.includes(a.perfil);
 }
@@ -46,7 +47,11 @@ export function podeEscrever(a: Acesso | null, modulo: string, setor?: string): 
   return false;
 }
 
-/** Dados de saúde dos encontristas: espelham as regras do banco. */
-export const podeVerSaude = (a: Acesso | null) => !!a && ["admin", "coordenacao", "saude"].includes(a.perfil);
-/** Dados espirituais (batismo, igreja, célula…). */
-export const podeVerEspiritual = (a: Acesso | null) => !!a && ["admin", "coordenacao", "decisoes"].includes(a.perfil);
+/** Ficha completa (planilha de encontristas): só administrador. */
+export const podeVerFicha = (a: Acesso | null) => !!a && a.perfil === "admin";
+/** Lista de saúde (somente dados de saúde): administrador e equipe de Saúde. */
+export const podeVerSaude = (a: Acesso | null) => !!a && ["admin", "saude"].includes(a.perfil);
+/** Secretaria 1 (crachás e quartos): administrador ou quem está na equipe com esse setor. */
+export const podeSecretaria = (a: Acesso | null) => !!a && (a.perfil === "admin" || setoresDaEquipe(a).includes("Secretaria 1"));
+/** Estoque (geral e por setor). */
+export const podeVerEstoque = (a: Acesso | null) => !!a && ["admin", "coordenacao", "estoque", "visitante", "financeiro", "decisoes"].includes(a.perfil);

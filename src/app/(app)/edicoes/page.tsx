@@ -4,7 +4,8 @@ import { supabase } from "@/lib/supabase";
 import { msgErro, useLista } from "@/lib/dados";
 import { dmy, fmtN, num, type Edicao, type Envio } from "@/lib/tipos";
 import { podeEscrever } from "@/lib/perm";
-import { useAuth, useAviso } from "@/components/provedores";
+import { CORES, NOMES_COR, TIPOS, corDe } from "@/lib/cores";
+import { useAuth, useAviso, useEdicao } from "@/components/provedores";
 import { Botao, Campo, Carregando, Cartao, Icone, Janela, Selo, Titulo, Vazio } from "@/components/ui";
 
 const ROTULO = { planejada: "Planejada", aberta: "Aberta", fechada: "Fechada" } as const;
@@ -13,7 +14,8 @@ const TOM = { planejada: "aviso", aberta: "ok", fechada: "neutro" } as const;
 export default function Edicoes() {
   const { acesso } = useAuth();
   const aviso = useAviso();
-  const eds = useLista<Edicao>("edicoes", "*", "data_ini");
+  const ctx = useEdicao();
+  const eds = { dados: ctx.carregou ? ctx.eds : null, recarregar: ctx.recarregar };
   const envios = useLista<Envio>("envios");
   const [form, setForm] = useState<Edicao | "nova" | null>(null);
   const pode = podeEscrever(acesso, "edicoes");
@@ -38,7 +40,7 @@ export default function Edicoes() {
           return (
             <Cartao key={e.id} className="flex flex-col gap-3 p-4">
               <div className="flex items-start justify-between gap-2">
-                <div><b className="text-lg">{e.nome}</b><div className="text-sm text-suave">{dmy(e.data_ini)}{e.data_fim ? ` a ${dmy(e.data_fim)}` : ""}{e.local ? ` · ${e.local}` : ""}</div></div>
+                <div><b className="flex items-center gap-2 text-lg"><span className="h-3 w-3 rounded-full" style={{ background: corDe(e.cor).hex }} />{e.nome}</b><div className="text-sm text-suave">Vida {TIPOS[e.tipo]} · rede {e.cor} · {dmy(e.data_ini)}{e.data_fim ? ` a ${dmy(e.data_fim)}` : ""}{e.local ? ` · ${e.local}` : ""}</div></div>
                 <Selo tom={TOM[e.status]}>{ROTULO[e.status]}</Selo>
               </div>
               <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
@@ -65,7 +67,7 @@ export default function Edicoes() {
 
 function FormEdicao({ ed, onFechar, onSalvo }: { ed: Edicao | null; onFechar: () => void; onSalvo: () => void }) {
   const aviso = useAviso();
-  const [f, setF] = useState({ nome: ed?.nome ?? "", ini: ed?.data_ini ?? "", fim: ed?.data_fim ?? "", local: ed?.local ?? "", resp: ed?.resp ?? "", enc: String(ed?.enc ?? 0) });
+  const [f, setF] = useState({ nome: ed?.nome ?? "", ini: ed?.data_ini ?? "", fim: ed?.data_fim ?? "", local: ed?.local ?? "", resp: ed?.resp ?? "", enc: String(ed?.enc ?? 0), tipo: ed?.tipo ?? "base", cor: ed?.cor ?? "Roxa" });
   const [del, setDel] = useState(false);
 
   async function salvar(e: React.FormEvent) {
@@ -75,7 +77,7 @@ function FormEdicao({ ed, onFechar, onSalvo }: { ed: Edicao | null; onFechar: ()
     if (f.fim < f.ini) { aviso("O fim não pode ser antes do início."); return; }
     const enc = num(f.enc || "0");
     if (!isFinite(enc) || enc < 0) { aviso("Número de encontristas inválido."); return; }
-    const d = { nome: f.nome.trim(), data_ini: f.ini, data_fim: f.fim, local: f.local.trim() || null, resp: f.resp.trim() || null, enc: Math.round(enc) };
+    const d = { tipo: f.tipo, cor: f.cor, nome: f.nome.trim(), data_ini: f.ini, data_fim: f.fim, local: f.local.trim() || null, resp: f.resp.trim() || null, enc: Math.round(enc) };
     const r = ed ? await supabase.from("edicoes").update(d).eq("id", ed.id) : await supabase.from("edicoes").insert(d);
     if (r.error) { aviso(msgErro(r.error)); return; }
     aviso(ed ? "Edição atualizada." : `${d.nome} criada como planejada.`); onSalvo();
@@ -90,7 +92,13 @@ function FormEdicao({ ed, onFechar, onSalvo }: { ed: Edicao | null; onFechar: ()
   return (
     <Janela titulo={ed ? "Editar edição" : "Nova edição"} onFechar={onFechar}>
       <form onSubmit={salvar} className="flex flex-col gap-3.5">
-        <Campo rotulo="Nome" value={f.nome} onChange={(e) => setF({ ...f, nome: e.target.value })} placeholder="Ex.: Vida 14" />
+        <Campo rotulo="Nome" value={f.nome} onChange={(e) => setF({ ...f, nome: e.target.value })} placeholder={`Ex.: Vida ${TIPOS[f.tipo]} 14`} />
+        <div className="grid grid-cols-3 gap-2">
+          {Object.entries(TIPOS).map(([k, v]) => <button key={k} type="button" onClick={() => setF({ ...f, tipo: k as Edicao["tipo"] })} className={`min-h-12 rounded-2xl border font-extrabold ${f.tipo === k ? "border-marca bg-marca-clara text-marca-esc" : "border-borda bg-white text-suave"}`}>Vida {v}</button>)}
+        </div>
+        <div><div className="mb-1.5 text-sm font-bold">Cor da rede</div><div className="flex flex-wrap gap-2">
+          {NOMES_COR.map((n) => <button key={n} type="button" onClick={() => setF({ ...f, cor: n })} aria-label={n} className={`flex min-h-11 items-center gap-2 rounded-full border px-3 text-sm font-bold ${f.cor === n ? "border-texto" : "border-borda"}`}><span className="h-4 w-4 rounded-full border border-borda" style={{ background: CORES[n].hex }} />{n}</button>)}
+        </div></div>
         <div className="grid grid-cols-2 gap-3">
           <Campo rotulo="Início" type="date" value={f.ini} onChange={(e) => setF({ ...f, ini: e.target.value })} />
           <Campo rotulo="Fim" type="date" value={f.fim} onChange={(e) => setF({ ...f, fim: e.target.value })} />

@@ -3,9 +3,9 @@ import { useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { msgErro, useLista } from "@/lib/dados";
 import { norm, type Edicao } from "@/lib/tipos";
-import { podeEscrever, podeVerEspiritual, podeVerSaude } from "@/lib/perm";
+import { podeVerFicha } from "@/lib/perm";
 import { lerArquivo, type ItemImport } from "@/lib/importar";
-import { useAuth, useAviso } from "@/components/provedores";
+import { useAuth, useAviso, useEdicao } from "@/components/provedores";
 import { Botao, Campo, Carregando, Cartao, Chip, Icone, Janela, Selo, Seletor, Titulo, Vazio } from "@/components/ui";
 
 type Saude = { tem_necessidade: boolean; necessidade: string | null; contatos: string[]; observacao: string | null };
@@ -21,8 +21,7 @@ const SEL = "*, encontrista_saude(*), encontrista_espiritual(*)";
 
 export default function Encontristas() {
   const { acesso } = useAuth();
-  const eds = useLista<Edicao>("edicoes", "*", "data_ini");
-  const [edSel, setEdSel] = useState("");
+  const { eds, ed } = useEdicao();
   const lista = useLista<Enc>("encontristas", SEL, "nome");
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("Encontrista");
@@ -31,13 +30,9 @@ export default function Encontristas() {
   const [rede, setRede] = useState("");
   const [ficha, setFicha] = useState<Enc | null>(null);
   const [importando, setImportando] = useState(false);
-  const verSaude = podeVerSaude(acesso), verEsp = podeVerEspiritual(acesso);
+  const verSaude = podeVerFicha(acesso), verEsp = podeVerFicha(acesso);
 
-  const edicaoId = useMemo(() => {
-    if (edSel) return edSel;
-    const d = eds.dados ?? [];
-    return (d.find((e) => e.status === "aberta") ?? d[d.length - 1])?.id ?? "";
-  }, [edSel, eds.dados]);
+  const edicaoId = ed?.id ?? "";
 
   const base = useMemo(() => (lista.dados ?? []).filter((e) => e.edicao_id === edicaoId && !e.cancelada), [lista.dados, edicaoId]);
   const cats = useMemo(() => Array.from(new Set(base.map((e) => (e.categoria ?? "").trim()).filter(Boolean))).sort(), [base]);
@@ -54,16 +49,13 @@ export default function Encontristas() {
     return true;
   });
 
-  if (!eds.dados || !lista.dados) return <Carregando />;
+  if (!lista.dados) return <Carregando />;
   const nNec = base.filter((e) => (!cat || (e.categoria ?? "").trim() === cat) && um(e.encontrista_saude)?.tem_necessidade).length;
 
   return (
     <div>
-      <Titulo direita={podeEscrever(acesso, "encontristas") ? <Botao onClick={() => setImportando(true)} className="!min-h-11">Importar planilha</Botao> : undefined}>Encontristas</Titulo>
+      <Titulo direita={podeVerFicha(acesso) ? <Botao onClick={() => setImportando(true)} className="!min-h-11">Importar planilha</Botao> : undefined}>Encontristas</Titulo>
       <div className="flex flex-col gap-3 pb-4">
-        <Seletor rotulo="Edição" value={edicaoId} onChange={(e) => setEdSel(e.target.value)}>
-          {eds.dados.map((e) => <option key={e.id} value={e.id}>{e.nome}</option>)}
-        </Seletor>
         <label className="flex min-h-12 items-center gap-2 rounded-2xl border border-borda bg-white px-3">
           <Icone n="busca" tam={20} />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por nome ou código" aria-label="Buscar encontrista" className="min-w-0 flex-1 bg-transparent text-base outline-none" />
@@ -83,7 +75,7 @@ export default function Encontristas() {
         <div className="text-sm text-suave">{vis.length} {vis.length === 1 ? "pessoa" : "pessoas"}</div>
       </div>
 
-      {base.length === 0 && <Vazio>Nenhum encontrista nesta edição ainda.{podeEscrever(acesso, "encontristas") ? " Use “Importar planilha”." : ""}</Vazio>}
+      {base.length === 0 && <Vazio>Nenhum encontrista nesta edição ainda.{podeVerFicha(acesso) ? " Use “Importar planilha”." : ""}</Vazio>}
       <Cartao className="overflow-hidden">
         {vis.map((e) => {
           const s = um(e.encontrista_saude);
@@ -100,7 +92,7 @@ export default function Encontristas() {
       </Cartao>
 
       {ficha && <Ficha e={ficha} verSaude={verSaude} verEsp={verEsp} onFechar={() => setFicha(null)} onSalvo={lista.recarregar} />}
-      {importando && edicaoId && <Importar edicaoId={edicaoId} edicaoNome={eds.dados.find((x) => x.id === edicaoId)?.nome ?? ""} onFechar={() => setImportando(false)} onFeito={lista.recarregar} />}
+      {importando && edicaoId && <Importar edicaoId={edicaoId} edicaoNome={ed?.nome ?? ""} onFechar={() => setImportando(false)} onFeito={lista.recarregar} />}
     </div>
   );
 }
@@ -117,11 +109,11 @@ function Ficha({ e, verSaude, verEsp, onFechar, onSalvo }: { e: Enc; verSaude: b
   const s = um(e.encontrista_saude), esp = um(e.encontrista_espiritual);
   const [obs, setObs] = useState(s?.observacao ?? "");
   const [salvando, setSalvando] = useState(false);
-  const podeObs = verSaude && podeEscrever(acesso, "saude");
+  const podeObs = verSaude;
 
   async function salvarObs() {
     setSalvando(true);
-    const { error } = await supabase.from("encontrista_saude").update({ observacao: obs.trim() || null }).eq("encontrista_id", e.id);
+    const { error } = await supabase.rpc("salvar_obs_saude", { p_id: e.id, p_obs: obs });
     setSalvando(false);
     if (error) { aviso(msgErro(error)); return; }
     aviso("Observação salva."); onSalvo();

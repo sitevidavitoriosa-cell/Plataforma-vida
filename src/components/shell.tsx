@@ -2,19 +2,47 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useAuth } from "./provedores";
+import { useAuth, useEdicao } from "./provedores";
+import { corDe, TIPOS } from "@/lib/cores";
 import { Carregando, Icone, Janela, Botao, cx } from "./ui";
 import { PERFIS, podeVer } from "@/lib/perm";
 
 const ITENS = [
-  { href: "/", modulo: "inicio", rotulo: "Início", icone: "inicio" },
-  { href: "/estoque", modulo: "estoque", rotulo: "Estoque", icone: "estoque" },
+  { href: "/", modulo: "inicio", rotulo: "Painel", icone: "inicio" },
+  { href: "/setores", modulo: "setores", rotulo: "Setores", icone: "estoque" },
   { href: "/edicoes", modulo: "edicoes", rotulo: "Edições", icone: "edicoes" },
   { href: "/encontristas", modulo: "encontristas", rotulo: "Encontristas", icone: "pessoas" },
   { href: "/financeiro", modulo: "financeiro", rotulo: "Financeiro", icone: "financeiro" },
   { href: "/decisoes", modulo: "decisoes", rotulo: "Decisões", icone: "decisoes" },
   { href: "/pessoas", modulo: "pessoas", rotulo: "Pessoas", icone: "pessoas" },
 ];
+
+function SeletorEdicao() {
+  const { eds, ed, trocar } = useEdicao();
+  const [aberto, setAberto] = useState(false);
+  if (!ed) return null;
+  const c = corDe(ed.cor);
+  return (
+    <>
+      <button type="button" onClick={() => setAberto(true)} className="flex min-h-10 items-center gap-2 rounded-full border border-borda bg-white px-3.5 text-sm font-bold">
+        <span className="h-3 w-3 rounded-full" style={{ background: c.hex }} />{ed.nome}<span className="text-suave">▾</span>
+      </button>
+      {aberto && (
+        <Janela titulo="Trocar de edição" onFechar={() => setAberto(false)}>
+          <div className="flex flex-col gap-2">
+            {eds.map((e) => (
+              <button key={e.id} type="button" onClick={() => { trocar(e.id); setAberto(false); }}
+                className={cx("flex min-h-14 items-center gap-3 rounded-2xl border px-4 text-left", e.id === ed.id ? "border-marca bg-marca-clara" : "border-borda bg-white")}>
+                <span className="h-4 w-4 rounded-full" style={{ background: corDe(e.cor).hex }} />
+                <span className="flex-1"><b className="block">{e.nome}</b><span className="text-xs text-suave">Vida {TIPOS[e.tipo]} · rede {e.cor}</span></span>
+              </button>
+            ))}
+          </div>
+        </Janela>
+      )}
+    </>
+  );
+}
 
 export function Protegido({ children }: { children: React.ReactNode }) {
   const { carregando, sessao, acesso, sair } = useAuth();
@@ -47,6 +75,7 @@ export function Protegido({ children }: { children: React.ReactNode }) {
           <div className="grid h-11 w-11 place-items-center rounded-2xl bg-marca text-xl font-extrabold text-white">V</div>
           <div className="leading-tight"><b>Vida Vitoriosa</b><div className="text-xs text-suave">Plataforma de gestão</div></div>
         </div>
+        <div className="mb-4 px-1"><SeletorEdicao /></div>
         <nav className="flex flex-col gap-1">
           {itens.map((i) => (
             <Link key={i.href} href={i.href} className={cx("flex min-h-12 items-center gap-3 rounded-2xl px-3 text-[15px] font-bold", ativo(i.href) ? "bg-marca-clara text-marca-esc" : "text-suave hover:bg-fundo")}>
@@ -63,7 +92,7 @@ export function Protegido({ children }: { children: React.ReactNode }) {
 
       {/* topo (celular) */}
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-borda bg-fundo/95 px-4 py-2.5 backdrop-blur md:hidden">
-        <div className="flex items-center gap-2.5"><div className="grid h-9 w-9 place-items-center rounded-xl bg-marca font-extrabold text-white">V</div><b>Vida Vitoriosa</b></div>
+        <SeletorEdicao />
         <button type="button" aria-label="Menu da conta" onClick={() => setMenu(true)} className="grid h-11 w-11 place-items-center rounded-full border border-borda bg-white font-extrabold text-marca-esc">
           {acesso.nome.trim().charAt(0).toUpperCase()}
         </button>
