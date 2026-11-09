@@ -35,10 +35,20 @@ export default function Registro() {
 
   const aviso = (m: string) => { setMsg(m); setTimeout(() => setMsg(""), 2500); };
   const bt = info?.botoes?.find((b) => b.id === botao);
+  // Resultados da busca: só aparecem depois de digitar.
   const lista = useMemo(() => {
     const n = norm(q);
-    return (info?.pessoas ?? []).filter((p) => !n || norm(p.nome + " " + (p.cod ?? "")).includes(n)).slice(0, 40);
+    if (n.length < 2) return [];
+    return (info?.pessoas ?? []).filter((p) => norm(p.nome + " " + (p.cod ?? "")).includes(n)).slice(0, 8);
   }, [info, q]);
+  // Lista de baixo: quem já foi registrado com o botão escolhido (os mais recentes primeiro).
+  const registrados = useMemo(() => {
+    if (!bt) return [];
+    const por = new Map((info?.pessoas ?? []).map((p) => [p.id, p]));
+    const ordem = meus.filter((m) => m.b === bt.id).map((m) => m.p);
+    const ids = [...ordem, ...Array.from(feitas).filter((k) => k.endsWith("|" + bt.id)).map((k) => k.split("|")[0]).filter((id) => !ordem.includes(id))];
+    return ids.map((id) => por.get(id)).filter((p): p is { id: string; nome: string; cod: string | null } => !!p);
+  }, [info, feitas, meus, bt]);
 
   async function marcar(p: { id: string; nome: string }, marcar: boolean) {
     if (!bt) return;
@@ -48,6 +58,7 @@ export default function Registro() {
     if (error || !r?.ok) { aviso(r?.erro === "link_invalido" ? "Este link foi desligado." : "Não consegui registrar. Tente de novo."); carregar(); return; }
     setFeitas((s) => { const n = new Set(s); if (marcar) n.add(k); else n.delete(k); return n; });
     setMeus((m) => (marcar ? [{ p: p.id, b: bt.id, nome: p.nome }, ...m].slice(0, 15) : m.filter((x) => !(x.p === p.id && x.b === bt.id))));
+    if (marcar) setQ("");
     aviso(marcar ? `Registrado: ${p.nome}` : `Desfeito: ${p.nome}`);
   }
 
@@ -75,7 +86,7 @@ export default function Registro() {
 
   return casca(
     <>
-      <p className="mb-3 mt-0 text-sm text-suave">Escolha a decisão e depois toque no nome da pessoa. Anotando como <b>{nome}</b> · <button type="button" className="font-bold text-marca" onClick={() => setNomeOk(false)}>trocar</button></p>
+      <p className="mb-3 mt-0 text-sm text-suave">Escolha a decisão, busque o nome e toque para registrar. Anotando como <b>{nome}</b> · <button type="button" className="font-bold text-marca" onClick={() => setNomeOk(false)}>trocar</button></p>
       <div className="flex flex-wrap gap-2">
         {(info.botoes ?? []).map((b) => (
           <button key={b.id} type="button" onClick={() => setBotao(b.id)} className="min-h-12 rounded-2xl border-2 px-4 text-[15px] font-extrabold"
@@ -83,22 +94,32 @@ export default function Registro() {
         ))}
       </div>
       <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar nome da pessoa" aria-label="Buscar nome" className="mt-4 min-h-12 w-full rounded-2xl border border-borda bg-white px-4 text-base outline-none" />
-      <div className="mt-3 flex flex-col gap-2">
-        {lista.length === 0 && <p className="text-sm text-suave">{(info.pessoas ?? []).length === 0 ? "Ainda não há encontristas cadastrados nesta edição." : "Ninguém com esse nome."}</p>}
-        {lista.map((p) => {
-          const ja = bt ? feitas.has(p.id + "|" + bt.id) : false;
-          return (
-            <button key={p.id} type="button" onClick={() => marcar(p, !ja)} className="flex min-h-14 items-center justify-between gap-3 rounded-2xl border border-borda bg-white px-4 text-left">
-              <span className="min-w-0"><b className="block truncate">{p.nome}</b>{p.cod && <span className="text-xs text-suave">Inscrição {p.cod}</span>}</span>
-              {ja ? <span className="shrink-0 rounded-full px-2.5 py-1 text-xs font-extrabold text-white" style={{ background: bt?.cor }}>✓ {bt?.nome} · desfazer</span> : <span className="shrink-0 text-sm font-bold text-suave">Registrar</span>}
-            </button>
-          );
-        })}
-      </div>
-      {meus.length > 0 && (
-        <div className="mt-6"><b>Meus últimos registros</b>
-          <div className="mt-2 flex flex-col gap-1.5">{meus.map((m) => <div key={m.p + m.b} className="flex justify-between rounded-xl bg-fundo px-3 py-2 text-sm"><span>{m.nome}</span><span className="font-bold">{info.botoes?.find((b) => b.id === m.b)?.nome}</span></div>)}</div></div>
+      {lista.length > 0 && (
+        <div className="mt-2 flex flex-col gap-2">
+          {lista.map((p) => {
+            const ja = feitas.has(p.id + "|" + bt?.id);
+            return (
+              <button key={p.id} type="button" onClick={() => !ja && marcar(p, true)} className="flex min-h-14 items-center justify-between gap-3 rounded-2xl border border-borda bg-white px-4 text-left">
+                <span className="min-w-0"><b className="block truncate">{p.nome}</b>{p.cod && <span className="text-xs text-suave">Inscrição {p.cod}</span>}</span>
+                <span className="shrink-0 text-sm font-bold" style={{ color: bt?.cor }}>{ja ? "✓ já registrado" : "Registrar"}</span>
+              </button>
+            );
+          })}
+        </div>
       )}
+      {q.trim().length >= 2 && lista.length === 0 && <p className="mt-2 text-sm text-suave">Ninguém com esse nome.</p>}
+      <div className="mt-6">
+        <b>{bt ? `${bt.nome}: ${registrados.length} registrado${registrados.length === 1 ? "" : "s"}` : "Registrados"}</b>
+        <div className="mt-2 flex flex-col gap-1.5">
+          {registrados.length === 0 && <p className="m-0 text-sm text-suave">Busque o nome acima e toque para registrar. A lista aparece aqui.</p>}
+          {registrados.map((p) => (
+            <div key={p.id} className="flex items-center justify-between gap-3 rounded-xl bg-fundo px-3 py-2 text-sm">
+              <span className="min-w-0 truncate font-bold">{p.nome}</span>
+              <button type="button" onClick={() => marcar(p, false)} className="shrink-0 font-bold text-suave">desfazer</button>
+            </div>
+          ))}
+        </div>
+      </div>
     </>
   );
 }
