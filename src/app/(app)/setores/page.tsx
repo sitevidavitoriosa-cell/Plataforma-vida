@@ -1,6 +1,5 @@
 "use client";
 import { Suspense, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { entradasSetores } from "@/lib/setores";
@@ -30,7 +29,7 @@ function Conteudo() {
   if (!atual) return <Vazio>Você ainda não está em nenhuma equipe.</Vazio>;
   return (
     <div>
-      <Titulo direita={acesso?.perfil === "admin" ? <Link href="/pessoas?aba=equipes&nova=1" className="inline-flex min-h-10 items-center rounded-2xl border border-borda bg-white px-4 text-sm font-extrabold text-marca">+ Nova equipe</Link> : undefined}>{atual.nome}</Titulo>
+      <Titulo>{atual.nome}</Titulo>
       {atual.id === "saude" && <Saude />}
       {atual.id === "secretaria" && <Secretaria />}
       {atual.id.startsWith("setor:") && <Estoque key={atual.id} setor={atual.id.slice(6)} />}

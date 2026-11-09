@@ -43,6 +43,8 @@ const MSG: Record<string, string> = {
   ja_enviado: "Este balanço já foi enviado ao paiol.",
   ja_conferido: "O paiol já conferiu este item.",
   sem_envio: "Este item não foi enviado para a edição.",
+  quartos_anjo_unico: "Esse servo já é anjo de outro quarto.",
+  quarto_anjos_pkey: "Esse servo já é anjo de outro quarto.",
   item_inexistente: "Item não encontrado.",
   quantidade_invalida: "Quantidade inválida.",
 };

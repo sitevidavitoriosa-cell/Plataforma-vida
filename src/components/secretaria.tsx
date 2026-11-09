@@ -6,10 +6,12 @@ import { norm } from "@/lib/tipos";
 import { TIPOS } from "@/lib/cores";
 import { useAviso, useEdicao } from "@/components/provedores";
 import { Estoque } from "@/components/estoque";
+import { acharPessoa, baixarModeloQuarto, lerNomesQuarto } from "@/lib/quartosPlanilha";
 import { Botao, Campo, Carregando, Cartao, Chip, Janela, Selo, Seletor, Vazio } from "@/components/ui";
 
 type Nome = { id: string; cod: string; nome: string; categoria: string | null; sexo: string | null };
-type Quarto = { id: string; edicao_id: string; nome: string; sexo: "Feminino" | "Masculino"; capacidade: number; anjo_id: string | null };
+type Quarto = { id: string; edicao_id: string; nome: string; sexo: "Feminino" | "Masculino"; capacidade: number };
+type AnjoLig = { quarto_id: string; encontrista_id: string };
 type Ocup = { encontrista_id: string; quarto_id: string };
 
 const slug = (t: string) => norm(t).replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
@@ -341,6 +343,7 @@ function Quartos() {
   const [quartos, setQuartos] = useState<Quarto[] | null>(null);
   const [ocup, setOcup] = useState<Ocup[]>([]);
   const [comLink, setComLink] = useState<Set<string>>(new Set());
+  const [anjosLig, setAnjosLig] = useState<AnjoLig[]>([]);
   const [novo, setNovo] = useState(false);
   const [aberto, setAberto] = useState<Quarto | null>(null);
 
@@ -350,16 +353,19 @@ function Quartos() {
     setQuartos((q.data as Quarto[]) ?? []);
     const ids = ((q.data as Quarto[]) ?? []).map((x) => x.id);
     if (ids.length) {
-      const [o, l] = await Promise.all([supabase.from("quarto_ocupantes").select("*").in("quarto_id", ids), supabase.from("quarto_links").select("quarto_id").eq("ativo", true).in("quarto_id", ids)]);
+      const [o, l, an] = await Promise.all([supabase.from("quarto_ocupantes").select("*").in("quarto_id", ids), supabase.from("quarto_links").select("quarto_id").eq("ativo", true).in("quarto_id", ids), supabase.from("quarto_anjos").select("quarto_id,encontrista_id").in("quarto_id", ids)]);
+      setAnjosLig((an.data as AnjoLig[]) ?? []);
       setOcup((o.data as Ocup[]) ?? []); setComLink(new Set(((l.data as { quarto_id: string }[]) ?? []).map((x) => x.quarto_id)));
-    } else { setOcup([]); setComLink(new Set()); }
+    } else { setOcup([]); setComLink(new Set()); setAnjosLig([]); }
   }, [ed]);
   useEffect(() => { setQuartos(null); carregar(); }, [carregar]);
 
   const enc = useMemo(() => (nomes ?? []).filter((n) => (n.categoria ?? "").trim() === "Encontrista" || !n.categoria), [nomes]);
   const mapa = useMemo(() => new Map(enc.map((n) => [n.id, n])), [enc]);
   const servos = useMemo(() => (nomes ?? []).filter((n) => !((n.categoria ?? "").trim() === "Encontrista" || !n.categoria)), [nomes]);
+  const anjosUsados = useMemo(() => new Set(anjosLig.map((a) => a.encontrista_id)), [anjosLig]);
   const nomeServo = (id: string | null) => servos.find((x) => x.id === id)?.nome ?? "";
+  const anjosDe = (qid: string) => anjosLig.filter((a) => a.quarto_id === qid).map((a) => nomeServo(a.encontrista_id)).filter(Boolean);
   const alocados = new Set(ocup.map((o) => o.encontrista_id));
   const semQuarto = enc.filter((n) => !alocados.has(n.id));
   const doQuarto = (id: string) => ocup.filter((o) => o.quarto_id === id).map((o) => mapa.get(o.encontrista_id)).filter(Boolean) as Nome[];
@@ -413,26 +419,77 @@ function Quartos() {
         return (
           <button key={q.id} type="button" onClick={() => setAberto(q)} className="text-left">
             <Cartao className="flex items-center justify-between gap-3 p-4">
-              <div><b>{q.nome}</b><div className="text-sm text-suave">{q.sexo}{q.anjo_id && nomeServo(q.anjo_id) ? ` · Anjo: ${nomeServo(q.anjo_id)}` : ""}</div></div>
+              <div><b>{q.nome}</b><div className="text-sm text-suave">{q.sexo}{anjosDe(q.id).length ? ` · ${anjosDe(q.id).length > 1 ? "Anjos" : "Anjo"}: ${anjosDe(q.id).join(", ")}` : ""}</div></div>
               <span className="flex items-center gap-2">{comLink.has(q.id) && <Selo tom="ok">link ativo</Selo>}<Selo tom={o.length >= q.capacidade ? "ok" : "neutro"}>{o.length}/{q.capacidade}</Selo></span>
             </Cartao>
           </button>
         );
       })}
-      {novo && <FormQuarto edicaoId={ed.id} servos={servos} candidatos={semQuarto} onFechar={() => setNovo(false)} onSalvo={() => { setNovo(false); carregar(); }} />}
-      {aberto && <QuartoJanela q={aberto} servos={servos} ocupantes={doQuarto(aberto.id)} candidatos={[...semQuarto].sort((a, b) => Number((b.sexo ?? "").toLowerCase().startsWith(aberto.sexo[0].toLowerCase())) - Number((a.sexo ?? "").toLowerCase().startsWith(aberto.sexo[0].toLowerCase())))}
+      {novo && <FormQuarto edicaoId={ed.id} servos={servos} anjosUsados={anjosUsados} enc={enc} candidatos={semQuarto} onFechar={() => setNovo(false)} onSalvo={() => { setNovo(false); carregar(); }} />}
+      {aberto && <QuartoJanela q={aberto} servos={servos} anjosUsados={anjosUsados} anjosAtuais={anjosLig.filter((a) => a.quarto_id === aberto.id).map((a) => a.encontrista_id)} ocupantes={doQuarto(aberto.id)} candidatos={[...semQuarto].sort((a, b) => Number((b.sexo ?? "").toLowerCase().startsWith(aberto.sexo[0].toLowerCase())) - Number((a.sexo ?? "").toLowerCase().startsWith(aberto.sexo[0].toLowerCase())))}
         lotado={doQuarto(aberto.id).length >= aberto.capacidade} onFechar={() => setAberto(null)} onMudou={carregar} />}
     </div>
   );
 }
 
-function FormQuarto({ edicaoId, servos, candidatos, onFechar, onSalvo }: { edicaoId: string; servos: Nome[]; candidatos: Nome[]; onFechar: () => void; onSalvo: () => void }) {
+/** Anjo do quarto (servo) em lista: depois de escolher um, a caixa "Existe outro servo nesse quarto?" abre mais uma escolha. */
+function AnjosCampo({ valores, onChange, servos, usadosFora }: { valores: string[]; onChange: (v: string[]) => void; servos: Nome[]; usadosFora: Set<string> }) {
+  const mudar = (i: number, id: string) => onChange(valores.map((x, k) => (k === i ? id : x)));
+  return (
+    <div className="flex flex-col gap-2.5">
+      {valores.map((v, i) => (
+        <div key={i} className="flex flex-col gap-2">
+          <Seletor rotulo={i === 0 ? "Anjo do quarto (servos)" : `Outro servo do quarto (${i + 1})`} value={v} onChange={(e) => mudar(i, e.target.value)}>
+            <option value="">{i === 0 ? "Escolher depois" : "Escolher"}</option>
+            {servos.map((x) => {
+              const ocupado = (usadosFora.has(x.id) || valores.some((o, k) => k !== i && o === x.id));
+              return <option key={x.id} value={x.id} disabled={ocupado}>{x.nome}{usadosFora.has(x.id) ? " (já é anjo de outro quarto)" : ocupado ? " (já escolhido)" : ""}</option>;
+            })}
+          </Seletor>
+          {v && valores.length < 4 && (
+            <label className="flex min-h-10 items-center gap-2.5 text-sm font-bold">
+              <input type="checkbox" className="h-5 w-5 accent-[#1f6f5c]" checked={valores.length > i + 1}
+                onChange={(e) => onChange(e.target.checked ? [...valores.slice(0, i + 1), ""] : valores.slice(0, i + 1))} />
+              Existe outro servo nesse quarto?
+            </label>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function FormQuarto({ edicaoId, servos, anjosUsados, enc, candidatos, onFechar, onSalvo }: { edicaoId: string; servos: Nome[]; anjosUsados: Set<string>; enc: Nome[]; candidatos: Nome[]; onFechar: () => void; onSalvo: () => void }) {
   const aviso = useAviso();
-  const [f, setF] = useState({ nome: "", sexo: "Feminino", cap: "6", anjo: "" });
+  const [f, setF] = useState({ nome: "", sexo: "Feminino", cap: "6" });
+  const [anjos, setAnjos] = useState<string[]>([""]);
   const [busca, setBusca] = useState("");
   const [marcados, setMarcados] = useState<Nome[]>([]);
   const [salvando, setSalvando] = useState(false);
+  const [relatorio, setRelatorio] = useState<string[]>([]);
+  const arq = useRef<HTMLInputElement>(null);
   const cap = Number(f.cap);
+  /** Nomes da planilha -> marcados no quarto. Não repete nome, não pega quem já tem quarto e respeita as vagas. */
+  async function planilha(file: File) {
+    try {
+      const nomes = await lerNomesQuarto(file);
+      if (!nomes.length) { aviso("Não encontrei nomes. Use a coluna “Encontrista” do modelo."); return; }
+      const novos = [...marcados]; const rel: string[] = []; let add = 0;
+      for (const nome of nomes) {
+        const p = acharPessoa(nome, candidatos);
+        if (!p) {
+          const outro = acharPessoa(nome, enc);
+          rel.push(outro ? `${nome}: já está em outro quarto` : `${nome}: não encontrado (ou há mais de uma pessoa com esse nome)`);
+          continue;
+        }
+        if (novos.some((m) => m.id === p.id)) { rel.push(`${nome}: repetido na planilha`); continue; }
+        if (novos.length >= cap) { rel.push(`${nome}: sem vaga (limite de ${cap})`); continue; }
+        novos.push(p); add++;
+      }
+      setMarcados(novos); setRelatorio(rel);
+      aviso(`${add} encontrista(s) marcado(s).${rel.length ? ` ${rel.length} ficaram de fora.` : ""}`);
+    } catch (er) { aviso("Não consegui ler o arquivo: " + (er instanceof Error ? er.message : "erro")); }
+  }
   const doSexo = (n: Nome) => (n.sexo ?? "").toLowerCase().startsWith(f.sexo[0].toLowerCase());
   const achados = useMemo(() => {
     const t = norm(busca);
@@ -450,9 +507,11 @@ function FormQuarto({ edicaoId, servos, candidatos, onFechar, onSalvo }: { edica
     if (marcados.length > cap) { aviso("Há mais pessoas marcadas do que vagas."); return; }
     setSalvando(true);
     try {
-      const { data, error } = await supabase.from("quartos").insert({ edicao_id: edicaoId, nome: f.nome.trim(), sexo: f.sexo, capacidade: cap, anjo_id: f.anjo || null }).select("id").single();
+      const { data, error } = await supabase.from("quartos").insert({ edicao_id: edicaoId, nome: f.nome.trim(), sexo: f.sexo, capacidade: cap }).select("id").single();
       if (error) throw error;
       if (marcados.length) { const r = await supabase.from("quarto_ocupantes").insert(marcados.map((n) => ({ encontrista_id: n.id, quarto_id: data.id }))); if (r.error) throw r.error; }
+      const ids = Array.from(new Set(anjos.filter(Boolean)));
+      if (ids.length) { const a = await supabase.from("quarto_anjos").insert(ids.map((id) => ({ encontrista_id: id, quarto_id: data.id }))); if (a.error) throw a.error; }
       const l = await supabase.from("quarto_links").insert({ quarto_id: data.id }); if (l.error) throw l.error;
       aviso("Quarto salvo. O link do anjo já está ativo.");
       onSalvo();
@@ -465,10 +524,7 @@ function FormQuarto({ edicaoId, servos, candidatos, onFechar, onSalvo }: { edica
         <Campo rotulo="Número ou nome do quarto" value={f.nome} onChange={(e) => setF({ ...f, nome: e.target.value })} placeholder="Ex.: Quarto 1" />
         <div className="grid grid-cols-2 gap-2">{["Feminino", "Masculino"].map((s) => <Chip key={s} ativo={f.sexo === s} onClick={() => setF({ ...f, sexo: s })}>{s}</Chip>)}</div>
         <Campo rotulo="Vagas" inputMode="numeric" value={f.cap} onChange={(e) => setF({ ...f, cap: e.target.value })} />
-        <Seletor rotulo="Anjo do quarto (servo)" value={f.anjo} onChange={(e) => setF({ ...f, anjo: e.target.value })}>
-          <option value="">Escolher depois</option>
-          {servos.map((s) => <option key={s.id} value={s.id}>{s.nome}</option>)}
-        </Seletor>
+        <AnjosCampo valores={anjos} onChange={setAnjos} servos={servos} usadosFora={anjosUsados} />
         <div className="flex flex-col gap-2">
           <b className="text-sm">Encontristas do quarto ({marcados.length}/{Number.isFinite(cap) ? cap : 0})</b>
           <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Digite o nome do encontrista" className="min-h-12 rounded-2xl border border-borda bg-white px-4 outline-none focus:border-marca" />
@@ -485,15 +541,34 @@ function FormQuarto({ edicaoId, servos, candidatos, onFechar, onSalvo }: { edica
           )}
         </div>
         <Botao type="submit" bloco disabled={salvando}>{salvando ? "Salvando…" : "Salvar quarto"}</Botao>
+        <div className="flex flex-col gap-2 rounded-2xl border border-borda p-3">
+          <b className="text-sm">Ou preencha por planilha</b>
+          <p className="m-0 text-xs text-suave">A planilha só leva o nome dos encontristas (o anjo, o sexo e as vagas são os de cima). O mesmo nome não pode repetir, e quem já está em outro quarto fica de fora.</p>
+          <input ref={arq} type="file" accept=".xlsx,.xls,.csv" hidden onChange={(e) => { const x = e.target.files?.[0]; if (x) planilha(x); e.target.value = ""; }} />
+          <div className="flex gap-2">
+            <Botao v="sec" onClick={() => baixarModeloQuarto(Number.isFinite(cap) ? cap : 6, f.nome)} className="!min-h-11 flex-1">Baixar modelo</Botao>
+            <Botao v="sec" onClick={() => arq.current?.click()} className="!min-h-11 flex-1">Enviar planilha</Botao>
+          </div>
+          {relatorio.length > 0 && <ul className="m-0 list-disc pl-5 text-xs text-alerta">{relatorio.slice(0, 8).map((r, i) => <li key={i}>{r}</li>)}{relatorio.length > 8 && <li>e mais {relatorio.length - 8}…</li>}</ul>}
+        </div>
       </form>
     </Janela>
   );
 }
 
-function QuartoJanela({ q, servos, ocupantes, candidatos, lotado, onFechar, onMudou }: { q: Quarto; servos: Nome[]; ocupantes: Nome[]; candidatos: Nome[]; lotado: boolean; onFechar: () => void; onMudou: () => void }) {
+function QuartoJanela({ q, servos, anjosUsados, anjosAtuais, ocupantes, candidatos, lotado, onFechar, onMudou }: { q: Quarto; servos: Nome[]; anjosUsados: Set<string>; anjosAtuais: string[]; ocupantes: Nome[]; candidatos: Nome[]; lotado: boolean; onFechar: () => void; onMudou: () => void }) {
   const aviso = useAviso();
   const [busca, setBusca] = useState("");
   const [del, setDel] = useState(false);
+  const [anjosSel, setAnjosSel] = useState<string[]>(anjosAtuais.length ? anjosAtuais : [""]);
+  async function trocarAnjos(v: string[]) {
+    setAnjosSel(v);
+    const ids = Array.from(new Set(v.filter(Boolean)));
+    const del = await supabase.from("quarto_anjos").delete().eq("quarto_id", q.id);
+    if (del.error) { aviso(msgErro(del.error)); return; }
+    if (ids.length) { const r = await supabase.from("quarto_anjos").insert(ids.map((id) => ({ encontrista_id: id, quarto_id: q.id }))); if (r.error) { aviso(msgErro(r.error)); return; } }
+    onMudou();
+  }
   const [token, setToken] = useState<string | null | undefined>(undefined);
   useEffect(() => { supabase.from("quarto_links").select("token").eq("quarto_id", q.id).eq("ativo", true).order("criado_em", { ascending: false }).limit(1).then(({ data }) => setToken(data?.[0]?.token ?? null)); }, [q.id]);
   const url = token ? `${typeof window !== "undefined" ? window.location.origin : ""}/q/${token}` : "";
@@ -526,10 +601,7 @@ function QuartoJanela({ q, servos, ocupantes, candidatos, lotado, onFechar, onMu
             </>
           ) : <Botao v="suave" onClick={gerarLink} className="!min-h-11">Gerar link do quarto</Botao>}
         </div>
-        <Seletor rotulo="Anjo do quarto (servo)" value={q.anjo_id ?? ""} onChange={async (e) => { const { error } = await supabase.from("quartos").update({ anjo_id: e.target.value || null }).eq("id", q.id); if (error) aviso(msgErro(error)); else { q.anjo_id = e.target.value || null; aviso("Anjo atualizado."); } onMudou(); }}>
-          <option value="">Escolher depois</option>
-          {servos.map((x) => <option key={x.id} value={x.id}>{x.nome}</option>)}
-        </Seletor>
+        <AnjosCampo valores={anjosSel} onChange={trocarAnjos} servos={servos} usadosFora={new Set(Array.from(anjosUsados).filter((id) => !anjosAtuais.includes(id)))} />
         {ocupantes.length === 0 && <Vazio>Ninguém neste quarto.</Vazio>}
         {ocupantes.map((n) => (
           <div key={n.id} className="flex items-center justify-between rounded-2xl border border-borda px-3 py-2"><span>{n.nome}</span><button type="button" onClick={() => tirar(n)} className="min-h-10 px-2 text-sm font-bold text-alerta">Tirar</button></div>
