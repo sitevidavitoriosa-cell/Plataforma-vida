@@ -9,7 +9,7 @@ type P = {
   batizado: boolean | null; igreja: string | null; em_celula: boolean | null; celula: string | null; lider_celula: string | null; discipulado: string | null; rede: string | null;
   tem_necessidade: boolean; necessidade: string | null; obs_saude: string | null; contatos: string[];
 };
-type Info = { ok: boolean; quarto?: string; sexo?: string; edicao?: string; pessoas?: P[] };
+type Info = { ok: boolean; quarto?: string; sexo?: string; anjo?: string | null; edicao?: string; pessoas?: P[] };
 
 const sn = (v: boolean | null) => (v === null || v === undefined ? "Não informado" : v ? "Sim" : "Não");
 
@@ -27,7 +27,7 @@ export default function Quarto() {
   const casca = (c: React.ReactNode) => (
     <div className="mx-auto min-h-dvh max-w-md px-4 pb-10 pt-4">
       <div className="mb-4 flex items-center gap-3"><div className="grid h-10 w-10 place-items-center rounded-xl bg-marca font-extrabold text-white">V</div>
-        <div className="leading-tight"><b>{info?.ok ? info.quarto : "Quarto"}</b><div className="text-xs text-suave">{info?.edicao ?? "Vida Vitoriosa"}</div></div></div>
+        <div className="leading-tight"><b>{info?.ok ? info.quarto : "Quarto"}</b><div className="text-xs text-suave">{info?.edicao ?? "Vida Vitoriosa"}{info?.ok && info.anjo ? ` · Anjo: ${info.anjo}` : ""}</div></div></div>
       {c}
     </div>
   );

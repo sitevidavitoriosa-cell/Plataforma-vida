@@ -3,14 +3,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { msgErro } from "@/lib/dados";
 import { norm } from "@/lib/tipos";
-import { acharPessoa, baixarModeloQuartos, lerQuartos, type LinhaQuarto } from "@/lib/quartosPlanilha";
 import { TIPOS } from "@/lib/cores";
 import { useAviso, useEdicao } from "@/components/provedores";
 import { Estoque } from "@/components/estoque";
 import { Botao, Campo, Carregando, Cartao, Chip, Janela, Selo, Seletor, Vazio } from "@/components/ui";
 
 type Nome = { id: string; cod: string; nome: string; categoria: string | null; sexo: string | null };
-type Quarto = { id: string; edicao_id: string; nome: string; sexo: "Feminino" | "Masculino"; capacidade: number };
+type Quarto = { id: string; edicao_id: string; nome: string; sexo: "Feminino" | "Masculino"; capacidade: number; anjo_id: string | null };
 type Ocup = { encontrista_id: string; quarto_id: string };
 
 const slug = (t: string) => norm(t).replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
@@ -343,7 +342,6 @@ function Quartos() {
   const [ocup, setOcup] = useState<Ocup[]>([]);
   const [comLink, setComLink] = useState<Set<string>>(new Set());
   const [novo, setNovo] = useState(false);
-  const [planilha, setPlanilha] = useState(false);
   const [aberto, setAberto] = useState<Quarto | null>(null);
 
   const carregar = useCallback(async () => {
@@ -360,6 +358,8 @@ function Quartos() {
 
   const enc = useMemo(() => (nomes ?? []).filter((n) => (n.categoria ?? "").trim() === "Encontrista" || !n.categoria), [nomes]);
   const mapa = useMemo(() => new Map(enc.map((n) => [n.id, n])), [enc]);
+  const servos = useMemo(() => (nomes ?? []).filter((n) => !((n.categoria ?? "").trim() === "Encontrista" || !n.categoria)), [nomes]);
+  const nomeServo = (id: string | null) => servos.find((x) => x.id === id)?.nome ?? "";
   const alocados = new Set(ocup.map((o) => o.encontrista_id));
   const semQuarto = enc.filter((n) => !alocados.has(n.id));
   const doQuarto = (id: string) => ocup.filter((o) => o.quarto_id === id).map((o) => mapa.get(o.encontrista_id)).filter(Boolean) as Nome[];
@@ -402,149 +402,95 @@ function Quartos() {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
-        <Botao onClick={() => setPlanilha(true)} className="!min-h-11">Importar planilha</Botao>
-        <Botao v="sec" onClick={() => setNovo(true)} className="!min-h-11">Novo quarto</Botao>
+        <Botao onClick={() => setNovo(true)} className="!min-h-11">Novo quarto</Botao>
         <Botao v="sec" onClick={linksTodos} className="!min-h-11" disabled={!quartos.length}>Links de todos</Botao>
         <Botao v="sec" onClick={pdf} className="!min-h-11" disabled={!quartos.length}>Gerar lista (PDF)</Botao>
       </div>
-      <p className="m-0 text-sm text-suave">{semQuarto.length} encontristas sem quarto · {quartos.reduce((s, q) => s + q.capacidade, 0)} vagas. Toque no quarto para colocar as pessoas e gerar o link do anjo.</p>
-      {quartos.length === 0 && <Vazio>Cadastre os quartos (nome, sexo e vagas).</Vazio>}
+      <p className="m-0 text-sm text-suave">{semQuarto.length} encontristas sem quarto · {quartos.reduce((s, q) => s + q.capacidade, 0)} vagas. Crie o quarto, marque o anjo e os encontristas. Ao salvar, o link do anjo já fica ativo.</p>
+      {quartos.length === 0 && <Vazio>Toque em “Novo quarto” para começar.</Vazio>}
       {quartos.map((q) => {
         const o = doQuarto(q.id);
         return (
           <button key={q.id} type="button" onClick={() => setAberto(q)} className="text-left">
             <Cartao className="flex items-center justify-between gap-3 p-4">
-              <div><b>{q.nome}</b><div className="text-sm text-suave">{q.sexo}</div></div>
+              <div><b>{q.nome}</b><div className="text-sm text-suave">{q.sexo}{q.anjo_id && nomeServo(q.anjo_id) ? ` · Anjo: ${nomeServo(q.anjo_id)}` : ""}</div></div>
               <span className="flex items-center gap-2">{comLink.has(q.id) && <Selo tom="ok">link ativo</Selo>}<Selo tom={o.length >= q.capacidade ? "ok" : "neutro"}>{o.length}/{q.capacidade}</Selo></span>
             </Cartao>
           </button>
         );
       })}
-      {planilha && <ImportarQuartos edicaoId={ed.id} quartos={quartos} enc={enc} onFechar={() => setPlanilha(false)} onFeito={() => { setPlanilha(false); carregar(); }} />}
-      {novo && <FormQuarto edicaoId={ed.id} onFechar={() => setNovo(false)} onSalvo={() => { setNovo(false); carregar(); }} />}
-      {aberto && <QuartoJanela q={aberto} ocupantes={doQuarto(aberto.id)} candidatos={[...semQuarto].sort((a, b) => Number((b.sexo ?? "").toLowerCase().startsWith(aberto.sexo[0].toLowerCase())) - Number((a.sexo ?? "").toLowerCase().startsWith(aberto.sexo[0].toLowerCase())))}
+      {novo && <FormQuarto edicaoId={ed.id} servos={servos} candidatos={semQuarto} onFechar={() => setNovo(false)} onSalvo={() => { setNovo(false); carregar(); }} />}
+      {aberto && <QuartoJanela q={aberto} servos={servos} ocupantes={doQuarto(aberto.id)} candidatos={[...semQuarto].sort((a, b) => Number((b.sexo ?? "").toLowerCase().startsWith(aberto.sexo[0].toLowerCase())) - Number((a.sexo ?? "").toLowerCase().startsWith(aberto.sexo[0].toLowerCase())))}
         lotado={doQuarto(aberto.id).length >= aberto.capacidade} onFechar={() => setAberto(null)} onMudou={carregar} />}
     </div>
   );
 }
 
-function ImportarQuartos({ edicaoId, quartos, enc, onFechar, onFeito }: { edicaoId: string; quartos: Quarto[]; enc: Nome[]; onFechar: () => void; onFeito: () => void }) {
+function FormQuarto({ edicaoId, servos, candidatos, onFechar, onSalvo }: { edicaoId: string; servos: Nome[]; candidatos: Nome[]; onFechar: () => void; onSalvo: () => void }) {
   const aviso = useAviso();
-  const [qtd, setQtd] = useState("24");
-  const [lido, setLido] = useState<LinhaQuarto[] | null>(null);
-  const [lendo, setLendo] = useState(false);
-  const [gravando, setGravando] = useState(false);
-  const [limpar, setLimpar] = useState(false);
-  const arq = useRef<HTMLInputElement>(null);
-
-  const analise = useMemo(() => (lido ?? []).map((l) => {
-    const achados: Nome[] = []; const sem: string[] = []; const ids = new Set<string>();
-    for (const n of l.nomes) { const p = acharPessoa(n, enc); if (!p) sem.push(n); else if (!ids.has(p.id)) { ids.add(p.id); achados.push(p); } }
-    const fem = achados.filter((p) => (p.sexo ?? "").toLowerCase().startsWith("f")).length, masc = achados.filter((p) => (p.sexo ?? "").toLowerCase().startsWith("m")).length;
-    const sexo: Quarto["sexo"] = masc > fem ? "Masculino" : "Feminino";
-    return { l, achados, sem, sexo };
-  }), [lido, enc]);
-  const totalAchados = analise.reduce((s, a) => s + a.achados.length, 0);
-  const totalSem = analise.reduce((s, a) => s + a.sem.length, 0);
-
-  async function escolher(f: File) {
-    setLendo(true);
-    try { const r = await lerQuartos(f); if (!r.length) aviso("Não encontrei quartos. Use o modelo (colunas Quarto e Encontrista 1, 2, 3…)."); else setLido(r); }
-    catch (e) { aviso("Não consegui ler o arquivo: " + (e instanceof Error ? e.message : "erro")); }
-    setLendo(false);
+  const [f, setF] = useState({ nome: "", sexo: "Feminino", cap: "6", anjo: "" });
+  const [busca, setBusca] = useState("");
+  const [marcados, setMarcados] = useState<Nome[]>([]);
+  const [salvando, setSalvando] = useState(false);
+  const cap = Number(f.cap);
+  const doSexo = (n: Nome) => (n.sexo ?? "").toLowerCase().startsWith(f.sexo[0].toLowerCase());
+  const achados = useMemo(() => {
+    const t = norm(busca);
+    if (t.length < 2) return [];
+    return candidatos.filter((n) => !marcados.some((m) => m.id === n.id) && norm(n.nome).includes(t)).sort((a, b) => Number(doSexo(b)) - Number(doSexo(a))).slice(0, 8);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [busca, candidatos, marcados, f.sexo]);
+  function marcar(n: Nome) {
+    if (marcados.length >= cap) { aviso(`O quarto tem ${cap} vagas. Aumente as vagas para colocar mais gente.`); return; }
+    setMarcados([...marcados, n]); setBusca("");
   }
-
-  async function gravar() {
-    setGravando(true);
-    try {
-      const existentes = new Map(quartos.map((q) => [norm(q.nome), q]));
-      const ocupar: { encontrista_id: string; quarto_id: string }[] = [];
-      const todosIds: string[] = [];
-      for (const a of analise) {
-        const cap = Math.min(60, Math.max(a.l.vagas ?? 0, a.achados.length, 6));
-        let q = existentes.get(norm(a.l.quarto));
-        if (!q) {
-          const { data, error } = await supabase.from("quartos").insert({ edicao_id: edicaoId, nome: a.l.quarto, sexo: a.sexo, capacidade: cap }).select("*").single();
-          if (error) throw error;
-          q = data as Quarto; existentes.set(norm(a.l.quarto), q);
-        } else if (cap > q.capacidade) {
-          await supabase.from("quartos").update({ capacidade: cap }).eq("id", q.id);
-        }
-        for (const p of a.achados) { ocupar.push({ encontrista_id: p.id, quarto_id: q.id }); todosIds.push(p.id); }
-      }
-      if (limpar) {
-        const ids = new Set(todosIds);
-        const sair = enc.filter((p) => !ids.has(p.id)).map((p) => p.id);
-        for (let k = 0; k < sair.length; k += 100) await supabase.from("quarto_ocupantes").delete().in("encontrista_id", sair.slice(k, k + 100));
-      }
-      for (let k = 0; k < ocupar.length; k += 100) {
-        const { error } = await supabase.from("quarto_ocupantes").upsert(ocupar.slice(k, k + 100), { onConflict: "encontrista_id" });
-        if (error) throw error;
-      }
-      aviso(`${analise.length} quartos e ${totalAchados} pessoas gravados.`);
-      onFeito();
-    } catch (e) { aviso(msgErro(e as Error)); }
-    setGravando(false);
-  }
-
-  return (
-    <Janela titulo="Importar quartos por planilha" onFechar={onFechar}>
-      <div className="flex flex-col gap-3">
-        <input ref={arq} type="file" accept=".xlsx,.xls,.csv" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) escolher(f); e.target.value = ""; }} />
-        {!lido ? (
-          <>
-            <p className="m-0 text-sm text-suave">1. Baixe o modelo, 2. escreva o nome dos encontristas em cada quarto, 3. envie de volta. O sistema cria os quartos, coloca cada pessoa e deixa o perfil pronto para o link do anjo.</p>
-            <div className="flex items-end gap-2">
-              <div className="w-28"><Campo rotulo="Nº de quartos" inputMode="numeric" value={qtd} onChange={(e) => setQtd(e.target.value)} /></div>
-              <Botao v="sec" onClick={() => baixarModeloQuartos(Math.min(100, Math.max(1, Number(qtd) || 24)))} className="!min-h-12">Baixar modelo</Botao>
-            </div>
-            <Botao bloco onClick={() => arq.current?.click()} disabled={lendo}>{lendo ? "Lendo…" : "Enviar planilha preenchida"}</Botao>
-          </>
-        ) : (
-          <>
-            <p className="m-0 text-sm"><b>{analise.length}</b> quartos · <b>{totalAchados}</b> pessoas encontradas{totalSem > 0 && <> · <b className="text-alerta">{totalSem} nome(s) não encontrado(s)</b></>}</p>
-            <div className="flex max-h-72 flex-col gap-1.5 overflow-y-auto">
-              {analise.map((a) => (
-                <div key={a.l.quarto} className="rounded-xl border border-borda px-3 py-2 text-sm">
-                  <div className="flex justify-between"><b>{a.l.quarto}</b><span className="text-suave">{a.achados.length} · {a.sexo}</span></div>
-                  {a.sem.length > 0 && <div className="mt-0.5 text-xs text-alerta">Não achei: {a.sem.join(", ")}</div>}
-                </div>
-              ))}
-            </div>
-            {totalSem > 0 && <p className="m-0 text-xs text-suave">Nomes não encontrados ficam de fora. Confira a grafia (ou se a pessoa é encontrista) e envie de novo, ou coloque depois à mão.</p>}
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={limpar} onChange={(e) => setLimpar(e.target.checked)} /> Tirar dos quartos quem não está na planilha</label>
-            <div className="flex gap-2"><Botao v="sec" bloco onClick={() => setLido(null)}>Voltar</Botao><Botao bloco onClick={gravar} disabled={gravando || totalAchados === 0}>{gravando ? "Gravando…" : "Gravar quartos"}</Botao></div>
-          </>
-        )}
-      </div>
-    </Janela>
-  );
-}
-
-function FormQuarto({ edicaoId, onFechar, onSalvo }: { edicaoId: string; onFechar: () => void; onSalvo: () => void }) {
-  const aviso = useAviso();
-  const [f, setF] = useState({ nome: "", sexo: "Feminino", cap: "6" });
   async function salvar(e: React.FormEvent) {
     e.preventDefault();
-    const cap = Number(f.cap);
-    if (!f.nome.trim() || !(cap >= 1 && cap <= 60)) { aviso("Informe o nome e as vagas (1 a 60)."); return; }
-    const { error } = await supabase.from("quartos").insert({ edicao_id: edicaoId, nome: f.nome.trim(), sexo: f.sexo, capacidade: cap });
-    if (error) { aviso(msgErro(error)); return; }
-    onSalvo();
+    if (!f.nome.trim() || !(cap >= 1 && cap <= 60)) { aviso("Informe o número/nome do quarto e as vagas (1 a 60)."); return; }
+    if (marcados.length > cap) { aviso("Há mais pessoas marcadas do que vagas."); return; }
+    setSalvando(true);
+    try {
+      const { data, error } = await supabase.from("quartos").insert({ edicao_id: edicaoId, nome: f.nome.trim(), sexo: f.sexo, capacidade: cap, anjo_id: f.anjo || null }).select("id").single();
+      if (error) throw error;
+      if (marcados.length) { const r = await supabase.from("quarto_ocupantes").insert(marcados.map((n) => ({ encontrista_id: n.id, quarto_id: data.id }))); if (r.error) throw r.error; }
+      const l = await supabase.from("quarto_links").insert({ quarto_id: data.id }); if (l.error) throw l.error;
+      aviso("Quarto salvo. O link do anjo já está ativo.");
+      onSalvo();
+    } catch (er) { aviso(msgErro(er as Error)); }
+    setSalvando(false);
   }
   return (
     <Janela titulo="Novo quarto" onFechar={onFechar}>
       <form onSubmit={salvar} className="flex flex-col gap-3.5">
-        <Campo rotulo="Nome" value={f.nome} onChange={(e) => setF({ ...f, nome: e.target.value })} placeholder="Ex.: Quarto 1" />
+        <Campo rotulo="Número ou nome do quarto" value={f.nome} onChange={(e) => setF({ ...f, nome: e.target.value })} placeholder="Ex.: Quarto 1" />
         <div className="grid grid-cols-2 gap-2">{["Feminino", "Masculino"].map((s) => <Chip key={s} ativo={f.sexo === s} onClick={() => setF({ ...f, sexo: s })}>{s}</Chip>)}</div>
         <Campo rotulo="Vagas" inputMode="numeric" value={f.cap} onChange={(e) => setF({ ...f, cap: e.target.value })} />
-        <Botao type="submit" bloco>Salvar</Botao>
+        <Seletor rotulo="Anjo do quarto (servo)" value={f.anjo} onChange={(e) => setF({ ...f, anjo: e.target.value })}>
+          <option value="">Escolher depois</option>
+          {servos.map((s) => <option key={s.id} value={s.id}>{s.nome}</option>)}
+        </Seletor>
+        <div className="flex flex-col gap-2">
+          <b className="text-sm">Encontristas do quarto ({marcados.length}/{Number.isFinite(cap) ? cap : 0})</b>
+          <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Digite o nome do encontrista" className="min-h-12 rounded-2xl border border-borda bg-white px-4 outline-none focus:border-marca" />
+          {achados.map((n) => (
+            <button key={n.id} type="button" onClick={() => marcar(n)} className="flex min-h-11 items-center justify-between gap-2 rounded-2xl border border-borda bg-white px-3 text-left">
+              <span className="truncate">{n.nome}</span><span className="shrink-0 text-xs font-bold text-marca">{n.sexo ?? ""} · marcar</span>
+            </button>
+          ))}
+          {busca.trim().length >= 2 && achados.length === 0 && <p className="m-0 text-sm text-suave">Ninguém sem quarto com esse nome.</p>}
+          {marcados.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-1">
+              {marcados.map((n) => <button key={n.id} type="button" onClick={() => setMarcados(marcados.filter((m) => m.id !== n.id))} className="min-h-9 rounded-full bg-marca-clara px-3 text-sm font-bold text-marca-esc">{n.nome} ✕</button>)}
+            </div>
+          )}
+        </div>
+        <Botao type="submit" bloco disabled={salvando}>{salvando ? "Salvando…" : "Salvar quarto"}</Botao>
       </form>
     </Janela>
   );
 }
 
-function QuartoJanela({ q, ocupantes, candidatos, lotado, onFechar, onMudou }: { q: Quarto; ocupantes: Nome[]; candidatos: Nome[]; lotado: boolean; onFechar: () => void; onMudou: () => void }) {
+function QuartoJanela({ q, servos, ocupantes, candidatos, lotado, onFechar, onMudou }: { q: Quarto; servos: Nome[]; ocupantes: Nome[]; candidatos: Nome[]; lotado: boolean; onFechar: () => void; onMudou: () => void }) {
   const aviso = useAviso();
   const [busca, setBusca] = useState("");
   const [del, setDel] = useState(false);
@@ -580,6 +526,10 @@ function QuartoJanela({ q, ocupantes, candidatos, lotado, onFechar, onMudou }: {
             </>
           ) : <Botao v="suave" onClick={gerarLink} className="!min-h-11">Gerar link do quarto</Botao>}
         </div>
+        <Seletor rotulo="Anjo do quarto (servo)" value={q.anjo_id ?? ""} onChange={async (e) => { const { error } = await supabase.from("quartos").update({ anjo_id: e.target.value || null }).eq("id", q.id); if (error) aviso(msgErro(error)); else { q.anjo_id = e.target.value || null; aviso("Anjo atualizado."); } onMudou(); }}>
+          <option value="">Escolher depois</option>
+          {servos.map((x) => <option key={x.id} value={x.id}>{x.nome}</option>)}
+        </Seletor>
         {ocupantes.length === 0 && <Vazio>Ninguém neste quarto.</Vazio>}
         {ocupantes.map((n) => (
           <div key={n.id} className="flex items-center justify-between rounded-2xl border border-borda px-3 py-2"><span>{n.nome}</span><button type="button" onClick={() => tirar(n)} className="min-h-10 px-2 text-sm font-bold text-alerta">Tirar</button></div>
