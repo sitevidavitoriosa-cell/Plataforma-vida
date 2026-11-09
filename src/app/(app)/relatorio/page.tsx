@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { useLista } from "@/lib/dados";
 import { dmy, fmtN, type Envio, type Item } from "@/lib/tipos";
 import { podeVerFicha } from "@/lib/perm";
-import { descricaoEd } from "@/lib/cores";
+import { descricaoEd, temaDe } from "@/lib/cores";
 import { useAuth, useAviso, useEdicao } from "@/components/provedores";
 import { Botao, Carregando, Chip, Titulo, Vazio } from "@/components/ui";
 
@@ -68,6 +68,73 @@ export default function Relatorio() {
     aviso("Planilha gerada.");
   }
 
+
+  async function slides() {
+    const { default: Pptx } = await import("pptxgenjs");
+    const t = temaDe(ed), hx = (c: string) => c.replace("#", "");
+    const COR = { marca: hx(t.marca), det: hx(t.detalhe), clara: hx(t.clara), txt: "141414", suave: "6B6B66" };
+    const pp = new Pptx(); pp.layout = "LAYOUT_WIDE"; pp.title = `Relatório ${ed!.nome}`;
+    const F = "Calibri";
+    const cabeca = (sl: ReturnType<typeof pp.addSlide>, titulo: string, sub?: string) => {
+      sl.background = { color: "FFFFFF" };
+      sl.addShape("rect", { x: 0, y: 0, w: 13.33, h: 0.12, fill: { color: COR.det } });
+      sl.addText(titulo, { x: 0.6, y: 0.35, w: 12, h: 0.7, fontFace: F, fontSize: 30, bold: true, color: COR.marca });
+      if (sub) sl.addText(sub, { x: 0.6, y: 1.0, w: 12, h: 0.4, fontFace: F, fontSize: 14, color: COR.suave });
+      sl.addText(`${ed!.nome} · ${descricaoEd(ed!)}`, { x: 0.6, y: 7.05, w: 9, h: 0.3, fontFace: F, fontSize: 10, color: COR.suave });
+    };
+    const kpis = (sl: ReturnType<typeof pp.addSlide>, lista: [string | number, string][], y: number) => {
+      const w = 12.1 / lista.length;
+      lista.forEach(([v, r], i) => {
+        const x = 0.6 + i * w;
+        sl.addShape("roundRect", { x, y, w: w - 0.2, h: 1.5, fill: { color: COR.clara }, rectRadius: 0.12 });
+        sl.addText(String(typeof v === "number" ? fmtN(v) : v), { x, y: y + 0.15, w: w - 0.2, h: 0.8, align: "center", fontFace: F, fontSize: 36, bold: true, color: COR.marca });
+        sl.addText(r, { x, y: y + 0.9, w: w - 0.2, h: 0.5, align: "center", fontFace: F, fontSize: 13, color: COR.suave });
+      });
+    };
+    // capa
+    const c = pp.addSlide(); c.background = { color: COR.marca };
+    c.addShape("rect", { x: 0, y: 5.6, w: 13.33, h: 0.18, fill: { color: COR.det } });
+    c.addText("RELATÓRIO GERAL", { x: 0.8, y: 1.6, w: 11, h: 0.5, fontFace: F, fontSize: 18, bold: true, color: COR.det, charSpacing: 4 });
+    c.addText(ed!.nome, { x: 0.8, y: 2.2, w: 11.5, h: 1.4, fontFace: F, fontSize: 54, bold: true, color: "FFFFFF" });
+    c.addText([descricaoEd(ed!), `${dmy(ed!.data_ini)}${ed!.data_fim ? " a " + dmy(ed!.data_fim) : ""}${ed!.local ? " · " + ed!.local : ""}`, ed!.resp ? `Responsável: ${ed!.resp}` : ""].filter(Boolean).join("\n"),
+      { x: 0.8, y: 3.8, w: 11, h: 1.4, fontFace: F, fontSize: 18, color: "FFFFFF" });
+    // resumo
+    const r = pp.addSlide(); cabeca(r, "Resumo da edição");
+    kpis(r, [[linhas.length, "itens enviados"], [emFalta, "itens em falta no estoque"], ...(admin ? ([[principais.length, "encontristas"], [equipe, "equipe"]] as [number, string][]) : []), [dec.length, "decisões registradas"]], 1.8);
+    if (admin) kpis(r, [[batizados, "encontristas batizados"], [saude, "com necessidade de saúde"]], 3.8);
+    // materiais
+    if (sec.materiais && linhas.length) {
+      const m = pp.addSlide(); cabeca(m, "Materiais enviados por setor", "Unidades enviadas à edição");
+      m.addChart(pp.ChartType.bar, [{ name: "Enviado", labels: setores, values: setores.map((st) => linhas.filter((l) => l.setor === st).reduce((a, l) => a + l.env, 0)) }],
+        { x: 0.6, y: 1.5, w: 12.1, h: 5.4, barDir: "bar", chartColors: [COR.marca], showValue: true, catAxisLabelFontSize: 12, valAxisHidden: true, valGridLine: { style: "none" }, dataLabelFontSize: 11 });
+      for (const st of setores) {
+        const l = linhas.filter((x) => x.setor === st);
+        for (let k = 0; k < l.length; k += 10) {
+          const sl = pp.addSlide(); cabeca(sl, st + (k > 0 ? " (continuação)" : ""), `${l.length} itens · balanço ${l.every((x) => x.fechado) ? "fechado" : "aberto"}`);
+          const cab = ["Item", "Medida", "Enviado", "Comprado", "Voltou", "Consumo"].map((h, i) => ({ text: h, options: { bold: true, color: "FFFFFF", fill: { color: COR.marca }, align: i > 1 ? "right" : "left" } }));
+          const corpo = l.slice(k, k + 10).map((x, j) => [x.nome, x.un, x.env, x.comp, x.volta, x.cons].map((v, i) => ({ text: typeof v === "number" ? fmtN(v) : v, options: { align: i > 1 ? "right" : "left", fill: { color: j % 2 ? "FFFFFF" : COR.clara } } })));
+          sl.addTable([cab, ...corpo] as never, { x: 0.6, y: 1.55, w: 12.1, colW: [5.5, 1.6, 1.25, 1.25, 1.25, 1.25], fontFace: F, fontSize: 13, color: COR.txt, border: { type: "none" }, rowH: 0.45 });
+        }
+      }
+    }
+    // pessoas
+    if (sec.pessoas && admin) {
+      const sl = pp.addSlide(); cabeca(sl, "Pessoas", "Encontristas e equipe");
+      kpis(sl, [[principais.length, "encontristas"], [equipe, "equipe"], [batizados, "batizados"], [saude, "necessidade de saúde"]], 1.6);
+      const redes = conta(principais, (e) => um(e.encontrista_espiritual)?.rede ?? ""), sexos = conta(principais, (e) => e.sexo ?? "");
+      if (redes.length) sl.addChart(pp.ChartType.bar, [{ name: "Encontristas", labels: redes.map((x) => x[0]), values: redes.map((x) => x[1]) }], { x: 0.6, y: 3.4, w: 7, h: 3.5, barDir: "col", chartColors: [COR.marca], showValue: true, showTitle: true, title: "Por rede", titleFontSize: 14, valAxisHidden: true, valGridLine: { style: "none" } });
+      if (sexos.length) sl.addChart(pp.ChartType.doughnut, [{ name: "Sexo", labels: sexos.map((x) => x[0]), values: sexos.map((x) => x[1]) }], { x: 7.9, y: 3.4, w: 4.8, h: 3.5, chartColors: [COR.marca, COR.det, "9A9A95"], showLegend: true, legendPos: "b", showPercent: true, showTitle: true, title: "Por sexo", titleFontSize: 14 });
+    }
+    // decisões
+    if (sec.decisoes) {
+      const sl = pp.addSlide(); cabeca(sl, "Decisões", `${dec.length} registradas`);
+      if (porBotao.length) sl.addChart(pp.ChartType.bar, [{ name: "Decisões", labels: porBotao.map((x) => x[0]), values: porBotao.map((x) => x[1]) }], { x: 0.6, y: 1.5, w: 12.1, h: 5.4, barDir: "bar", chartColors: [COR.marca], showValue: true, valAxisHidden: true, valGridLine: { style: "none" }, catAxisLabelFontSize: 14 });
+      else sl.addText("Nenhuma decisão registrada nesta edição.", { x: 0.6, y: 3, w: 12, h: 1, fontFace: F, fontSize: 20, color: COR.suave });
+    }
+    await pp.writeFile({ fileName: `Apresentacao_${ed!.nome.replace(/[^a-zA-Z0-9]+/g, "_")}.pptx` });
+    aviso("Apresentação gerada.");
+  }
+
   const Tit = ({ children }: { children: React.ReactNode }) => <h2 className="mb-3 mt-8 border-b-2 border-detalhe pb-1.5 text-xl font-extrabold print:mt-6 print:break-after-avoid">{children}</h2>;
   const Kpi = ({ v, t }: { v: number | string; t: string }) => <div className="rounded-2xl border border-borda bg-white p-3 print:break-inside-avoid"><div className="text-2xl font-extrabold leading-none">{v}</div><div className="mt-1 text-xs text-suave">{t}</div></div>;
   const Tab = ({ cab, linhas: ls }: { cab: string[]; linhas: (string | number)[][] }) => (
@@ -93,6 +160,7 @@ export default function Relatorio() {
         <div className="flex flex-wrap gap-2">
           <Botao onClick={() => window.print()} className="!min-h-11">Imprimir / salvar PDF</Botao>
           <Botao v="sec" onClick={excel} className="!min-h-11">Baixar Excel</Botao>
+          <Botao v="sec" onClick={slides} className="!min-h-11">Baixar apresentação (slides)</Botao>
         </div>
       </div>
 

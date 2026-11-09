@@ -4,13 +4,13 @@ import { supabase } from "@/lib/supabase";
 import { msgErro, useLista } from "@/lib/dados";
 import type { Equipe, Item, Pessoa } from "@/lib/tipos";
 import { PERFIS, podeVer, type Perfil } from "@/lib/perm";
-import { useAuth, useAviso } from "@/components/provedores";
+import { useAuth, useAviso, useEdicao } from "@/components/provedores";
 import { Botao, Campo, Carregando, Cartao, Chip, Icone, Janela, Selo, Seletor, Titulo, Vazio, cx } from "@/components/ui";
 
 export default function Pessoas() {
   const { acesso } = useAuth();
   const aviso = useAviso();
-  const pessoas = useLista<Pessoa>("pessoas", "*, equipe_membros(equipe_id)", "nome");
+  const pessoas = useLista<Pessoa>("pessoas", "*, equipe_membros(equipe_id), pessoa_edicoes(edicao_id)", "nome");
   const equipes = useLista<Equipe>("equipes", "*", "nome");
   const itens = useLista<Item>("itens", "setor");
   const [aba, setAba] = useState<"pessoas" | "equipes">("pessoas");
@@ -102,6 +102,8 @@ function FormPessoa({ p, equipes, onFechar, onSalvo }: { p: Pessoa | null; equip
   const aviso = useAviso();
   const [f, setF] = useState({ nome: p?.nome ?? "", email: p?.email ?? "", perfil: (p?.perfil ?? "visitante") as Perfil, ativo: p?.ativo ?? true, telefone: p?.telefone ?? "" });
   const [sel, setSel] = useState<string[]>(p?.equipe_membros.map((m) => m.equipe_id) ?? []);
+  const [selEd, setSelEd] = useState<string[]>(p?.pessoa_edicoes?.map((m) => m.edicao_id) ?? []);
+  const { eds } = useEdicao();
   const [del, setDel] = useState(false);
 
   async function salvar(e: React.FormEvent) {
@@ -123,6 +125,11 @@ function FormPessoa({ p, equipes, onFechar, onSalvo }: { p: Pessoa | null; equip
     const tirar = atuais.filter((x) => !sel.includes(x)), por = sel.filter((x) => !atuais.includes(x));
     if (tirar.length) await supabase.from("equipe_membros").delete().eq("pessoa_id", id).in("equipe_id", tirar);
     if (por.length) await supabase.from("equipe_membros").insert(por.map((equipe_id) => ({ pessoa_id: id, equipe_id })));
+    const edAtuais = p?.pessoa_edicoes?.map((m) => m.edicao_id) ?? [];
+    const edQuer = f.perfil === "admin_edicao" ? selEd : [];
+    const edTirar = edAtuais.filter((x) => !edQuer.includes(x)), edPor = edQuer.filter((x) => !edAtuais.includes(x));
+    if (edTirar.length) await supabase.from("pessoa_edicoes").delete().eq("pessoa_id", id).in("edicao_id", edTirar);
+    if (edPor.length) await supabase.from("pessoa_edicoes").insert(edPor.map((edicao_id) => ({ pessoa_id: id, edicao_id })));
     aviso(p ? "Pessoa atualizada." : "Pessoa convidada.");
     onSalvo(!p && codigo ? { nome: f.nome.trim(), email, codigo } : undefined);
   }
@@ -143,6 +150,18 @@ function FormPessoa({ p, equipes, onFechar, onSalvo }: { p: Pessoa | null; equip
         <Seletor rotulo="Perfil de acesso" value={f.perfil} onChange={(e) => setF({ ...f, perfil: e.target.value as Perfil })}>
           {(Object.keys(PERFIS) as Perfil[]).map((k) => <option key={k} value={k}>{PERFIS[k].nome} — {PERFIS[k].desc}</option>)}
         </Seletor>
+        {f.perfil === "admin_edicao" && (
+          <div>
+            <div className="pb-2 text-[13px] font-bold text-suave">Edições que ele administra (só vê e mexe nessas)</div>
+            <div className="flex flex-wrap gap-2">
+              {eds.map((e) => {
+                const on = selEd.includes(e.id);
+                return <button key={e.id} type="button" onClick={() => setSelEd(on ? selEd.filter((x) => x !== e.id) : [...selEd, e.id])} className={cx("min-h-11 rounded-full px-4 text-[15px] font-extrabold", on ? "bg-marca text-white" : "border border-borda bg-white text-suave")}>{e.nome}</button>;
+              })}
+              {eds.length === 0 && <span className="text-sm text-suave">Crie uma edição primeiro.</span>}
+            </div>
+          </div>
+        )}
         <div>
           <div className="pb-2 text-[13px] font-bold text-suave">Equipes (cuidam do estoque dos seus setores)</div>
           <div className="flex flex-wrap gap-2">

@@ -5,7 +5,7 @@ O site antigo (arquivo único, Firebase) está em `legado/index.html` e serve s�
 
 ## Banco
 - Migrações em `supabase/migrations/` (já aplicadas, em ordem). Mudança no banco = nova migração numerada.
-- Perfis: admin, coordenacao, financeiro, estoque, decisoes, saude, visitante. Equipes ligam pessoas a setores do estoque (`equipes.setores`).
+- Perfis: admin, admin_edicao, coordenacao, financeiro, estoque, decisoes, saude, visitante. `admin_edicao` enxerga e altera só as edições ligadas a ele (`pessoa_edicoes`, `pode_edicao()`): ficha, saúde, secretaria, decisões, envio de material/balanço e relatório; não mexe em pessoas, equipes, edições nem financeiro. Equipes ligam pessoas a setores do estoque (`equipes.setores`).
 - Regras de acesso (RLS) no próprio banco; o site só esconde o que a pessoa não pode usar.
 - Operações de estoque são funções do banco (`definir_envio`, `fechar_balanco`, `definir_estoque`, `copiar_envio`): atômicas e com checagem de permissão.
 - Convite: admin cadastra a pessoa -> sistema gera um código -> pessoa abre `/ativar`, digita e-mail + código e cria a senha.
@@ -29,3 +29,7 @@ O site antigo (arquivo único, Firebase) está em `legado/index.html` e serve s�
 - Importação da planilha (.xlsx/.csv) em `/encontristas`, pela função `importar_encontristas` (chave: código da inscrição; reimportar atualiza). Só admin importa e vê.
 - Tabelas `encontristas`, `encontrista_saude`, `encontrista_espiritual`: RLS só admin. Outros perfis acessam por funções (saúde, nomes).
 - Não guardar CPF nem dados de pagamento da planilha.
+
+## Relatório geral (`/relatorio`, cartão no Painel)
+- Materiais por setor, pessoas e decisões da edição escolhida. Saídas: imprimir/PDF, Excel (`xlsx`) e apresentação PowerPoint (`pptxgenjs`, tema da edição). Pessoas só para quem vê a ficha.
+- Estoque: importação do inventário (.xls/.xlsx) em `src/lib/inventario.ts`.

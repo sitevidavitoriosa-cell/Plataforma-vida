@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { msgErro, useLista } from "@/lib/dados";
 import { fmtN, norm, num, type Edicao, type Envio, type Equipe, type Item } from "@/lib/tipos";
-import { podeEscrever, setoresDaEquipe } from "@/lib/perm";
+import { podeEnviar, podeEscrever, setoresDaEquipe } from "@/lib/perm";
 import { useAuth, useAviso, useEdicao } from "@/components/provedores";
 import { lerInventario, type ItemInv } from "@/lib/inventario";
 import { Botao, Campo, Carregando, Chip, Cartao, Icone, Janela, Passo, Selo, Seletor, Titulo, Vazio, cx } from "@/components/ui";
@@ -173,7 +173,7 @@ function Enviado({ itens, envios, edicoes, ed, recarregar, setItens, setEnvios }
 
   const linha = (i: Item) => {
     const x = doEd(i.id), v = x ? Number(x.env) : 0, fechado = !!x && x.aplicado != null;
-    const pode = podeEscrever(acesso, "estoque", i.setor);
+    const pode = podeEnviar(acesso, i.setor);
     return (
       <div key={i.id} className={cx("flex min-h-16 items-center gap-2.5 rounded-2xl border px-3 py-2", v > 0 ? "border-[#a9d3c2] bg-marca-clara" : "border-borda bg-white")}>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -219,7 +219,7 @@ function Balanco({ itens, envios, ed, recarregar, setEnvios }: { itens: Item[]; 
   const volta = (x: Envio) => (x.volta == null ? Number(x.env) + Number(x.comp) : Number(x.volta));
   const faltas = lista.filter((r) => !r.it.cons && Number(r.x.env) + Number(r.x.comp) - volta(r.x) > 0).length;
   const pendentes = lista.filter((r) => r.x.aplicado == null || volta(r.x) !== Number(r.x.aplicado)).length;
-  const podeFechar = lista.some((r) => podeEscrever(acesso, "estoque", r.it.setor));
+  const podeFechar = lista.some((r) => podeEnviar(acesso, r.it.setor));
 
   async function salvar(r: { x: Envio; it: Item }, campo: "volta" | "comp", v: number) {
     setEnvios((p) => (p ?? []).map((e) => (e.edicao_id === r.x.edicao_id && e.item_id === r.x.item_id ? { ...e, [campo]: v } : e)));
@@ -244,7 +244,7 @@ function Balanco({ itens, envios, ed, recarregar, setEnvios }: { itens: Item[]; 
       <p className="m-0 px-1 text-sm text-suave">Começa igual ao enviado. Toque em − para o que não voltou e em + para o que sobrou a mais.</p>
       {lista.map((r) => {
         const v = volta(r.x), cons = Number(r.x.env) + Number(r.x.comp) - v, falta = !r.it.cons && cons > 0;
-        const pode = podeEscrever(acesso, "estoque", r.it.setor);
+        const pode = podeEnviar(acesso, r.it.setor);
         const cab = r.it.setor !== ultimo ? (ultimo = r.it.setor) : "";
         const depois = r.it.qtd + (v - Number(r.x.aplicado ?? 0));
         return (
