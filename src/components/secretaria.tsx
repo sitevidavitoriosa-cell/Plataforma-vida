@@ -294,6 +294,7 @@ function Quartos() {
   const { nomes } = useNomes();
   const [quartos, setQuartos] = useState<Quarto[] | null>(null);
   const [ocup, setOcup] = useState<Ocup[]>([]);
+  const [comLink, setComLink] = useState<Set<string>>(new Set());
   const [novo, setNovo] = useState(false);
   const [aberto, setAberto] = useState<Quarto | null>(null);
 
@@ -302,7 +303,10 @@ function Quartos() {
     const q = await supabase.from("quartos").select("*").eq("edicao_id", ed.id).order("nome");
     setQuartos((q.data as Quarto[]) ?? []);
     const ids = ((q.data as Quarto[]) ?? []).map((x) => x.id);
-    if (ids.length) { const o = await supabase.from("quarto_ocupantes").select("*").in("quarto_id", ids); setOcup((o.data as Ocup[]) ?? []); } else setOcup([]);
+    if (ids.length) {
+      const [o, l] = await Promise.all([supabase.from("quarto_ocupantes").select("*").in("quarto_id", ids), supabase.from("quarto_links").select("quarto_id").eq("ativo", true).in("quarto_id", ids)]);
+      setOcup((o.data as Ocup[]) ?? []); setComLink(new Set(((l.data as { quarto_id: string }[]) ?? []).map((x) => x.quarto_id)));
+    } else { setOcup([]); setComLink(new Set()); }
   }, [ed]);
   useEffect(() => { setQuartos(null); carregar(); }, [carregar]);
 
@@ -312,27 +316,6 @@ function Quartos() {
   const semQuarto = enc.filter((n) => !alocados.has(n.id));
   const doQuarto = (id: string) => ocup.filter((o) => o.quarto_id === id).map((o) => mapa.get(o.encontrista_id)).filter(Boolean) as Nome[];
 
-  async function distribuir() {
-    if (!quartos) return;
-    const livre = new Map(quartos.map((q) => [q.id, q.capacidade - ocup.filter((o) => o.quarto_id === q.id).length]));
-    const novos: Ocup[] = [];
-    for (const n of semQuarto) {
-      const q = quartos.find((x) => (n.sexo ?? "").toLowerCase().startsWith(x.sexo[0].toLowerCase()) && (livre.get(x.id) ?? 0) > 0);
-      if (!q) continue;
-      livre.set(q.id, (livre.get(q.id) ?? 0) - 1);
-      novos.push({ encontrista_id: n.id, quarto_id: q.id });
-    }
-    if (novos.length === 0) { aviso("Ninguém para distribuir (sem vagas ou sem sexo informado)."); return; }
-    const { error } = await supabase.from("quarto_ocupantes").insert(novos);
-    if (error) { aviso(msgErro(error)); return; }
-    aviso(`${novos.length} pessoas distribuídas.`); carregar();
-  }
-  async function limpar() {
-    if (!quartos?.length) return;
-    const { error } = await supabase.from("quarto_ocupantes").delete().in("quarto_id", quartos.map((q) => q.id));
-    if (error) { aviso(msgErro(error)); return; }
-    aviso("Distribuição limpa."); carregar();
-  }
   async function pdf() {
     if (!ed || !quartos) return;
     const { jsPDF } = await import("jspdf");
@@ -354,11 +337,9 @@ function Quartos() {
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
         <Botao onClick={() => setNovo(true)} className="!min-h-11">Novo quarto</Botao>
-        <Botao v="suave" onClick={distribuir} className="!min-h-11" disabled={!quartos.length || !semQuarto.length}>Distribuir automático</Botao>
         <Botao v="sec" onClick={pdf} className="!min-h-11" disabled={!quartos.length}>Gerar lista (PDF)</Botao>
-        {ocup.length > 0 && <Botao v="sec" onClick={limpar} className="!min-h-11 !text-alerta">Limpar</Botao>}
       </div>
-      <p className="m-0 text-sm text-suave">{semQuarto.length} encontristas sem quarto · {quartos.reduce((s, q) => s + q.capacidade, 0)} vagas no total</p>
+      <p className="m-0 text-sm text-suave">{semQuarto.length} encontristas sem quarto · {quartos.reduce((s, q) => s + q.capacidade, 0)} vagas. Toque no quarto para colocar as pessoas e gerar o link do anjo.</p>
       {quartos.length === 0 && <Vazio>Cadastre os quartos (nome, sexo e vagas).</Vazio>}
       {quartos.map((q) => {
         const o = doQuarto(q.id);
@@ -366,13 +347,13 @@ function Quartos() {
           <button key={q.id} type="button" onClick={() => setAberto(q)} className="text-left">
             <Cartao className="flex items-center justify-between gap-3 p-4">
               <div><b>{q.nome}</b><div className="text-sm text-suave">{q.sexo}</div></div>
-              <Selo tom={o.length >= q.capacidade ? "ok" : "neutro"}>{o.length}/{q.capacidade}</Selo>
+              <span className="flex items-center gap-2">{comLink.has(q.id) && <Selo tom="ok">link ativo</Selo>}<Selo tom={o.length >= q.capacidade ? "ok" : "neutro"}>{o.length}/{q.capacidade}</Selo></span>
             </Cartao>
           </button>
         );
       })}
       {novo && <FormQuarto edicaoId={ed.id} onFechar={() => setNovo(false)} onSalvo={() => { setNovo(false); carregar(); }} />}
-      {aberto && <QuartoJanela q={aberto} ocupantes={doQuarto(aberto.id)} candidatos={semQuarto.filter((n) => (n.sexo ?? "").toLowerCase().startsWith(aberto.sexo[0].toLowerCase()))}
+      {aberto && <QuartoJanela q={aberto} ocupantes={doQuarto(aberto.id)} candidatos={[...semQuarto].sort((a, b) => Number((b.sexo ?? "").toLowerCase().startsWith(aberto.sexo[0].toLowerCase())) - Number((a.sexo ?? "").toLowerCase().startsWith(aberto.sexo[0].toLowerCase())))}
         lotado={doQuarto(aberto.id).length >= aberto.capacidade} onFechar={() => setAberto(null)} onMudou={carregar} />}
     </div>
   );
@@ -412,28 +393,17 @@ function QuartoJanela({ q, ocupantes, candidatos, lotado, onFechar, onMudou }: {
     await supabase.from("quarto_links").update({ ativo: false }).eq("quarto_id", q.id);
     const { data, error } = await supabase.from("quarto_links").insert({ quarto_id: q.id }).select("token").single();
     if (error) { aviso(msgErro(error)); return; }
-    setToken(data.token);
+    setToken(data.token); onMudou();
   }
-  async function desligarLink() { await supabase.from("quarto_links").update({ ativo: false }).eq("quarto_id", q.id); setToken(null); aviso("Link desligado."); }
+  async function desligarLink() { await supabase.from("quarto_links").update({ ativo: false }).eq("quarto_id", q.id); setToken(null); aviso("Link desligado."); onMudou(); }
   async function copiar() { try { await navigator.clipboard.writeText(url); aviso("Link copiado."); } catch { aviso("Copie o link na tela."); } }
   async function add(n: Nome) { const { error } = await supabase.from("quarto_ocupantes").insert({ encontrista_id: n.id, quarto_id: q.id }); if (error) aviso(msgErro(error)); onMudou(); }
   async function tirar(n: Nome) { const { error } = await supabase.from("quarto_ocupantes").delete().eq("encontrista_id", n.id); if (error) aviso(msgErro(error)); onMudou(); }
   async function excluir() { const { error } = await supabase.from("quartos").delete().eq("id", q.id); if (error) { aviso(msgErro(error)); return; } onMudou(); onFechar(); }
-  const cand = candidatos.filter((n) => !busca || norm(n.nome).includes(norm(busca))).slice(0, 30);
+  const cand = candidatos.filter((n) => !busca || norm(n.nome).includes(norm(busca))).slice(0, 40);
   return (
     <Janela titulo={`${q.nome} · ${ocupantes.length}/${q.capacidade}`} onFechar={onFechar}>
       <div className="flex flex-col gap-3">
-        {ocupantes.length === 0 && <Vazio>Ninguém neste quarto.</Vazio>}
-        {ocupantes.map((n) => (
-          <div key={n.id} className="flex items-center justify-between rounded-2xl border border-borda px-3 py-2"><span>{n.nome}</span><button type="button" onClick={() => tirar(n)} className="min-h-10 px-2 text-sm font-bold text-alerta">Tirar</button></div>
-        ))}
-        {!lotado && (
-          <>
-            <b className="text-sm">Adicionar ({q.sexo.toLowerCase()})</b>
-            <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar nome" className="min-h-11 rounded-2xl border border-borda px-3 outline-none" />
-            {cand.map((n) => <button key={n.id} type="button" onClick={() => add(n)} className="min-h-11 rounded-2xl border border-borda bg-white px-3 text-left">{n.nome}</button>)}
-          </>
-        )}
         <div className="flex flex-col gap-2 rounded-2xl border border-borda p-3">
           <b className="text-sm">Link do anjo (perfil dos encontristas do quarto)</b>
           {token === undefined ? null : token ? (
@@ -448,6 +418,17 @@ function QuartoJanela({ q, ocupantes, candidatos, lotado, onFechar, onMudou }: {
             </>
           ) : <Botao v="suave" onClick={gerarLink} className="!min-h-11">Gerar link do quarto</Botao>}
         </div>
+        {ocupantes.length === 0 && <Vazio>Ninguém neste quarto.</Vazio>}
+        {ocupantes.map((n) => (
+          <div key={n.id} className="flex items-center justify-between rounded-2xl border border-borda px-3 py-2"><span>{n.nome}</span><button type="button" onClick={() => tirar(n)} className="min-h-10 px-2 text-sm font-bold text-alerta">Tirar</button></div>
+        ))}
+        {!lotado && (
+          <>
+            <b className="text-sm">Adicionar quem está sem quarto</b>
+            <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar nome" className="min-h-11 rounded-2xl border border-borda px-3 outline-none" />
+            {cand.map((n) => <button key={n.id} type="button" onClick={() => add(n)} className="flex min-h-11 items-center justify-between gap-2 rounded-2xl border border-borda bg-white px-3 text-left"><span className="truncate">{n.nome}</span><span className="shrink-0 text-xs text-suave">{n.sexo ?? ""}</span></button>)}
+          </>
+        )}
         {!del ? <Botao v="sec" bloco className="!text-alerta" onClick={() => setDel(true)}>Excluir quarto</Botao> : <Botao v="perigo" bloco onClick={excluir}>Confirmar exclusão</Botao>}
       </div>
     </Janela>
