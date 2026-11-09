@@ -1,5 +1,7 @@
 "use client";
 import Link from "next/link";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useLista } from "@/lib/dados";
 import { dmy, fmtN, type Envio, type Item } from "@/lib/tipos";
 import { PERFIS, podeVerEstoque, podeVerFicha } from "@/lib/perm";
@@ -15,6 +17,10 @@ export default function Painel() {
   const { ed, carregou } = useEdicao();
   const itens = useLista<Item>("itens", "*", "nome");
   const envios = useLista<Envio>("envios");
+  const router = useRouter();
+  const soSecretaria = acesso?.perfil === "secretaria1";
+  useEffect(() => { if (soSecretaria) router.replace("/setores?aba=secretaria"); }, [soSecretaria, router]);
+  if (soSecretaria) return <Carregando />;
   if (!acesso || !carregou || !itens.dados || !envios.dados) return <Carregando />;
 
   const falta = itens.dados.filter((i) => i.min > 0 && i.qtd < i.min).sort((a, b) => a.qtd / a.min - b.qtd / b.min);

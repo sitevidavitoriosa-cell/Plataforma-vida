@@ -17,16 +17,18 @@ const slug = (t: string) => norm(t).replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g
 const baixar = (blob: Blob, nome: string) => { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nome; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); };
 
 export function Secretaria() {
-  const [sub, setSub] = useState<"crachas" | "quartos" | "material">("crachas");
+  const [sub, setSub] = useState<"crachas" | "quartos" | "encontristas" | "material">("crachas");
   return (
     <div>
       <div className="flex gap-2 overflow-x-auto pb-3">
         <Chip ativo={sub === "crachas"} onClick={() => setSub("crachas")}>Crachás</Chip>
         <Chip ativo={sub === "quartos"} onClick={() => setSub("quartos")}>Quartos</Chip>
+        <Chip ativo={sub === "encontristas"} onClick={() => setSub("encontristas")}>Encontristas</Chip>
         <Chip ativo={sub === "material"} onClick={() => setSub("material")}>Material</Chip>
       </div>
       {sub === "crachas" && <Crachas />}
       {sub === "quartos" && <Quartos />}
+      {sub === "encontristas" && <EncontristasSec />}
       {sub === "material" && <Estoque setor="Secretaria 1" />}
     </div>
   );
@@ -285,6 +287,50 @@ function Crachas() {
       <Botao onClick={gerar} disabled={!temModelo || gerando || lista.length === 0} bloco>{gerando ? "Gerando…" : `Gerar PDF (${lista.length} crachás de ${rotuloTipo})`}</Botao>
       {tipo === "servo" && comFoto < lista.length && lista.length > 0 && <p className="m-0 text-xs text-suave">{lista.length - comFoto} servo(s) sem foto sairão só com o nome.</p>}
     </Cartao>
+  );
+}
+
+/* ---------- Encontristas (dados de cadastro, sem telefone/CPF/pagamento/saúde) ---------- */
+type EncSec = { id: string; cod: string; nome: string; categoria: string | null; sexo: string | null; idade: number | null; estado_civil: string | null; bairro: string | null; municipio: string | null; batizado: boolean | null; igreja: string | null; rede: string | null };
+function EncontristasSec() {
+  const { ed } = useEdicao();
+  const aviso = useAviso();
+  const [dados, setDados] = useState<EncSec[] | null>(null);
+  const [quartoDe, setQuartoDe] = useState<Map<string, string>>(new Map());
+  const [q, setQ] = useState("");
+  const [grupo, setGrupo] = useState("Encontrista");
+  useEffect(() => {
+    if (!ed) return;
+    setDados(null);
+    supabase.rpc("secretaria_encontristas", { p_edicao: ed.id }).then(({ data, error }) => { if (error) { aviso(msgErro(error)); setDados([]); } else setDados((data as EncSec[]) ?? []); });
+    supabase.from("quartos").select("id,nome").eq("edicao_id", ed.id).then(async ({ data: qs }) => {
+      const nomes = new Map(((qs as { id: string; nome: string }[]) ?? []).map((x) => [x.id, x.nome]));
+      if (!nomes.size) { setQuartoDe(new Map()); return; }
+      const { data: oc } = await supabase.from("quarto_ocupantes").select("encontrista_id,quarto_id").in("quarto_id", Array.from(nomes.keys()));
+      setQuartoDe(new Map(((oc as { encontrista_id: string; quarto_id: string }[]) ?? []).map((o) => [o.encontrista_id, nomes.get(o.quarto_id) ?? ""])));
+    });
+  }, [ed, aviso]);
+  const grupos = useMemo(() => Array.from(new Set((dados ?? []).map((n) => (n.categoria ?? "").trim()).filter(Boolean))).sort(), [dados]);
+  const lista = useMemo(() => (dados ?? []).filter((n) => (!grupo || (n.categoria ?? "").trim() === grupo) && (!q || norm(n.nome + " " + (n.cod ?? "")).includes(norm(q)))), [dados, grupo, q]);
+  if (!ed) return <Vazio>Crie uma edição primeiro.</Vazio>;
+  if (!dados) return <Carregando />;
+  return (
+    <div className="flex flex-col gap-3">
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar nome ou inscrição" aria-label="Buscar" className="min-h-12 rounded-2xl border border-borda bg-white px-4 outline-none" />
+      <div className="flex gap-2 overflow-x-auto">
+        {grupos.map((g) => <Chip key={g} ativo={grupo === g} onClick={() => setGrupo(g)}>{g}</Chip>)}
+        <Chip ativo={grupo === ""} onClick={() => setGrupo("")}>Todos</Chip>
+      </div>
+      <p className="m-0 text-sm text-suave">{lista.length} pessoa(s). Telefone, pagamento e saúde não aparecem aqui.</p>
+      {lista.length === 0 && <Vazio>Ninguém encontrado.</Vazio>}
+      {lista.map((n) => (
+        <Cartao key={n.id} className="flex flex-col gap-1 p-3.5">
+          <div className="flex items-center justify-between gap-2"><b>{n.nome}</b>{quartoDe.get(n.id) ? <Selo tom="ok">{quartoDe.get(n.id)}</Selo> : (n.categoria ?? "").trim() === "Encontrista" ? <Selo tom="aviso">sem quarto</Selo> : null}</div>
+          <span className="text-xs text-suave">{[n.categoria?.trim(), n.sexo, n.idade ? n.idade + " anos" : "", n.estado_civil, n.bairro || n.municipio].filter(Boolean).join(" · ")}</span>
+          <span className="text-xs text-suave">{[n.batizado === null ? "" : n.batizado ? "Batizado" : "Não batizado", n.igreja, n.rede && "Rede " + n.rede].filter(Boolean).join(" · ")}</span>
+        </Cartao>
+      ))}
+    </div>
   );
 }
 

@@ -5,7 +5,7 @@ O site antigo (arquivo único, Firebase) está em `legado/index.html` e serve s�
 
 ## Banco
 - Migrações em `supabase/migrations/` (já aplicadas, em ordem). Mudança no banco = nova migração numerada.
-- Perfis: admin, admin_edicao, coordenacao, financeiro, estoque, decisoes, saude, visitante. `admin_edicao` enxerga e altera só as edições ligadas a ele (`pessoa_edicoes`, `pode_edicao()`): ficha, saúde, secretaria, decisões, envio de material/balanço e relatório; não mexe em pessoas, equipes, edições nem financeiro. Equipes ligam pessoas a setores do estoque (`equipes.setores`).
+- Perfis: admin, admin_edicao, coordenacao, financeiro, estoque, decisoes, saude, secretaria1, visitante. `secretaria1` acessa só a Secretaria 1 (crachás, quartos, encontristas via `secretaria_encontristas`, saúde só leitura, material do setor); sem Painel, edições, financeiro ou estoque geral. `admin_edicao` enxerga e altera só as edições ligadas a ele (`pessoa_edicoes`, `pode_edicao()`): ficha, saúde, secretaria, decisões, envio de material/balanço e relatório; não mexe em pessoas, equipes, edições nem financeiro. Equipes ligam pessoas a setores do estoque (`equipes.setores`).
 - Regras de acesso (RLS) no próprio banco; o site só esconde o que a pessoa não pode usar.
 - Operações de estoque são funções do banco (`definir_envio`, `fechar_balanco`, `definir_estoque`, `copiar_envio`): atômicas e com checagem de permissão.
 - Convite: admin cadastra a pessoa -> sistema gera um código -> pessoa abre `/ativar`, digita e-mail + código e cria a senha.
@@ -21,7 +21,7 @@ O site antigo (arquivo único, Firebase) está em `legado/index.html` e serve s�
 - A edição escolhida no topo vale para estoque, saúde, encontristas e secretaria.
 
 ## Estoque (`/estoque`) e Equipes (`/setores`, aba "Equipes")
-- **Estoque** (`src/components/estoque.tsx`) é só do paiol (admin, coordenação, estoque; admin de edição nas edições dele): Geral (itens por setor), Enviado (registra o envio por edição) e Balanço (confere). O material que as equipes usam fica no estoque geral e quem administra é o paiol.
+- **Estoque** (`src/components/estoque.tsx`) é só do paiol (admin e perfil estoque; admin de edição nas edições dele; coordenação, financeiro, decisões e visitante não acessam): Geral (itens por setor), Enviado (registra o envio por edição) e Balanço (confere). O material que as equipes usam fica no estoque geral e quem administra é o paiol.
 - **Equipes** (Saúde, Secretaria 1 e demais setores): o servo vê só o que o paiol enviou para a equipe dele (`Estoque setor=...`, modo equipe). No Balanço informa o que voltou (nunca mais que o levado) e envia ao paiol (`salvar_volta`, `enviar_balanco`). O paiol confere e confirma (`conferir_balanco`, `reabrir_balanco`, `fechar_balanco`); só aí o estoque geral muda. Servo de setor não vê itens/envios de outros setores (RLS `ve_todo_estoque()`), nem envia material (`definir_envio` só `eh_paiol`).
 - Saúde: só `saude_lista` e `salvar_obs_saude` (admin e perfil saúde). Não lê a ficha.
 - Secretaria 1 (`pode_secretaria()`): Crachás (modelo PNG por rede/edição para encontristas e outro para servos com foto; fotos em `crachas_fotos`), Quartos (cadastro manual ou importação de planilha; link secreto por quarto `/q/[token]` com perfil dos encontristas, função `quarto_info`) e Material (equipe). Nomes vêm de `nomes_edicao` (sem saúde/telefone).

@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { msgErro } from "@/lib/dados";
 import { norm } from "@/lib/tipos";
 import { ContatoLinha } from "@/components/contato";
-import { useAviso, useEdicao } from "@/components/provedores";
+import { useAuth, useAviso, useEdicao } from "@/components/provedores";
 import { Botao, Carregando, Cartao, Chip, Icone, Janela, Selo, Vazio } from "@/components/ui";
 
 type Linha = { id: string; nome: string; idade: number | null; categoria: string | null; necessidade: string | null; contatos: string[] | null; observacao: string | null };
@@ -63,6 +63,8 @@ export function Saude() {
 
 function Detalhe({ l, onFechar, onSalvo }: { l: Linha; onFechar: () => void; onSalvo: () => void }) {
   const aviso = useAviso();
+  const { acesso } = useAuth();
+  const edita = acesso?.perfil !== "secretaria1"; // Secretaria 1 só lê a saúde
   const [obs, setObs] = useState(l.observacao ?? "");
   const [salvando, setSalvando] = useState(false);
   async function salvar() {
@@ -77,10 +79,11 @@ function Detalhe({ l, onFechar, onSalvo }: { l: Linha; onFechar: () => void; onS
       <div className="flex flex-col gap-3">
         <div><div className="text-xs font-bold uppercase text-suave">Necessidade</div><p className="m-0">{l.necessidade}</p></div>
         {l.contatos && l.contatos.length > 0 && <div><div className="text-xs font-bold uppercase text-suave">Contato de emergência</div>{l.contatos.map((c, i) => <ContatoLinha key={i} texto={c} />)}</div>}
+        {!edita ? (l.observacao ? <div><div className="text-xs font-bold uppercase text-suave">Observação da equipe de saúde</div><p className="m-0">{l.observacao}</p></div> : null) : <>
         <label className="flex flex-col gap-1.5 text-sm font-bold">Observação da equipe de saúde
           <textarea value={obs} onChange={(e) => setObs(e.target.value)} rows={3} className="rounded-2xl border border-borda bg-white p-3 text-base font-normal outline-none focus:border-marca" placeholder="Ex.: medicação guardada com a enfermeira" />
         </label>
-        <Botao onClick={salvar} disabled={salvando || obs === (l.observacao ?? "")} bloco>Salvar observação</Botao>
+        <Botao onClick={salvar} disabled={salvando || obs === (l.observacao ?? "")} bloco>Salvar observação</Botao></>}
       </div>
     </Janela>
   );
