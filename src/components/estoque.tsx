@@ -297,7 +297,9 @@ function BalancoPaiol({ itens, envios, ed, recarregar }: { itens: Item[]; envios
     .sort((a, b) => a.it.setor.localeCompare(b.it.setor) || a.it.nome.localeCompare(b.it.nome));
   const informada = (x: Envio) => (x.volta == null ? Number(x.env) + Number(x.comp) : Number(x.volta));
   const contada = (x: Envio) => conta[x.item_id] ?? informada(x);
-  const aConferir = lista.filter((r) => r.x.informado && r.x.aplicado == null);
+  const conferidos = lista.filter((r) => r.x.aplicado != null).length;
+  // pendentes que já têm número: o setor informou ou o paiol mexeu na contagem
+  const aConferir = lista.filter((r) => r.x.aplicado == null && (r.x.informado || conta[r.x.item_id] !== undefined));
   const aguardando = lista.filter((r) => !r.x.informado && r.x.aplicado == null).length;
 
   async function conferir(r: { x: Envio; it: Item }) {
@@ -312,9 +314,15 @@ function BalancoPaiol({ itens, envios, ed, recarregar }: { itens: Item[]; envios
   }
   async function confirmarTodos() {
     setLote(true);
-    const { data, error } = await supabase.rpc("fechar_balanco", { p_edicao: ed.id });
+    let ok = 0;
+    for (const r of aConferir) {
+      const { error } = await supabase.rpc("conferir_balanco", { p_edicao: ed.id, p_item: r.x.item_id, p_volta: contada(r.x) });
+      if (error) { aviso(`${r.it.nome}: ${msgErro(error)}`); break; }
+      ok++;
+    }
     setLote(false);
-    if (error) aviso(msgErro(error)); else aviso(`${data ?? 0} itens confirmados e somados ao estoque.`);
+    if (ok) aviso(`${ok} itens confirmados e somados ao estoque.`);
+    setConta({});
     recarregar();
   }
 
@@ -323,6 +331,7 @@ function BalancoPaiol({ itens, envios, ed, recarregar }: { itens: Item[]; envios
   let ultimo = "";
   return (
     <div className="flex flex-col gap-2.5">
+      <div className="flex items-center justify-between rounded-2xl bg-marca-clara px-4 py-3 text-sm"><b>{conferidos} de {lista.length} itens conferidos</b><span className="text-suave">todo o material enviado</span></div>
       <p className="m-0 px-1 text-sm text-suave">Aqui você diz quanto voltou de cada item desta edição. Cada equipe informa o que voltou; você confere a contagem no paiol e confirma, e só então o estoque único é atualizado (as outras edições enxergam a nova quantidade).{aguardando ? ` ${aguardando} item(ns) ainda sem balanço do setor.` : ""}</p>
       {lista.map((r) => {
         const levou = Number(r.x.env) + Number(r.x.comp), v = contada(r.x), inf = r.x.informado, conf = r.x.aplicado != null;
@@ -339,9 +348,9 @@ function BalancoPaiol({ itens, envios, ed, recarregar }: { itens: Item[]; envios
               <div className="text-xs font-bold text-suave">
                 {conf ? <span className="text-marca">Conferido: voltou {fmtN(Number(r.x.aplicado))} · usou {fmtN(levou - Number(r.x.aplicado))}</span>
                   : inf ? <>O setor informou: voltou {fmtN(informada(r.x))} · usou {fmtN(levou - informada(r.x))}</>
-                  : <>Aguardando o setor informar</>}
+                  : <>O setor ainda não informou. Conte no paiol e confirme (começa como "voltou tudo").</>}
               </div>
-              {(inf || conf) && pode && (
+              {pode && (
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex flex-col"><span className="text-xs font-bold text-suave">{conf ? "Contagem confirmada" : "Sua contagem"}</span>
                     <span className="text-[13px] font-bold">{levou - v === 0 ? "nada usado" : `usado ${fmtN(levou - v)}`}</span></div>
@@ -349,10 +358,10 @@ function BalancoPaiol({ itens, envios, ed, recarregar }: { itens: Item[]; envios
                 </div>
               )}
               {dif && <div className="rounded-xl bg-alerta-clara px-3 py-2 text-[13px] font-bold text-[#8e2e18]">O setor informou {fmtN(informada(r.x))}, você contou {fmtN(v)}. Se confirmar, vale a sua contagem.</div>}
-              {pode && inf && !conf && (
+              {pode && !conf && (
                 <div className="flex gap-2">
-                  <Botao v="sec" onClick={() => devolver(r)} className="!min-h-11 flex-1">Devolver ao setor</Botao>
-                  <Botao onClick={() => conferir(r)} className="!min-h-11 flex-1">Confirmar</Botao>
+                  {inf && <Botao v="sec" onClick={() => devolver(r)} className="!min-h-11 flex-1">Devolver ao setor</Botao>}
+                  <Botao onClick={() => conferir(r)} className="!min-h-11 flex-1">Confirmar e dar baixa</Botao>
                 </div>
               )}
               {pode && conf && v !== Number(r.x.aplicado) && <Botao onClick={() => conferir(r)} className="!min-h-11">Corrigir contagem</Botao>}
@@ -363,8 +372,8 @@ function BalancoPaiol({ itens, envios, ed, recarregar }: { itens: Item[]; envios
       <div className="h-24" />
       {pode && aConferir.length > 0 && (
         <div className="fixed inset-x-0 z-30 flex flex-col gap-2 border-t border-borda bg-white px-4 py-3 md:left-64" style={{ bottom: "calc(env(safe-area-inset-bottom) + 66px)" }}>
-          <div className="text-[13px] text-suave">Confirma tudo como o setor informou. Quem você contou diferente, confirme item por item antes.</div>
-          <Botao onClick={confirmarTodos} disabled={lote} bloco>{lote ? "Confirmando…" : `Confirmar todos como informado (${aConferir.length})`}</Botao>
+          <div className="text-[13px] text-suave">Confirma de uma vez os itens que o setor informou ou que você já contou aqui. Os demais você confirma um a um.</div>
+          <Botao onClick={confirmarTodos} disabled={lote} bloco>{lote ? "Confirmando…" : `Confirmar informados e contados (${aConferir.length})`}</Botao>
         </div>
       )}
     </div>
