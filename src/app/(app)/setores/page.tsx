@@ -2,8 +2,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { entradasSetores, hrefSetor } from "@/lib/setores";
-import Link from "next/link";
+import { entradasSetores } from "@/lib/setores";
 import { useAuth } from "@/components/provedores";
 import { Estoque } from "@/components/estoque";
 import { Saude } from "@/components/saude";
@@ -27,9 +26,6 @@ function Conteudo() {
   return (
     <div>
       <Titulo>{atual.nome}</Titulo>
-      <div className="flex gap-2 overflow-x-auto pb-3">
-        {abas.map((a) => <Link key={a.id} href={hrefSetor(a.id)} replace className={`inline-flex min-h-11 shrink-0 items-center rounded-full px-4 text-[15px] font-extrabold ${atual.id === a.id ? "bg-marca text-white" : "border border-borda bg-white text-suave"}`}>{a.nome}</Link>)}
-      </div>
       {atual.id === "saude" && <Saude />}
       {atual.id === "secretaria" && <Secretaria />}
       {atual.id.startsWith("setor:") && <Estoque key={atual.id} setor={atual.id.slice(6)} />}
