@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { msgErro } from "@/lib/dados";
 import { norm } from "@/lib/tipos";
+import { acharPessoa, baixarModeloQuartos, lerQuartos, type LinhaQuarto } from "@/lib/quartosPlanilha";
 import { TIPOS } from "@/lib/cores";
 import { useAviso, useEdicao } from "@/components/provedores";
 import { Estoque } from "@/components/estoque";
@@ -296,6 +297,7 @@ function Quartos() {
   const [ocup, setOcup] = useState<Ocup[]>([]);
   const [comLink, setComLink] = useState<Set<string>>(new Set());
   const [novo, setNovo] = useState(false);
+  const [planilha, setPlanilha] = useState(false);
   const [aberto, setAberto] = useState<Quarto | null>(null);
 
   const carregar = useCallback(async () => {
@@ -316,6 +318,24 @@ function Quartos() {
   const semQuarto = enc.filter((n) => !alocados.has(n.id));
   const doQuarto = (id: string) => ocup.filter((o) => o.quarto_id === id).map((o) => mapa.get(o.encontrista_id)).filter(Boolean) as Nome[];
 
+  /** Gera o link de cada quarto que ainda não tem e baixa uma planilha Quarto | Link para enviar aos anjos. */
+  async function linksTodos() {
+    if (!ed || !quartos?.length) return;
+    const faltam = quartos.filter((q) => !comLink.has(q.id));
+    if (faltam.length) {
+      const { error } = await supabase.from("quarto_links").insert(faltam.map((q) => ({ quarto_id: q.id })));
+      if (error) { aviso(msgErro(error)); return; }
+    }
+    const { data, error } = await supabase.from("quarto_links").select("quarto_id,token").eq("ativo", true).in("quarto_id", quartos.map((q) => q.id));
+    if (error) { aviso(msgErro(error)); return; }
+    const tok = new Map((data as { quarto_id: string; token: string }[]).map((x) => [x.quarto_id, x.token]));
+    const XLSX = await import("xlsx");
+    const ws = XLSX.utils.aoa_to_sheet([["Quarto", "Encontristas", "Anjo", "Link"], ...quartos.map((q) => [q.nome, doQuarto(q.id).length, "", `${window.location.origin}/q/${tok.get(q.id) ?? ""}`])]);
+    ws["!cols"] = [{ wch: 14 }, { wch: 13 }, { wch: 24 }, { wch: 70 }];
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Links");
+    XLSX.writeFile(wb, `Links_quartos_${slug(ed.nome)}.xlsx`);
+    aviso(`${faltam.length} link(s) novo(s). Planilha baixada.`); carregar();
+  }
   async function pdf() {
     if (!ed || !quartos) return;
     const { jsPDF } = await import("jspdf");
@@ -336,7 +356,9 @@ function Quartos() {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
-        <Botao onClick={() => setNovo(true)} className="!min-h-11">Novo quarto</Botao>
+        <Botao onClick={() => setPlanilha(true)} className="!min-h-11">Importar planilha</Botao>
+        <Botao v="sec" onClick={() => setNovo(true)} className="!min-h-11">Novo quarto</Botao>
+        <Botao v="sec" onClick={linksTodos} className="!min-h-11" disabled={!quartos.length}>Links de todos</Botao>
         <Botao v="sec" onClick={pdf} className="!min-h-11" disabled={!quartos.length}>Gerar lista (PDF)</Botao>
       </div>
       <p className="m-0 text-sm text-suave">{semQuarto.length} encontristas sem quarto · {quartos.reduce((s, q) => s + q.capacidade, 0)} vagas. Toque no quarto para colocar as pessoas e gerar o link do anjo.</p>
@@ -352,10 +374,104 @@ function Quartos() {
           </button>
         );
       })}
+      {planilha && <ImportarQuartos edicaoId={ed.id} quartos={quartos} enc={enc} onFechar={() => setPlanilha(false)} onFeito={() => { setPlanilha(false); carregar(); }} />}
       {novo && <FormQuarto edicaoId={ed.id} onFechar={() => setNovo(false)} onSalvo={() => { setNovo(false); carregar(); }} />}
       {aberto && <QuartoJanela q={aberto} ocupantes={doQuarto(aberto.id)} candidatos={[...semQuarto].sort((a, b) => Number((b.sexo ?? "").toLowerCase().startsWith(aberto.sexo[0].toLowerCase())) - Number((a.sexo ?? "").toLowerCase().startsWith(aberto.sexo[0].toLowerCase())))}
         lotado={doQuarto(aberto.id).length >= aberto.capacidade} onFechar={() => setAberto(null)} onMudou={carregar} />}
     </div>
+  );
+}
+
+function ImportarQuartos({ edicaoId, quartos, enc, onFechar, onFeito }: { edicaoId: string; quartos: Quarto[]; enc: Nome[]; onFechar: () => void; onFeito: () => void }) {
+  const aviso = useAviso();
+  const [qtd, setQtd] = useState("24");
+  const [lido, setLido] = useState<LinhaQuarto[] | null>(null);
+  const [lendo, setLendo] = useState(false);
+  const [gravando, setGravando] = useState(false);
+  const [limpar, setLimpar] = useState(false);
+  const arq = useRef<HTMLInputElement>(null);
+
+  const analise = useMemo(() => (lido ?? []).map((l) => {
+    const achados: Nome[] = []; const sem: string[] = []; const ids = new Set<string>();
+    for (const n of l.nomes) { const p = acharPessoa(n, enc); if (!p) sem.push(n); else if (!ids.has(p.id)) { ids.add(p.id); achados.push(p); } }
+    const fem = achados.filter((p) => (p.sexo ?? "").toLowerCase().startsWith("f")).length, masc = achados.filter((p) => (p.sexo ?? "").toLowerCase().startsWith("m")).length;
+    const sexo: Quarto["sexo"] = masc > fem ? "Masculino" : "Feminino";
+    return { l, achados, sem, sexo };
+  }), [lido, enc]);
+  const totalAchados = analise.reduce((s, a) => s + a.achados.length, 0);
+  const totalSem = analise.reduce((s, a) => s + a.sem.length, 0);
+
+  async function escolher(f: File) {
+    setLendo(true);
+    try { const r = await lerQuartos(f); if (!r.length) aviso("Não encontrei quartos. Use o modelo (colunas Quarto e Encontrista 1, 2, 3…)."); else setLido(r); }
+    catch (e) { aviso("Não consegui ler o arquivo: " + (e instanceof Error ? e.message : "erro")); }
+    setLendo(false);
+  }
+
+  async function gravar() {
+    setGravando(true);
+    try {
+      const existentes = new Map(quartos.map((q) => [norm(q.nome), q]));
+      const ocupar: { encontrista_id: string; quarto_id: string }[] = [];
+      const todosIds: string[] = [];
+      for (const a of analise) {
+        const cap = Math.min(60, Math.max(a.l.vagas ?? 0, a.achados.length, 6));
+        let q = existentes.get(norm(a.l.quarto));
+        if (!q) {
+          const { data, error } = await supabase.from("quartos").insert({ edicao_id: edicaoId, nome: a.l.quarto, sexo: a.sexo, capacidade: cap }).select("*").single();
+          if (error) throw error;
+          q = data as Quarto; existentes.set(norm(a.l.quarto), q);
+        } else if (cap > q.capacidade) {
+          await supabase.from("quartos").update({ capacidade: cap }).eq("id", q.id);
+        }
+        for (const p of a.achados) { ocupar.push({ encontrista_id: p.id, quarto_id: q.id }); todosIds.push(p.id); }
+      }
+      if (limpar) {
+        const ids = new Set(todosIds);
+        const sair = enc.filter((p) => !ids.has(p.id)).map((p) => p.id);
+        for (let k = 0; k < sair.length; k += 100) await supabase.from("quarto_ocupantes").delete().in("encontrista_id", sair.slice(k, k + 100));
+      }
+      for (let k = 0; k < ocupar.length; k += 100) {
+        const { error } = await supabase.from("quarto_ocupantes").upsert(ocupar.slice(k, k + 100), { onConflict: "encontrista_id" });
+        if (error) throw error;
+      }
+      aviso(`${analise.length} quartos e ${totalAchados} pessoas gravados.`);
+      onFeito();
+    } catch (e) { aviso(msgErro(e as Error)); }
+    setGravando(false);
+  }
+
+  return (
+    <Janela titulo="Importar quartos por planilha" onFechar={onFechar}>
+      <div className="flex flex-col gap-3">
+        <input ref={arq} type="file" accept=".xlsx,.xls,.csv" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) escolher(f); e.target.value = ""; }} />
+        {!lido ? (
+          <>
+            <p className="m-0 text-sm text-suave">1. Baixe o modelo, 2. escreva o nome dos encontristas em cada quarto, 3. envie de volta. O sistema cria os quartos, coloca cada pessoa e deixa o perfil pronto para o link do anjo.</p>
+            <div className="flex items-end gap-2">
+              <div className="w-28"><Campo rotulo="Nº de quartos" inputMode="numeric" value={qtd} onChange={(e) => setQtd(e.target.value)} /></div>
+              <Botao v="sec" onClick={() => baixarModeloQuartos(Math.min(100, Math.max(1, Number(qtd) || 24)))} className="!min-h-12">Baixar modelo</Botao>
+            </div>
+            <Botao bloco onClick={() => arq.current?.click()} disabled={lendo}>{lendo ? "Lendo…" : "Enviar planilha preenchida"}</Botao>
+          </>
+        ) : (
+          <>
+            <p className="m-0 text-sm"><b>{analise.length}</b> quartos · <b>{totalAchados}</b> pessoas encontradas{totalSem > 0 && <> · <b className="text-alerta">{totalSem} nome(s) não encontrado(s)</b></>}</p>
+            <div className="flex max-h-72 flex-col gap-1.5 overflow-y-auto">
+              {analise.map((a) => (
+                <div key={a.l.quarto} className="rounded-xl border border-borda px-3 py-2 text-sm">
+                  <div className="flex justify-between"><b>{a.l.quarto}</b><span className="text-suave">{a.achados.length} · {a.sexo}</span></div>
+                  {a.sem.length > 0 && <div className="mt-0.5 text-xs text-alerta">Não achei: {a.sem.join(", ")}</div>}
+                </div>
+              ))}
+            </div>
+            {totalSem > 0 && <p className="m-0 text-xs text-suave">Nomes não encontrados ficam de fora. Confira a grafia (ou se a pessoa é encontrista) e envie de novo, ou coloque depois à mão.</p>}
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={limpar} onChange={(e) => setLimpar(e.target.checked)} /> Tirar dos quartos quem não está na planilha</label>
+            <div className="flex gap-2"><Botao v="sec" bloco onClick={() => setLido(null)}>Voltar</Botao><Botao bloco onClick={gravar} disabled={gravando || totalAchados === 0}>{gravando ? "Gravando…" : "Gravar quartos"}</Botao></div>
+          </>
+        )}
+      </div>
+    </Janela>
   );
 }
 
