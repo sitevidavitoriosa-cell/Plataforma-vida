@@ -66,6 +66,7 @@ export default function Painel() {
 
 function KpisEncontristas({ edicaoId, nItens, nFalta }: { edicaoId: string; nItens: number; nFalta: number }) {
   const lista = useLista<Enc>("encontristas", "id, edicao_id, nome, idade, categoria, cancelada, encontrista_saude(tem_necessidade), encontrista_espiritual(batizado, rede, igreja, em_celula, celula, lider_celula)", "nome");
+  const [rede, setRede] = useState<string | null>(null);
   if (!lista.dados) return <Carregando />;
   const todos = lista.dados.filter((e) => e.edicao_id === edicaoId && !e.cancelada);
   const encs = todos.filter((e) => (e.categoria ?? "").trim() === "Encontrista");
@@ -75,7 +76,6 @@ function KpisEncontristas({ edicaoId, nItens, nFalta }: { edicaoId: string; nIte
   const redes = new Map<string, number>();
   encs.forEach((e) => { const r = um(e.encontrista_espiritual)?.rede || "Sem rede"; redes.set(r, (redes.get(r) ?? 0) + 1); });
   const max = Math.max(1, ...redes.values());
-  const [rede, setRede] = useState<string | null>(null);
   const daRede = rede ? encs.filter((e) => (um(e.encontrista_espiritual)?.rede || "Sem rede") === rede) : [];
   const kpis = [
     { t: "Encontristas", v: encs.length, href: "/encontristas" },
