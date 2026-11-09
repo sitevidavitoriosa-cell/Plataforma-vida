@@ -7,18 +7,18 @@ export type Acesso = {
 
 export const PERFIS: Record<Perfil, { nome: string; desc: string }> = {
   admin: { nome: "Administrador", desc: "Tudo, inclusive pessoas e equipes" },
-  coordenacao: { nome: "Coordenação", desc: "Edições, estoque, financeiro e decisões (sem a ficha dos encontristas)" },
+  coordenacao: { nome: "Coordenação", desc: "Edições, financeiro e decisões (sem estoque e sem a ficha dos encontristas)" },
   financeiro: { nome: "Financeiro", desc: "Lançamentos e relatórios do caixa" },
-  estoque: { nome: "Estoque", desc: "Estoque de todos os setores" },
+  estoque: { nome: "Estoque (paiol)", desc: "Estoque de todos os setores: envia e confere o material" },
   decisoes: { nome: "Decisões", desc: "Encontristas e registro de decisões" },
   saude: { nome: "Saúde", desc: "Só dados de saúde dos encontristas" },
   admin_edicao: { nome: "Admin de edição", desc: "Ficha, saúde, secretaria, decisões, envio de material e relatório só das edições dele" },
-  visitante: { nome: "Visitante", desc: "Só consulta (edições e estoque)" },
+  visitante: { nome: "Visitante", desc: "Só consulta (edições). Sem estoque" },
 };
 
 const ESCREVE: Record<Perfil, string[] | "*"> = {
   admin: "*",
-  coordenacao: ["edicoes", "estoque", "financeiro", "decisoes"],
+  coordenacao: ["edicoes", "financeiro", "decisoes"],
   financeiro: ["financeiro"],
   estoque: ["estoque"],
   decisoes: ["decisoes"],
@@ -38,7 +38,7 @@ export const setoresDaEquipe = (a: Acesso | null) => (a ? a.equipes.flatMap((e) 
 export function podeVer(a: Acesso | null, modulo: string): boolean {
   if (!a) return false;
   if (modulo === "estoque") return podeVerEstoque(a);
-  if (modulo === "setores") return ["admin", "coordenacao", "estoque", "saude", "admin_edicao"].includes(a.perfil) || setoresDaEquipe(a).length > 0;
+  if (modulo === "setores") return ["admin", "estoque", "saude", "admin_edicao"].includes(a.perfil) || setoresDaEquipe(a).length > 0;
   const l = VE[modulo];
   return !l || l.includes(a.perfil);
 }
@@ -58,9 +58,8 @@ export const podeVerSaude = (a: Acesso | null) => !!a && ["admin", "saude", "adm
 /** Secretaria 1 (crachás e quartos): administrador ou quem está na equipe com esse setor. */
 export const podeSecretaria = (a: Acesso | null) => !!a && (["admin", "admin_edicao"].includes(a.perfil) || setoresDaEquipe(a).includes("Secretaria 1"));
 /** Estoque (geral e por setor). */
-export const podeVerEstoque = (a: Acesso | null) =>
-  !!a && (["admin", "coordenacao", "estoque", "financeiro", "decisoes", "admin_edicao"].includes(a.perfil) || (a.perfil === "visitante" && setoresDaEquipe(a).length === 0));
+export const podeVerEstoque = (a: Acesso | null) => !!a && ["admin", "estoque", "admin_edicao"].includes(a.perfil);
 /** Paiol: quem guarda o material, registra o envio e confere o balanço (administrador, coordenação, estoque; admin de edição nas edições dele). */
-export const ehPaiol = (a: Acesso | null) => !!a && ["admin", "coordenacao", "estoque", "admin_edicao"].includes(a.perfil);
+export const ehPaiol = (a: Acesso | null) => !!a && ["admin", "estoque", "admin_edicao"].includes(a.perfil);
 /** Enviar material e fechar balanço: quem edita o setor, ou o admin de edição (na edição dele). */
 export const podeEnviar = (a: Acesso | null, setor: string) => !!a && (podeEscrever(a, "estoque", setor) || a.perfil === "admin_edicao");

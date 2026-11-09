@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useLista } from "@/lib/dados";
 import { dmy, fmtN, type Envio, type Item } from "@/lib/tipos";
-import { PERFIS, podeVerFicha } from "@/lib/perm";
+import { PERFIS, podeVerEstoque, podeVerFicha } from "@/lib/perm";
 import { descricaoEd } from "@/lib/cores";
 import { useAuth, useEdicao } from "@/components/provedores";
 import { Carregando, Cartao, Selo, Vazio } from "@/components/ui";
@@ -42,7 +42,7 @@ export default function Painel() {
         <span className="text-xl font-extrabold text-marca">→</span>
       </Link>
 
-      <Cartao className="overflow-hidden">
+      {podeVerEstoque(acesso) && <Cartao className="overflow-hidden">
         <div className="flex items-center justify-between px-4 pb-2 pt-4"><b className="text-base">Precisa de atenção</b>{falta.length > 0 && <Selo tom="alerta">{falta.length}</Selo>}</div>
         {falta.length === 0 && <Vazio>Nada abaixo do mínimo.</Vazio>}
         {falta.slice(0, 6).map((i) => (
@@ -52,7 +52,7 @@ export default function Painel() {
           </Link>
         ))}
         {falta.length > 6 && <Link href="/estoque" className="block border-t border-borda px-4 py-3 text-center text-sm font-bold text-marca">Ver todos os {falta.length}</Link>}
-      </Cartao>
+      </Cartao>}
     </div>
   );
 }
