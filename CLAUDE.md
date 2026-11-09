@@ -33,3 +33,7 @@ O site antigo (arquivo único, Firebase) está em `legado/index.html` e serve s�
 ## Relatório geral (`/relatorio`, cartão no Painel)
 - Materiais por setor, pessoas e decisões da edição escolhida. Saídas: imprimir/PDF, Excel (`xlsx`) e apresentação PowerPoint (`pptxgenjs`, tema da edição). Pessoas só para quem vê a ficha.
 - Estoque: importação do inventário (.xls/.xlsx) em `src/lib/inventario.ts`.
+
+## Decisões e Financeiro
+- Decisões (`/decisoes`): botões por edição (`decisoes_cfg`), lista por `decisoes_lista`, link de registro em `registro_links`. Página pública sem login em `/r/[token]` (só `link_info` e `registrar_decisao`; nomes dos encontristas, sem telefone/endereço). Gerar novo link desliga o anterior.
+- Financeiro (`/financeiro`): lançamentos por edição (entrada/saída), categoria, setor e comprovante no bucket privado `comprovantes`; exportação em Excel. Acesso: admin, coordenação, financeiro.
