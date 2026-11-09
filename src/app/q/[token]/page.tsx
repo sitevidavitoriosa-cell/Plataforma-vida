@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { ContatoLinha } from "@/components/contato";
 
 type P = {
   id: string; nome: string; idade: number | null; sexo: string | null; estado_civil: string | null; bairro: string | null; municipio: string | null;
@@ -65,7 +66,7 @@ export default function Quarto() {
         {p.contatos.length > 0 && (
           <>
             <h2 className="mb-1 mt-5 text-base font-extrabold">Contatos de emergência</h2>
-            <div className="rounded-3xl border border-borda bg-white px-5 py-2">{p.contatos.map((c, i) => <div key={i} className="border-b border-borda py-2 text-sm last:border-0">{c}</div>)}</div>
+            <div className="rounded-3xl border border-borda bg-white px-5 py-2">{p.contatos.map((c, i) => <ContatoLinha key={i} texto={c} className="border-b border-borda py-2 last:border-0" />)}</div>
           </>
         )}
       </>
