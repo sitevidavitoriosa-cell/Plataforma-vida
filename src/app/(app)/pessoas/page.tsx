@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { msgErro, useLista } from "@/lib/dados";
 import type { Equipe, Item, Pessoa } from "@/lib/tipos";
@@ -16,6 +16,7 @@ export default function Pessoas() {
   const [aba, setAba] = useState<"pessoas" | "equipes">("pessoas");
   const [edit, setEdit] = useState<Pessoa | "nova" | null>(null);
   const [eq, setEq] = useState<Equipe | "nova" | null>(null);
+  useEffect(() => { const q = new URLSearchParams(window.location.search); if (q.get("aba") === "equipes") { setAba("equipes"); if (q.get("nova")) setEq("nova"); } }, []);
   const [convite, setConvite] = useState<{ nome: string; email: string; codigo: string } | null>(null);
 
   const setores = useMemo(() => Array.from(new Set([...(itens.dados ?? []).map((i) => i.setor), ...(equipes.dados ?? []).flatMap((e) => e.setores)])).sort((a, b) => a.localeCompare(b)), [itens.dados, equipes.dados]);
@@ -62,7 +63,7 @@ export default function Pessoas() {
 
       {aba === "equipes" && (
         <div className="flex flex-col gap-2.5">
-          <p className="m-0 px-1 text-sm text-suave">Cada equipe cuida do estoque dos seus setores: quem está nela pode registrar e ajustar só esses itens.</p>
+          <p className="m-0 px-1 text-sm text-suave">Cada equipe tem a sua área em Equipes: vê só o material que o paiol enviou para o setor dela e informa o balanço. Saúde e Secretaria 1 têm telas próprias além do material.</p>
           {equipes.dados.map((e) => (
             <Cartao key={e.id} className="flex flex-col gap-2 p-4">
               <div className="flex items-center justify-between"><b className="text-base">{e.nome}</b>
@@ -189,11 +190,16 @@ function FormEquipe({ e, setores, onFechar, onSalvo }: { e: Equipe | null; setor
   const aviso = useAviso();
   const [nome, setNome] = useState(e?.nome ?? "");
   const [sel, setSel] = useState<string[]>(e?.setores ?? []);
+  const [extras, setExtras] = useState<string[]>([]);
+  const [novoSetor, setNovoSetor] = useState("");
   const [del, setDel] = useState(false);
+  const todos = Array.from(new Set([...setores, ...extras]));
+  function addSetor() { const s = novoSetor.trim(); if (!s) return; if (!todos.includes(s)) setExtras([...extras, s]); if (!sel.includes(s)) setSel([...sel, s]); setNovoSetor(""); }
   async function salvar(ev: React.FormEvent) {
     ev.preventDefault();
     if (!nome.trim()) { aviso("Dê um nome para a equipe."); return; }
-    const d = { nome: nome.trim(), setores: sel };
+    // equipe nova sem setor escolhido ganha um setor com o próprio nome (é a área de material dela)
+    const d = { nome: nome.trim(), setores: sel.length || e ? sel : [nome.trim()] };
     const r = e ? await supabase.from("equipes").update(d).eq("id", e.id) : await supabase.from("equipes").insert(d);
     if (r.error) { aviso(r.error.message.includes("equipes_nome_key") ? "Já existe uma equipe com esse nome." : msgErro(r.error)); return; }
     aviso("Equipe salva."); onSalvo();
@@ -209,9 +215,14 @@ function FormEquipe({ e, setores, onFechar, onSalvo }: { e: Equipe | null; setor
       <form onSubmit={salvar} className="flex flex-col gap-3.5">
         <Campo rotulo="Nome da equipe" value={nome} onChange={(x) => setNome(x.target.value)} placeholder="Ex.: Saúde" />
         <div>
-          <div className="pb-2 text-[13px] font-bold text-suave">Setores do estoque que a equipe cuida</div>
+          <div className="pb-1 text-[13px] font-bold text-suave">Setor do material da equipe</div>
+          <p className="m-0 pb-2 text-xs text-suave">Se deixar em branco, a equipe ganha um setor com o próprio nome. O paiol cadastra os itens e envia o material para esse setor.</p>
           <div className="flex flex-wrap gap-2">
-            {setores.map((s) => { const on = sel.includes(s); return <button key={s} type="button" onClick={() => setSel(on ? sel.filter((x) => x !== s) : [...sel, s])} className={cx("min-h-11 rounded-full px-4 text-[15px] font-extrabold", on ? "bg-marca text-white" : "border border-borda bg-white text-suave")}>{s}</button>; })}
+            {todos.map((s) => { const on = sel.includes(s); return <button key={s} type="button" onClick={() => setSel(on ? sel.filter((x) => x !== s) : [...sel, s])} className={cx("min-h-11 rounded-full px-4 text-[15px] font-extrabold", on ? "bg-marca text-white" : "border border-borda bg-white text-suave")}>{s}</button>; })}
+          </div>
+          <div className="mt-2 flex gap-2">
+            <input value={novoSetor} onChange={(x) => setNovoSetor(x.target.value)} onKeyDown={(x) => { if (x.key === "Enter") { x.preventDefault(); addSetor(); } }} placeholder="Criar outro setor" className="min-h-11 min-w-0 flex-1 rounded-2xl border border-borda bg-white px-3 outline-none" />
+            <Botao v="sec" onClick={addSetor} className="!min-h-11">Adicionar</Botao>
           </div>
         </div>
         <Botao type="submit" bloco>Salvar</Botao>

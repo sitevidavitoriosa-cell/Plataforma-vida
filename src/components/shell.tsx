@@ -23,7 +23,11 @@ const ITENS = [
 function useEntradasSetores(): EntradaSetor[] {
   const { acesso } = useAuth();
   const [setores, setSetores] = useState<string[]>([]);
-  useEffect(() => { if (acesso) supabase.from("itens").select("setor").then(({ data }) => setSetores(Array.from(new Set(((data as { setor: string }[] | null) ?? []).map((x) => x.setor))))); }, [acesso]);
+  useEffect(() => { if (acesso) supabase.from("itens").select("setor").then(async ({ data }) => {
+      const eq = await supabase.from("equipes").select("setores");
+      const ss = [...((data as { setor: string }[] | null) ?? []).map((x) => x.setor), ...(((eq.data as { setores: string[] }[] | null) ?? []).flatMap((e) => e.setores))];
+      setSetores(Array.from(new Set(ss)));
+    }); }, [acesso]);
   return entradasSetores(acesso, setores);
 }
 
