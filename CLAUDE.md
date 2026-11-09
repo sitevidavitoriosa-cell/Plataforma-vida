@@ -5,7 +5,7 @@ O site antigo (arquivo único, Firebase) está em `legado/index.html` e serve s�
 
 ## Banco
 - Migrações em `supabase/migrations/` (já aplicadas, em ordem). Mudança no banco = nova migração numerada.
-- Perfis: admin, coordenacao, financeiro, estoque, decisoes, visitante. Equipes ligam pessoas a setores do estoque (`equipes.setores`).
+- Perfis: admin, coordenacao, financeiro, estoque, decisoes, saude, visitante. Equipes ligam pessoas a setores do estoque (`equipes.setores`).
 - Regras de acesso (RLS) no próprio banco; o site só esconde o que a pessoa não pode usar.
 - Operações de estoque são funções do banco (`definir_envio`, `fechar_balanco`, `definir_estoque`, `copiar_envio`): atômicas e com checagem de permissão.
 - Convite: admin cadastra a pessoa -> sistema gera um código -> pessoa abre `/ativar`, digita e-mail + código e cria a senha.
@@ -15,3 +15,8 @@ O site antigo (arquivo único, Firebase) está em `legado/index.html` e serve s�
 ## Regras
 - Português claro; celular em primeiro lugar, completo no computador. Menu de baixo fixo.
 - Só a chave publicável do Supabase vai no código (`.env.production`). Nunca chaves secretas.
+
+## Encontristas (ficha)
+- Importação da planilha de inscrição (.xlsx/.csv) em `/encontristas`, pela função `importar_encontristas` (chave: código da inscrição; reimportar atualiza).
+- Dados em 3 tabelas com acessos separados: `encontristas` (básicos: admin, coordenação, decisões, saúde veem; admin/coordenação escrevem), `encontrista_saude` (admin, coordenação, saúde), `encontrista_espiritual` (admin, coordenação, decisões).
+- Não guardar CPF nem dados de pagamento da planilha.

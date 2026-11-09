@@ -1,4 +1,4 @@
-export type Perfil = "admin" | "coordenacao" | "financeiro" | "estoque" | "decisoes" | "visitante";
+export type Perfil = "admin" | "coordenacao" | "financeiro" | "estoque" | "decisoes" | "saude" | "visitante";
 export type Acesso = {
   id: string; nome: string; email: string; perfil: Perfil;
   equipes: { nome: string; setores: string[] }[];
@@ -10,20 +10,23 @@ export const PERFIS: Record<Perfil, { nome: string; desc: string }> = {
   financeiro: { nome: "Financeiro", desc: "Lançamentos e relatórios do caixa" },
   estoque: { nome: "Estoque", desc: "Estoque de todos os setores" },
   decisoes: { nome: "Decisões", desc: "Encontristas e registro de decisões" },
+  saude: { nome: "Saúde", desc: "Ficha de saúde dos encontristas" },
   visitante: { nome: "Visitante", desc: "Só consulta (edições e estoque)" },
 };
 
 const ESCREVE: Record<Perfil, string[] | "*"> = {
   admin: "*",
-  coordenacao: ["edicoes", "estoque", "financeiro", "decisoes"],
+  coordenacao: ["edicoes", "estoque", "financeiro", "decisoes", "encontristas"],
   financeiro: ["financeiro"],
   estoque: ["estoque"],
   decisoes: ["decisoes"],
+  saude: ["saude"],
   visitante: [],
 };
 const VE: Record<string, Perfil[]> = {
   financeiro: ["admin", "coordenacao", "financeiro"],
   decisoes: ["admin", "coordenacao", "decisoes"],
+  encontristas: ["admin", "coordenacao", "decisoes", "saude"],
   pessoas: ["admin"],
 };
 
@@ -42,3 +45,8 @@ export function podeEscrever(a: Acesso | null, modulo: string, setor?: string): 
   if (modulo === "estoque" && setor) return setoresDaEquipe(a).includes(setor);
   return false;
 }
+
+/** Dados de saúde dos encontristas: espelham as regras do banco. */
+export const podeVerSaude = (a: Acesso | null) => !!a && ["admin", "coordenacao", "saude"].includes(a.perfil);
+/** Dados espirituais (batismo, igreja, célula…). */
+export const podeVerEspiritual = (a: Acesso | null) => !!a && ["admin", "coordenacao", "decisoes"].includes(a.perfil);

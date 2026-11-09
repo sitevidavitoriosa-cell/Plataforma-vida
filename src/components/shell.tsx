@@ -10,6 +10,7 @@ const ITENS = [
   { href: "/", modulo: "inicio", rotulo: "Início", icone: "inicio" },
   { href: "/estoque", modulo: "estoque", rotulo: "Estoque", icone: "estoque" },
   { href: "/edicoes", modulo: "edicoes", rotulo: "Edições", icone: "edicoes" },
+  { href: "/encontristas", modulo: "encontristas", rotulo: "Encontristas", icone: "pessoas" },
   { href: "/financeiro", modulo: "financeiro", rotulo: "Financeiro", icone: "financeiro" },
   { href: "/decisoes", modulo: "decisoes", rotulo: "Decisões", icone: "decisoes" },
   { href: "/pessoas", modulo: "pessoas", rotulo: "Pessoas", icone: "pessoas" },
@@ -72,17 +73,25 @@ export function Protegido({ children }: { children: React.ReactNode }) {
 
       {/* menu de baixo, fixo (celular) */}
       <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-borda bg-white px-1.5 pt-1.5 md:hidden" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 6px)" }}>
-        {principais.slice(0, 5).map((i) => (
+        {(principais.length > 5 ? principais.slice(0, 4) : principais).map((i) => (
           <Link key={i.href} href={i.href} className={cx("flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl", ativo(i.href) ? "text-marca" : "text-suave")}>
             <Icone n={i.icone} tam={24} /><span className="text-[11px] font-bold">{i.rotulo}</span>
           </Link>
         ))}
+        {principais.length > 5 && (
+          <button type="button" onClick={() => setMenu(true)} className="flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl text-suave">
+            <Icone n="mais" tam={24} /><span className="text-[11px] font-bold">Mais</span>
+          </button>
+        )}
       </nav>
 
       {menu && (
         <Janela titulo={acesso.nome} onFechar={() => setMenu(false)}>
           <p className="mb-4 mt-0 text-suave">{acesso.email}<br />{PERFIS[acesso.perfil]?.nome}{acesso.equipes.length ? " · " + acesso.equipes.map((e) => e.nome).join(", ") : ""}</p>
           <div className="flex flex-col gap-2.5">
+            {principais.length > 5 && principais.slice(4).map((i) => (
+              <Link key={i.href} href={i.href} onClick={() => setMenu(false)} className="flex min-h-12 items-center gap-2 rounded-2xl border border-borda bg-white px-4 font-extrabold"><Icone n={i.icone} />{i.rotulo}</Link>
+            ))}
             {podeVer(acesso, "pessoas") && <Link href="/pessoas" onClick={() => setMenu(false)} className="flex min-h-12 items-center gap-2 rounded-2xl border border-borda bg-white px-4 font-extrabold"><Icone n="pessoas" />Pessoas e equipes</Link>}
             <Botao v="sec" onClick={sair}><Icone n="sair" tam={18} />Sair</Botao>
           </div>
