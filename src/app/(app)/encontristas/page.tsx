@@ -179,7 +179,10 @@ function Importar({ edicaoId, edicaoNome, onFechar, onFeito }: { edicaoId: strin
     try {
       const r = await lerArquivo(f);
       setItens(r.itens);
-      setInfo(r.semSaude ? "Atenção: esta planilha não tem a coluna de necessidade de saúde." : "");
+      const partes: string[] = [];
+      if (r.faltando.length) partes.push(`Esta planilha não tem: ${r.faltando.join(", ")}. Tudo bem: ela será importada mesmo assim, e o que não veio fica como está no cadastro (nada é apagado).`);
+      if (r.semCodigo) partes.push("Sem a coluna do código, a pessoa é reconhecida pelo e-mail ou pelo nome ao reimportar.");
+      setInfo(partes.join(" "));
     } catch (x) { setInfo(""); setErro(x instanceof Error ? x.message : "Não consegui ler o arquivo."); }
   }
 
@@ -206,8 +209,8 @@ function Importar({ edicaoId, edicaoNome, onFechar, onFeito }: { edicaoId: strin
           <Cartao className="p-4 text-[15px]">
             <b>{itens.length} inscrições encontradas</b>
             <div className="mt-1 text-suave">
-              {cont((i) => i.categoria === "Encontrista")} encontristas · {cont((i) => i.cancelada)} canceladas<br />
-              {cont((i) => i.tem_necessidade)} com necessidade de saúde · {cont((i) => i.batizado === true)} batizados
+              {cont((i) => !i.categoria || i.categoria === "Encontrista")} encontristas · {cont((i) => !!i.cancelada)} canceladas<br />
+              {cont((i) => !!i.tem_necessidade)} com necessidade de saúde · {cont((i) => i.batizado === true)} batizados
             </div>
           </Cartao>
         )}

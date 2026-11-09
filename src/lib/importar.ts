@@ -5,19 +5,21 @@ import { norm } from "./tipos";
 export type ItemImport = {
   cod: string; nome: string; email?: string; fone?: string; endereco?: string; bairro?: string;
   municipio?: string; cep?: string; sexo?: string; idade?: number | null; estado_civil?: string;
-  categoria?: string; status?: string; cancelada: boolean; data_inscricao?: string | null;
-  tem_necessidade: boolean; necessidade?: string; contatos: string[];
-  batizado: boolean | null; igreja?: string; em_celula: boolean | null; celula?: string;
+  categoria?: string; status?: string; cancelada?: boolean; data_inscricao?: string | null;
+  tem_necessidade?: boolean; necessidade?: string; contatos?: string[];
+  batizado?: boolean | null; igreja?: string; em_celula?: boolean | null; celula?: string;
   lider_celula?: string; discipulado?: string; rede?: string;
 };
 
-export type ResultadoLeitura = { itens: ItemImport[]; ignoradas: number; semSaude: boolean };
+// `faltando`: colunas que não vieram na planilha (não bloqueia; o que não veio não é alterado no cadastro).
+export type ResultadoLeitura = { itens: ItemImport[]; ignoradas: number; semSaude: boolean; faltando: string[]; semCodigo: boolean };
 
 const txt = (v: unknown) => (v == null ? "" : v instanceof Date ? v.toISOString() : String(v)).replace(/\s+/g, " ").trim();
 
 // descobre a coluna pelo começo do título (já sem acento/pontuação), aceitando variações
 function indice(cab: string[], ...pistas: string[]) {
   const n = cab.map((c) => norm(c).replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim());
+  for (const p of pistas) { const i = n.findIndex((c) => c === p); if (i >= 0) return i; }
   for (const p of pistas) {
     const i = n.findIndex((c) => c.startsWith(p));
     if (i >= 0) return i;
@@ -56,49 +58,66 @@ function lerData(v: unknown): string | null {
   return isNaN(d.getTime()) ? null : d.toISOString();
 }
 
-export function converter(linhas: unknown[][]): ResultadoLeitura {
-  if (linhas.length < 2) return { itens: [], ignoradas: 0, semSaude: true };
+export function converter(todas: unknown[][]): ResultadoLeitura {
+  // o cabeçalho pode não estar na 1ª linha (títulos acima): procura a linha que tem a coluna "Nome"
+  let h = todas.slice(0, 15).findIndex((l) => indice(l.map(txt), "nome completo", "nome") >= 0);
+  if (h < 0) h = 0;
+  const linhas = todas.slice(h);
+  if (linhas.length < 2) return { itens: [], ignoradas: 0, semSaude: true, faltando: [], semCodigo: false };
   const cab = linhas[0].map(txt);
   const c = {
-    nome: indice(cab, "nome"), email: indice(cab, "email"), cod: indice(cab, "codigo da inscricao"),
-    status: indice(cab, "status"), canc: indice(cab, "cancelada"), data: indice(cab, "data da inscri", "data de inscri", "data inscri", "inscrito em", "data do cadastro", "data de cadastro", "data da compra", "data do pedido", "criado em"),
-    cat: indice(cab, "categoria"), rede: indice(cab, "qual a rede", "qual e a rede"),
+    nome: indice(cab, "nome completo", "nome"), email: indice(cab, "email", "e mail"), cod: indice(cab, "codigo da inscricao", "codigo inscricao", "cod inscricao", "codigo"),
+    status: indice(cab, "status"), canc: indice(cab, "cancelada"),
+    data: indice(cab, "data da inscri", "data de inscri", "data inscri", "inscrito em", "data do cadastro", "data de cadastro", "data da compra", "data do pedido", "criado em"),
+    cat: indice(cab, "categoria"), rede: indice(cab, "qual a rede", "qual e a rede", "rede"),
     cel: indice(cab, "voce participa de celula"), sexo: indice(cab, "sexo"), bairro: indice(cab, "bairro"),
-    bat: indice(cab, "voce ja e batizado", "voce e batizado"), mun: indice(cab, "municipio"),
+    bat: indice(cab, "voce ja e batizado", "voce e batizado", "batizado"), mun: indice(cab, "municipio", "cidade"),
     end: indice(cab, "endereco"), saude: indice(cab, "voce tem alguma necessidade"), civil: indice(cab, "estado civil"),
     c1: indice(cab, "1 coloque"), c2: indice(cab, "2 coloque"), c3: indice(cab, "3 coloque"),
     disc: indice(cab, "voce faz discipulado"), lider: indice(cab, "qual e o nome e telefone do a seu sua lider", "qual e o nome e telefone do a seu/sua lider"),
     celnome: indice(cab, "nome da celula"), igreja: indice(cab, "voce faz parte de alguma igreja"),
-    cep: indice(cab, "cep"), idade: indice(cab, "qual a sua idade"), fone: indice(cab, "telefone de contato"),
+    cep: indice(cab, "cep"), idade: indice(cab, "qual a sua idade", "idade"), fone: indice(cab, "telefone de contato", "telefone", "celular", "whatsapp"),
   };
-  if (c.cod < 0 || c.nome < 0) throw new Error("Não achei as colunas “Nome” e “Código da inscrição”. Esta planilha é da inscrição?");
+  if (c.nome < 0) throw new Error("Não achei a coluna “Nome” nesta planilha. Confira se a primeira linha tem os títulos das colunas.");
+  const tem = (i: number) => i >= 0;
   const g = (l: unknown[], i: number) => (i < 0 ? "" : txt(l[i]));
   const itens: ItemImport[] = [];
+  const vistos = new Set<string>();
   let ignoradas = 0;
   for (const l of linhas.slice(1)) {
-    const cod = g(l, c.cod), nome = g(l, c.nome);
-    if (!cod || !nome) { ignoradas++; continue; }
-    const necessidade = g(l, c.saude);
-    const idadeN = parseInt(g(l, c.idade).replace(/\D/g, ""), 10);
-    const lider = g(l, c.lider), disc = g(l, c.disc), celNome = g(l, c.celnome), igreja = g(l, c.igreja);
-    const rede = g(l, c.rede);
-    const d = l[c.data];
-    itens.push({
-      cod, nome, email: g(l, c.email).toLowerCase(), fone: g(l, c.fone).replace(/\D/g, ""),
-      endereco: g(l, c.end), bairro: g(l, c.bairro), municipio: padroniza(g(l, c.mun)),
-      cep: g(l, c.cep).replace(/\D/g, ""), sexo: padroniza(g(l, c.sexo)),
-      idade: isFinite(idadeN) ? idadeN : null, estado_civil: g(l, c.civil),
-      categoria: g(l, c.cat), status: g(l, c.status), cancelada: simNao(g(l, c.canc)) === true,
-      data_inscricao: lerData(d),
-      tem_necessidade: !semValor(necessidade), necessidade: semValor(necessidade) ? "" : necessidade,
-      contatos: [g(l, c.c1), g(l, c.c2), g(l, c.c3)].filter((x) => !semValor(x)),
-      batizado: simNao(g(l, c.bat)), igreja: semValor(igreja) ? "" : igreja,
-      em_celula: simNao(g(l, c.cel)), celula: semValor(celNome) ? "" : celNome,
-      lider_celula: semValor(lider) ? "" : lider, discipulado: semValor(disc) ? "" : disc,
-      rede: norm(rede).startsWith("ainda nao") ? "Sem rede" : rede,
-    });
+    const nome = g(l, c.nome);
+    // sem coluna de código: usa o e-mail ou o próprio nome como chave (reimportar atualiza a mesma pessoa)
+    const cod = tem(c.cod) ? g(l, c.cod) : (tem(c.email) && g(l, c.email) ? g(l, c.email).toLowerCase() : norm(nome).replace(/\s+/g, " "));
+    if (!cod || !nome || vistos.has(cod)) { ignoradas++; continue; }
+    vistos.add(cod);
+    const it: ItemImport = { cod, nome };
+    if (tem(c.email)) it.email = g(l, c.email).toLowerCase();
+    if (tem(c.fone)) it.fone = g(l, c.fone).replace(/\D/g, "");
+    if (tem(c.end)) it.endereco = g(l, c.end);
+    if (tem(c.bairro)) it.bairro = g(l, c.bairro);
+    if (tem(c.mun)) it.municipio = padroniza(g(l, c.mun));
+    if (tem(c.cep)) it.cep = g(l, c.cep).replace(/\D/g, "");
+    if (tem(c.sexo)) it.sexo = padroniza(g(l, c.sexo));
+    if (tem(c.idade)) { const n = parseInt(g(l, c.idade).replace(/\D/g, ""), 10); it.idade = isFinite(n) ? n : null; }
+    if (tem(c.civil)) it.estado_civil = g(l, c.civil);
+    if (tem(c.cat)) it.categoria = g(l, c.cat);
+    if (tem(c.status)) it.status = g(l, c.status);
+    if (tem(c.canc)) it.cancelada = simNao(g(l, c.canc)) === true;
+    if (tem(c.data)) it.data_inscricao = lerData(l[c.data]);
+    if (tem(c.saude)) { const nec = g(l, c.saude); it.tem_necessidade = !semValor(nec); it.necessidade = semValor(nec) ? "" : nec; }
+    if (tem(c.c1) || tem(c.c2) || tem(c.c3)) it.contatos = [g(l, c.c1), g(l, c.c2), g(l, c.c3)].filter((x) => !semValor(x));
+    if (tem(c.bat)) it.batizado = simNao(g(l, c.bat));
+    if (tem(c.igreja)) { const x = g(l, c.igreja); it.igreja = semValor(x) ? "" : x; }
+    if (tem(c.cel)) it.em_celula = simNao(g(l, c.cel));
+    if (tem(c.celnome)) { const x = g(l, c.celnome); it.celula = semValor(x) ? "" : x; }
+    if (tem(c.lider)) { const x = g(l, c.lider); it.lider_celula = semValor(x) ? "" : x; }
+    if (tem(c.disc)) { const x = g(l, c.disc); it.discipulado = semValor(x) ? "" : x; }
+    if (tem(c.rede)) { const x = g(l, c.rede); it.rede = norm(x).startsWith("ainda nao") ? "Sem rede" : x; }
+    itens.push(it);
   }
-  return { itens, ignoradas, semSaude: c.saude < 0 };
+  const faltando = ([["código da inscrição", c.cod], ["categoria", c.cat], ["sexo", c.sexo], ["data da inscrição", c.data], ["necessidade de saúde", c.saude], ["batizado", c.bat], ["célula", c.cel], ["igreja", c.igreja], ["rede", c.rede]] as [string, number][])
+    .filter(([, i]) => i < 0).map(([n]) => n);
+  return { itens, ignoradas, semSaude: c.saude < 0, faltando, semCodigo: c.cod < 0 };
 }
 
 function csv(texto: string, sep: string): string[][] {
