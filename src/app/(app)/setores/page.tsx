@@ -1,34 +1,34 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+import { entradasSetores, hrefSetor } from "@/lib/setores";
+import Link from "next/link";
 import { useAuth } from "@/components/provedores";
 import { Estoque } from "@/components/estoque";
 import { Saude } from "@/components/saude";
 import { Secretaria } from "@/components/secretaria";
-import { Chip, Titulo, Vazio } from "@/components/ui";
-import { podeSecretaria, podeVerEstoque, podeVerSaude, setoresDaEquipe } from "@/lib/perm";
+import { Titulo, Vazio } from "@/components/ui";
 
 export default function Setores() {
+  return <Suspense fallback={null}><Conteudo /></Suspense>;
+}
+
+function Conteudo() {
   const { acesso } = useAuth();
-  const abas = useMemo(() => {
-    const l: { id: string; nome: string }[] = [];
-    if (podeVerEstoque(acesso)) l.push({ id: "estoque", nome: "Estoque" });
-    if (podeVerSaude(acesso)) l.push({ id: "saude", nome: "Saúde" });
-    if (podeSecretaria(acesso)) l.push({ id: "secretaria", nome: "Secretaria 1" });
-    const especiais = ["Secretaria 1", "Saúde"];
-    Array.from(new Set(setoresDaEquipe(acesso))).filter((s) => !especiais.includes(s)).forEach((s) => l.push({ id: "setor:" + s, nome: s }));
-    return l;
-  }, [acesso]);
-  const [aba, setAba] = useState("");
-  useEffect(() => { try { setAba(localStorage.getItem("vv-aba-setor") ?? ""); } catch {} }, []);
-  const atual = abas.find((a) => a.id === aba) ?? abas[0];
-  const escolher = (id: string) => { setAba(id); try { localStorage.setItem("vv-aba-setor", id); } catch {} };
+  const params = useSearchParams();
+  const [setoresItens, setSetoresItens] = useState<string[]>([]);
+  useEffect(() => { supabase.from("itens").select("setor").then(({ data }) => setSetoresItens(Array.from(new Set(((data as { setor: string }[] | null) ?? []).map((x) => x.setor))))); }, []);
+  const abas = useMemo(() => entradasSetores(acesso, setoresItens), [acesso, setoresItens]);
+  const pedido = params.get("aba");
+  const atual = abas.find((a) => a.id === pedido) ?? abas[0];
 
   if (!atual) return <Vazio>Você ainda não está em nenhum setor.</Vazio>;
   return (
     <div>
-      <Titulo>Setores</Titulo>
+      <Titulo>{atual.nome}</Titulo>
       <div className="flex gap-2 overflow-x-auto pb-3">
-        {abas.map((a) => <Chip key={a.id} ativo={atual.id === a.id} onClick={() => escolher(a.id)}>{a.nome}</Chip>)}
+        {abas.map((a) => <Link key={a.id} href={hrefSetor(a.id)} replace className={`inline-flex min-h-11 shrink-0 items-center rounded-full px-4 text-[15px] font-extrabold ${atual.id === a.id ? "bg-marca text-white" : "border border-borda bg-white text-suave"}`}>{a.nome}</Link>)}
       </div>
       {atual.id === "estoque" && <Estoque />}
       {atual.id === "saude" && <Saude />}

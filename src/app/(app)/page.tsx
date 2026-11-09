@@ -37,6 +37,11 @@ export default function Painel() {
 
       {ed && podeVerFicha(acesso) && <KpisEncontristas edicaoId={ed.id} nItens={nEnv} nFalta={falta.length} />}
 
+      <Link href="/relatorio" className="flex items-center justify-between gap-3 rounded-3xl border border-borda bg-white p-4">
+        <div><b className="block text-base">Relatório geral</b><span className="text-sm text-suave">Materiais por setor, pessoas e decisões. Imprime, salva em PDF ou baixa em Excel.</span></div>
+        <span className="text-xl font-extrabold text-marca">→</span>
+      </Link>
+
       <Cartao className="overflow-hidden">
         <div className="flex items-center justify-between px-4 pb-2 pt-4"><b className="text-base">Precisa de atenção</b>{falta.length > 0 && <Selo tom="alerta">{falta.length}</Selo>}</div>
         {falta.length === 0 && <Vazio>Nada abaixo do mínimo.</Vazio>}

@@ -5,6 +5,7 @@ import { msgErro, useLista } from "@/lib/dados";
 import { fmtN, norm, num, type Edicao, type Envio, type Equipe, type Item } from "@/lib/tipos";
 import { podeEscrever, setoresDaEquipe } from "@/lib/perm";
 import { useAuth, useAviso, useEdicao } from "@/components/provedores";
+import { lerInventario, type ItemInv } from "@/lib/inventario";
 import { Botao, Campo, Carregando, Chip, Cartao, Icone, Janela, Passo, Selo, Seletor, Titulo, Vazio, cx } from "@/components/ui";
 
 type Aba = "geral" | "enviado" | "balanco";
@@ -20,6 +21,7 @@ export function Estoque({ setor }: { setor?: string }) {
   const { eds: listaEd, ed } = useEdicao();
   const [aba, setAba] = useState<Aba>("geral");
   const [aberto, setAberto] = useState<Item | "novo" | null>(null);
+  const [importando, setImportando] = useState(false);
 
   useEffect(() => { try { const a = localStorage.getItem("vv-aba-estoque") as Aba | null; if (a) setAba(a); } catch {} }, []);
   const trocaAba = (a: Aba) => { setAba(a); try { localStorage.setItem("vv-aba-estoque", a); } catch {} };
@@ -47,6 +49,9 @@ export function Estoque({ setor }: { setor?: string }) {
 
       {aba !== "geral" && !ed && <Vazio>Crie uma edição em “Edições” para usar o enviado e o balanço.</Vazio>}
 
+      {aba === "geral" && !setor && podeEscrever(acesso, "estoque") && (
+        <div className="pb-3"><Botao v="sec" onClick={() => setImportando(true)} className="!min-h-11">Importar itens da planilha (Excel)</Botao></div>
+      )}
       {aba === "geral" && <Geral itens={itens.dados} onAbrir={setAberto} />}
       {aba === "enviado" && ed && <Enviado itens={itens.dados} envios={envios.dados} edicoes={listaEd} ed={ed} recarregar={() => { todos.recarregar(); envios.recarregar(); }} setItens={todos.setDados} setEnvios={envios.setDados} />}
       {aba === "balanco" && ed && <Balanco itens={itens.dados} envios={envios.dados} ed={ed} recarregar={() => { todos.recarregar(); envios.recarregar(); }} setEnvios={envios.setDados} />}
@@ -56,6 +61,8 @@ export function Estoque({ setor }: { setor?: string }) {
           <Icone n="mais1" tam={20} />Novo item
         </button>
       )}
+
+      {importando && <ImportarItens existentes={todos.dados} onFechar={() => setImportando(false)} onFeito={() => todos.recarregar()} />}
 
       {aberto && (
         <ItemJanela item={aberto === "novo" ? null : aberto} setores={setores} setorPadrao={setor} onFechar={() => setAberto(null)}
@@ -93,7 +100,7 @@ function Geral({ itens, onAbrir }: { itens: Item[]; onAbrir: (i: Item) => void }
       )}
       {grupos.length === 0 && <Vazio>Nenhum item encontrado.</Vazio>}
       {grupos.map(([setor, lista]) => {
-        const aberto = forcarAberto || abertos[setor];
+        const aberto = forcarAberto || abertos[setor] || grupos.length === 1;
         const faltas = lista.filter(emFalta).length;
         return (
           <Cartao key={setor} className="overflow-hidden">
@@ -375,6 +382,89 @@ function ItemJanela({ item, setores, setorPadrao, onFechar, onMudou, aviso }: { 
         {item && !confirmaDel && <Botao v="sec" bloco onClick={() => setConfirmaDel(true)} className="!text-alerta"><Icone n="lixo" tam={18} />Excluir item</Botao>}
         {item && confirmaDel && <Botao v="perigo" bloco onClick={excluir}>Confirmar: excluir “{item.nome}”</Botao>}
       </form>
+    </Janela>
+  );
+}
+
+
+/* ---------------- Importar planilha de inventário ---------------- */
+function ImportarItens({ existentes, onFechar, onFeito }: { existentes: Item[]; onFechar: () => void; onFeito: () => void }) {
+  const aviso = useAviso();
+  const [lido, setLido] = useState<{ itens: ItemInv[]; setores: string[]; ignorados: number } | null>(null);
+  const [lendo, setLendo] = useState(false);
+  const [atualizar, setAtualizar] = useState(false);
+  const [gravando, setGravando] = useState(false);
+  const chave = (setor: string, nome: string) => norm(setor) + "|" + norm(nome);
+  const mapa = useMemo(() => new Map(existentes.map((i) => [chave(i.setor, i.nome), i])), [existentes]);
+
+  async function escolher(f: File) {
+    setLendo(true);
+    try {
+      const r = await lerInventario(f);
+      if (r.itens.length === 0) aviso("Não encontrei itens. Use o modelo com as colunas ITENS, MEDIDA, ESTOQUE ATUAL e NECESSIDADE.");
+      else setLido(r);
+    } catch (e) { aviso("Não consegui ler o arquivo: " + (e instanceof Error ? e.message : "erro")); }
+    setLendo(false);
+  }
+  const novos = (lido?.itens ?? []).filter((i) => !mapa.has(chave(i.setor, i.nome)));
+  const repetidos = (lido?.itens ?? []).filter((i) => mapa.has(chave(i.setor, i.nome)));
+
+  async function gravar() {
+    if (!lido) return;
+    setGravando(true);
+    let erro = "";
+    for (let k = 0; k < novos.length; k += 100) {
+      const lote = novos.slice(k, k + 100).map((i) => ({ nome: i.nome, setor: i.setor, un: i.un, qtd: i.qtd, min: i.min, cons: i.cons, obs: i.obs }));
+      const { error } = await supabase.from("itens").insert(lote);
+      if (error) { erro = msgErro(error); break; }
+    }
+    let atualizados = 0;
+    if (!erro && atualizar) {
+      for (const i of repetidos) {
+        const ex = mapa.get(chave(i.setor, i.nome))!;
+        if (Number(ex.qtd) !== i.qtd) { const { error } = await supabase.rpc("definir_estoque", { p_item: ex.id, p_qtd: i.qtd, p_obs: "Importação da planilha" }); if (error) { erro = msgErro(error); break; } }
+        if (Number(ex.min) !== i.min) await supabase.from("itens").update({ min: i.min }).eq("id", ex.id);
+        atualizados++;
+      }
+    }
+    setGravando(false);
+    onFeito();
+    if (erro) { aviso("Parou com erro: " + erro); return; }
+    aviso(`${novos.length} itens novos${atualizar ? ` e ${atualizados} atualizados` : ""}.`); onFechar();
+  }
+
+  return (
+    <Janela titulo="Importar itens (Excel)" onFechar={onFechar}>
+      <div className="flex flex-col gap-3.5">
+        {!lido ? (
+          <>
+            <p className="m-0 text-sm text-suave">Envie o inventário no modelo atual (.xls ou .xlsx): setores em linhas soltas e colunas ITENS, MEDIDA, ESTOQUE ATUAL, NECESSIDADE e OBS. A coluna NECESSIDADE vira a quantidade mínima.</p>
+            <label className="flex min-h-14 cursor-pointer items-center justify-center rounded-2xl bg-marca px-4 font-extrabold text-white">
+              {lendo ? "Lendo…" : "Escolher arquivo"}
+              <input type="file" accept=".xls,.xlsx" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) escolher(f); e.target.value = ""; }} />
+            </label>
+          </>
+        ) : (
+          <>
+            <div className="rounded-2xl bg-marca-clara p-3 text-sm">
+              <b>{lido.itens.length} itens</b> em {lido.setores.length} setores · <b>{novos.length} novos</b> · {repetidos.length} já cadastrados{lido.ignorados > 0 ? ` · ${lido.ignorados} repetidos na planilha ignorados` : ""}
+            </div>
+            <div className="max-h-56 overflow-y-auto rounded-2xl border border-borda text-sm">
+              {lido.setores.map((s) => (
+                <div key={s} className="flex justify-between border-b border-borda px-3 py-2 last:border-0"><b>{s}</b><span className="text-suave">{lido.itens.filter((i) => i.setor === s).length} itens</span></div>
+              ))}
+            </div>
+            {repetidos.length > 0 && (
+              <label className="flex items-start gap-3 rounded-2xl border border-borda bg-white p-3 text-sm">
+                <input type="checkbox" checked={atualizar} onChange={(e) => setAtualizar(e.target.checked)} className="mt-0.5 h-5 w-5" />
+                <span><b>Atualizar também os {repetidos.length} já cadastrados</b><br /><span className="text-suave">Troca a quantidade pelo valor da planilha (fica no histórico) e o mínimo. Desmarcado, eles não são mexidos.</span></span>
+              </label>
+            )}
+            <Botao onClick={gravar} disabled={gravando || (novos.length === 0 && !atualizar)} bloco>{gravando ? "Gravando…" : `Importar ${novos.length} novos${atualizar ? " e atualizar" : ""}`}</Botao>
+            <Botao v="sec" bloco onClick={() => setLido(null)}>Escolher outro arquivo</Botao>
+          </>
+        )}
+      </div>
     </Janela>
   );
 }
