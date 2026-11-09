@@ -72,65 +72,128 @@ export default function Relatorio() {
   async function slides() {
     const { default: Pptx } = await import("pptxgenjs");
     const t = temaDe(ed), hx = (c: string) => c.replace("#", "");
-    const COR = { marca: hx(t.marca), det: hx(t.detalhe), clara: hx(t.clara), txt: "141414", suave: "6B6B66" };
+    const COR = { marca: hx(t.marca), esc: hx(t.esc), det: hx(t.detalhe), clara: hx(t.clara), fundo: hx(t.fundo), txt: "1B1B1A", suave: "76766F", linha: "DDDCD6" };
     const pp = new Pptx(); pp.layout = "LAYOUT_WIDE"; pp.title = `Relatório ${ed!.nome}`;
-    const F = "Calibri";
-    const cabeca = (sl: ReturnType<typeof pp.addSlide>, titulo: string, sub?: string) => {
-      sl.background = { color: "FFFFFF" };
-      sl.addShape("rect", { x: 0, y: 0, w: 13.33, h: 0.12, fill: { color: COR.det } });
-      sl.addText(titulo, { x: 0.6, y: 0.35, w: 12, h: 0.7, fontFace: F, fontSize: 30, bold: true, color: COR.marca });
-      if (sub) sl.addText(sub, { x: 0.6, y: 1.0, w: 12, h: 0.4, fontFace: F, fontSize: 14, color: COR.suave });
-      sl.addText(`${ed!.nome} · ${descricaoEd(ed!)}`, { x: 0.6, y: 7.05, w: 9, h: 0.3, fontFace: F, fontSize: 10, color: COR.suave });
+    const TIT = "Georgia", COR_TXT = "Calibri";
+    const W = 13.33;
+    const periodo = `${dmy(ed!.data_ini)}${ed!.data_fim ? " a " + dmy(ed!.data_fim) : ""}${ed!.local ? "  ·  " + ed!.local : ""}`;
+    type Sl = ReturnType<typeof pp.addSlide>;
+
+    // base de cada slide de conteúdo: faixa lateral fina, chamada pequena, título em serifa, rodapé discreto
+    const base = (num: string, kicker: string, titulo: string, sub?: string): Sl => {
+      const sl = pp.addSlide(); sl.background = { color: COR.fundo };
+      sl.addShape("rect", { x: 0, y: 0, w: 0.22, h: 7.5, fill: { color: COR.marca } });
+      sl.addShape("rect", { x: 0, y: 0, w: 0.22, h: 1.7, fill: { color: COR.det } });
+      sl.addText(`${num}  ${kicker.toUpperCase()}`, { x: 0.9, y: 0.45, w: 8, h: 0.3, fontFace: COR_TXT, fontSize: 11, bold: true, color: COR.det, charSpacing: 5 });
+      sl.addText(titulo, { x: 0.9, y: 0.78, w: 11.6, h: 0.8, fontFace: TIT, fontSize: 34, bold: true, color: COR.esc });
+      if (sub) sl.addText(sub, { x: 0.9, y: 1.52, w: 11.6, h: 0.35, fontFace: COR_TXT, fontSize: 14, color: COR.suave });
+      sl.addText(ed!.nome, { x: 0.9, y: 7.0, w: 6, h: 0.3, fontFace: COR_TXT, fontSize: 10, color: COR.suave });
+      return sl;
     };
-    const kpis = (sl: ReturnType<typeof pp.addSlide>, lista: [string | number, string][], y: number) => {
-      const w = 12.1 / lista.length;
-      lista.forEach(([v, r], i) => {
-        const x = 0.6 + i * w;
-        sl.addShape("roundRect", { x, y, w: w - 0.2, h: 1.5, fill: { color: COR.clara }, rectRadius: 0.12 });
-        sl.addText(String(typeof v === "number" ? fmtN(v) : v), { x, y: y + 0.15, w: w - 0.2, h: 0.8, align: "center", fontFace: F, fontSize: 36, bold: true, color: COR.marca });
-        sl.addText(r, { x, y: y + 0.9, w: w - 0.2, h: 0.5, align: "center", fontFace: F, fontSize: 13, color: COR.suave });
+    // número grande com legenda e fio no topo
+    const dado = (sl: Sl, v: string | number, r: string, x: number, y: number, w: number, tam = 46, cor = COR.marca) => {
+      sl.addShape("rect", { x, y, w: w - 0.3, h: 0.04, fill: { color: COR.det } });
+      sl.addText(String(typeof v === "number" ? fmtN(v) : v), { x, y: y + 0.12, w: w - 0.3, h: tam / 40, fontFace: TIT, fontSize: tam, bold: true, color: cor });
+      sl.addText(r, { x, y: y + 0.2 + tam / 40, w: w - 0.3, h: 0.4, fontFace: COR_TXT, fontSize: 13, color: COR.suave });
+    };
+    // barras horizontais desenhadas à mão (rótulo, barra proporcional, valor)
+    const barras = (sl: Sl, itens: [string, number][], x: number, y: number, w: number, h: number) => {
+      const lista = itens.slice(0, 9); if (!lista.length) return;
+      const max = Math.max(...lista.map((i) => i[1]), 1), lin = Math.min(0.62, h / lista.length), lw = 3.0, bw = w - lw - 1.0;
+      lista.forEach(([nome, v], i) => {
+        const yy = y + i * lin;
+        sl.addText(nome, { x, y: yy, w: lw - 0.15, h: lin, fontFace: COR_TXT, fontSize: 13, color: COR.txt, valign: "middle", align: "right", fit: "shrink" });
+        sl.addShape("roundRect", { x: x + lw, y: yy + lin * 0.2, w: bw, h: lin * 0.6, fill: { color: COR.linha }, rectRadius: 0.05 });
+        sl.addShape("roundRect", { x: x + lw, y: yy + lin * 0.2, w: Math.max(0.12, (bw * v) / max), h: lin * 0.6, fill: { color: i === 0 ? COR.det : COR.marca }, rectRadius: 0.05 });
+        sl.addText(fmtN(v), { x: x + lw + bw + 0.1, y: yy, w: 0.9, h: lin, fontFace: TIT, fontSize: 15, bold: true, color: COR.esc, valign: "middle" });
       });
     };
-    // capa
-    const c = pp.addSlide(); c.background = { color: COR.marca };
-    c.addShape("rect", { x: 0, y: 5.6, w: 13.33, h: 0.18, fill: { color: COR.det } });
-    c.addText("RELATÓRIO GERAL", { x: 0.8, y: 1.6, w: 11, h: 0.5, fontFace: F, fontSize: 18, bold: true, color: COR.det, charSpacing: 4 });
-    c.addText(ed!.nome, { x: 0.8, y: 2.2, w: 11.5, h: 1.4, fontFace: F, fontSize: 54, bold: true, color: "FFFFFF" });
-    c.addText([descricaoEd(ed!), `${dmy(ed!.data_ini)}${ed!.data_fim ? " a " + dmy(ed!.data_fim) : ""}${ed!.local ? " · " + ed!.local : ""}`, ed!.resp ? `Responsável: ${ed!.resp}` : ""].filter(Boolean).join("\n"),
-      { x: 0.8, y: 3.8, w: 11, h: 1.4, fontFace: F, fontSize: 18, color: "FFFFFF" });
-    // resumo
-    const r = pp.addSlide(); cabeca(r, "Resumo da edição");
-    kpis(r, [[linhas.length, "itens enviados"], [emFalta, "itens em falta no estoque"], ...(admin ? ([[principais.length, "encontristas"], [equipe, "equipe"]] as [number, string][]) : []), [dec.length, "decisões registradas"]], 1.8);
-    if (admin) kpis(r, [[batizados, "encontristas batizados"], [saude, "com necessidade de saúde"]], 3.8);
-    // materiais
+
+    // ---- capa
+    const c = pp.addSlide(); c.background = { color: COR.esc };
+    c.addShape("ellipse", { x: 8.3, y: -1.4, w: 7.6, h: 7.6, fill: { color: COR.marca } });
+    c.addShape("ellipse", { x: 10.9, y: 4.5, w: 3.8, h: 3.8, fill: { color: COR.det } });
+    c.addShape("ellipse", { x: 7.5, y: 3.4, w: 2.2, h: 2.2, fill: { color: COR.det, transparency: 100 }, line: { color: COR.det, width: 2 } });
+    c.addText("RELATÓRIO GERAL", { x: 0.9, y: 1.3, w: 8, h: 0.4, fontFace: COR_TXT, fontSize: 14, bold: true, color: COR.det, charSpacing: 8 });
+    c.addText(ed!.nome, { x: 0.9, y: 1.85, w: 8.2, h: 2.2, fontFace: TIT, fontSize: 60, bold: true, color: "FFFFFF", valign: "top", fit: "shrink" });
+    c.addShape("rect", { x: 0.95, y: 4.35, w: 1.3, h: 0.07, fill: { color: COR.det } });
+    c.addText([descricaoEd(ed!), periodo, ed!.resp ? `Responsável: ${ed!.resp}` : ""].filter(Boolean).join("\n"), { x: 0.9, y: 4.65, w: 7.2, h: 1.4, fontFace: COR_TXT, fontSize: 17, color: "E6E6E0", valign: "top", paraSpaceAfter: 4 });
+    c.addText("VIDA VITORIOSA", { x: 0.9, y: 6.75, w: 6, h: 0.3, fontFace: COR_TXT, fontSize: 11, bold: true, color: COR.det, charSpacing: 6 });
+
+    // ---- resumo: painel de cor com o número principal + grade de números
+    const r = pp.addSlide(); r.background = { color: COR.fundo };
+    r.addShape("rect", { x: 0, y: 0, w: 5.2, h: 7.5, fill: { color: COR.marca } });
+    r.addShape("ellipse", { x: -1.4, y: 4.6, w: 4.6, h: 4.6, fill: { color: COR.det, transparency: 70 } });
+    r.addText("01  RESUMO", { x: 0.8, y: 0.6, w: 4, h: 0.3, fontFace: COR_TXT, fontSize: 11, bold: true, color: COR.det, charSpacing: 5 });
+    const principal: [number, string] = admin ? [principais.length, "encontristas"] : [linhas.length, "itens enviados"];
+    r.addText(fmtN(principal[0]), { x: 0.8, y: 2.2, w: 4.2, h: 1.9, fontFace: TIT, fontSize: 100, bold: true, color: "FFFFFF", fit: "shrink" });
+    r.addText(principal[1], { x: 0.8, y: 4.1, w: 4.2, h: 0.5, fontFace: COR_TXT, fontSize: 20, color: "FFFFFF" });
+    r.addText(ed!.nome, { x: 0.8, y: 6.7, w: 4.2, h: 0.4, fontFace: TIT, fontSize: 14, color: COR.clara });
+    r.addText("O que aconteceu nesta edição", { x: 5.9, y: 0.55, w: 7, h: 0.8, fontFace: TIT, fontSize: 30, bold: true, color: COR.esc });
+    const grade: [number, string][] = [[linhas.length, "itens enviados"], [dec.length, "decisões registradas"], ...(admin ? ([[equipe, "pessoas na equipe"], [batizados, "encontristas batizados"], [saude, "com necessidade de saúde"]] as [number, string][]) : []), [emFalta, "itens em falta no estoque"]];
+    grade.slice(0, 6).forEach(([v, rot], i) => dado(r, v, rot, 5.9 + (i % 2) * 3.6, 1.9 + Math.floor(i / 2) * 1.7, 3.6));
+
+    // ---- materiais
+    let n = 2;
     if (sec.materiais && linhas.length) {
-      const m = pp.addSlide(); cabeca(m, "Materiais enviados por setor", "Unidades enviadas à edição");
-      m.addChart(pp.ChartType.bar, [{ name: "Enviado", labels: setores, values: setores.map((st) => linhas.filter((l) => l.setor === st).reduce((a, l) => a + l.env, 0)) }],
-        { x: 0.6, y: 1.5, w: 12.1, h: 5.4, barDir: "bar", chartColors: [COR.marca], showValue: true, catAxisLabelFontSize: 12, valAxisHidden: true, valGridLine: { style: "none" }, dataLabelFontSize: 11 });
+      const m = base(String(n++).padStart(2, "0"), "Materiais", "O que saiu para a edição", "Unidades enviadas por setor");
+      barras(m, setores.map((st) => [st, linhas.filter((l) => l.setor === st).reduce((a, l) => a + l.env, 0)] as [string, number]).sort((a, b) => b[1] - a[1]), 0.9, 2.15, 11.6, 4.7);
       for (const st of setores) {
         const l = linhas.filter((x) => x.setor === st);
-        for (let k = 0; k < l.length; k += 10) {
-          const sl = pp.addSlide(); cabeca(sl, st + (k > 0 ? " (continuação)" : ""), `${l.length} itens · balanço ${l.every((x) => x.fechado) ? "fechado" : "aberto"}`);
-          const cab = ["Item", "Medida", "Enviado", "Comprado", "Voltou", "Consumo"].map((h, i) => ({ text: h, options: { bold: true, color: "FFFFFF", fill: { color: COR.marca }, align: i > 1 ? "right" : "left" } }));
-          const corpo = l.slice(k, k + 10).map((x, j) => [x.nome, x.un, x.env, x.comp, x.volta, x.cons].map((v, i) => ({ text: typeof v === "number" ? fmtN(v) : v, options: { align: i > 1 ? "right" : "left", fill: { color: j % 2 ? "FFFFFF" : COR.clara } } })));
-          sl.addTable([cab, ...corpo] as never, { x: 0.6, y: 1.55, w: 12.1, colW: [5.5, 1.6, 1.25, 1.25, 1.25, 1.25], fontFace: F, fontSize: 13, color: COR.txt, border: { type: "none" }, rowH: 0.45 });
+        const totEnv = l.reduce((a, x) => a + x.env, 0), totCons = l.reduce((a, x) => a + x.cons, 0);
+        for (let k = 0; k < l.length; k += 9) {
+          const sl = pp.addSlide(); sl.background = { color: COR.fundo };
+          sl.addShape("rect", { x: 0, y: 0, w: 4.1, h: 7.5, fill: { color: COR.clara } });
+          sl.addShape("rect", { x: 0, y: 0, w: 0.22, h: 7.5, fill: { color: COR.marca } });
+          sl.addText("MATERIAIS", { x: 0.8, y: 0.55, w: 3, h: 0.3, fontFace: COR_TXT, fontSize: 11, bold: true, color: COR.det, charSpacing: 5 });
+          sl.addText(st + (k > 0 ? " (cont.)" : ""), { x: 0.8, y: 0.9, w: 3.1, h: 1.7, fontFace: TIT, fontSize: 30, bold: true, color: COR.esc, valign: "top", fit: "shrink" });
+          dado(sl, l.length, "itens", 0.8, 2.9, 3.2, 30); dado(sl, totEnv, "unidades enviadas", 0.8, 4.4, 3.2, 30); dado(sl, totCons, "consumidas", 0.8, 5.9, 3.2, 30, COR.esc);
+          const nb = { type: "none" as const }, fio = (cor: string, pt = 0.75) => ({ type: "solid" as const, color: cor, pt });
+          const cab = ["Item", "Enviado", "Comprado", "Voltou", "Consumo"].map((h, i) => ({ text: h.toUpperCase(), options: { bold: true, fontSize: 10, color: COR.suave, align: i ? "right" : "left", border: [nb, nb, fio(COR.marca, 1.5), nb] } }));
+          const corpo = l.slice(k, k + 9).map((x) => [`${x.nome}`, x.env, x.comp, x.volta, x.cons].map((v, i) => ({ text: typeof v === "number" ? fmtN(v) : v, options: { align: i ? "right" : "left", bold: i === 4, color: i === 4 ? COR.esc : COR.txt, border: [nb, nb, fio(COR.linha), nb] } })));
+          sl.addTable([cab, ...corpo] as never, { x: 4.6, y: 0.9, w: 8.2, colW: [3.6, 1.1, 1.2, 1.1, 1.2], fontFace: COR_TXT, fontSize: 13, rowH: 0.55, valign: "middle" });
+          sl.addText(`Balanço ${l.every((x) => x.fechado) ? "fechado" : "em aberto"}`, { x: 4.6, y: 6.95, w: 4, h: 0.3, fontFace: COR_TXT, fontSize: 10, color: COR.suave });
         }
       }
     }
-    // pessoas
+    // ---- pessoas
     if (sec.pessoas && admin) {
-      const sl = pp.addSlide(); cabeca(sl, "Pessoas", "Encontristas e equipe");
-      kpis(sl, [[principais.length, "encontristas"], [equipe, "equipe"], [batizados, "batizados"], [saude, "necessidade de saúde"]], 1.6);
-      const redes = conta(principais, (e) => um(e.encontrista_espiritual)?.rede ?? ""), sexos = conta(principais, (e) => e.sexo ?? "");
-      if (redes.length) sl.addChart(pp.ChartType.bar, [{ name: "Encontristas", labels: redes.map((x) => x[0]), values: redes.map((x) => x[1]) }], { x: 0.6, y: 3.4, w: 7, h: 3.5, barDir: "col", chartColors: [COR.marca], showValue: true, showTitle: true, title: "Por rede", titleFontSize: 14, valAxisHidden: true, valGridLine: { style: "none" } });
-      if (sexos.length) sl.addChart(pp.ChartType.doughnut, [{ name: "Sexo", labels: sexos.map((x) => x[0]), values: sexos.map((x) => x[1]) }], { x: 7.9, y: 3.4, w: 4.8, h: 3.5, chartColors: [COR.marca, COR.det, "9A9A95"], showLegend: true, legendPos: "b", showPercent: true, showTitle: true, title: "Por sexo", titleFontSize: 14 });
+      const sl = base(String(n++).padStart(2, "0"), "Pessoas", "Quem esteve conosco", "Encontristas e equipe");
+      [[principais.length, "encontristas"], [equipe, "equipe"], [batizados, "batizados"], [saude, "com necessidade de saúde"]].forEach(([v, rot], i) => dado(sl, v as number, rot as string, 0.9 + i * 3.0, 2.1, 3.0, 44));
+      const redes = conta(principais, (e) => um(e.encontrista_espiritual)?.rede ?? "").map(([a, b]) => [a || "Sem rede", b] as [string, number]);
+      const sexos = conta(principais, (e) => e.sexo ?? "").filter(([a]) => a);
+      const totS = sexos.reduce((a, x) => a + x[1], 0) || 1;
+      if (redes.length) { sl.addText("POR REDE", { x: 0.9, y: 4.0, w: 4, h: 0.3, fontFace: COR_TXT, fontSize: 11, bold: true, color: COR.det, charSpacing: 5 }); barras(sl, redes.sort((a, b) => b[1] - a[1]), 0.9, 4.35, 7.4, 2.6); }
+      if (sexos.length) {
+        sl.addText("POR SEXO", { x: 9.1, y: 4.0, w: 4, h: 0.3, fontFace: COR_TXT, fontSize: 11, bold: true, color: COR.det, charSpacing: 5 });
+        sexos.slice(0, 2).forEach(([nome, v], i) => dado(sl, `${Math.round((v / totS) * 100)}%`, nome, 9.1 + i * 2.0, 4.4, 2.0, 40, i ? COR.det : COR.marca));
+      }
     }
-    // decisões
+    // ---- decisões
     if (sec.decisoes) {
-      const sl = pp.addSlide(); cabeca(sl, "Decisões", `${dec.length} registradas`);
-      if (porBotao.length) sl.addChart(pp.ChartType.bar, [{ name: "Decisões", labels: porBotao.map((x) => x[0]), values: porBotao.map((x) => x[1]) }], { x: 0.6, y: 1.5, w: 12.1, h: 5.4, barDir: "bar", chartColors: [COR.marca], showValue: true, valAxisHidden: true, valGridLine: { style: "none" }, catAxisLabelFontSize: 14 });
-      else sl.addText("Nenhuma decisão registrada nesta edição.", { x: 0.6, y: 3, w: 12, h: 1, fontFace: F, fontSize: 20, color: COR.suave });
+      const sl = pp.addSlide(); sl.background = { color: COR.esc };
+      sl.addShape("ellipse", { x: -2.2, y: 3.2, w: 6.2, h: 6.2, fill: { color: COR.marca } });
+      sl.addText(`${String(n++).padStart(2, "0")}  DECISÕES`, { x: 0.9, y: 0.55, w: 6, h: 0.3, fontFace: COR_TXT, fontSize: 11, bold: true, color: COR.det, charSpacing: 5 });
+      sl.addText(fmtN(dec.length), { x: 0.9, y: 1.5, w: 4.4, h: 2.2, fontFace: TIT, fontSize: 110, bold: true, color: "FFFFFF", fit: "shrink" });
+      sl.addText("decisões registradas", { x: 0.9, y: 3.7, w: 4.4, h: 0.5, fontFace: COR_TXT, fontSize: 20, color: COR.clara });
+      if (porBotao.length) {
+        const max = Math.max(...porBotao.map((x) => x[1]), 1);
+        porBotao.slice(0, 7).forEach(([nome, v], i) => {
+          const yy = 1.3 + i * 0.78;
+          sl.addText(String(nome), { x: 5.9, y: yy, w: 4.3, h: 0.7, fontFace: COR_TXT, fontSize: 17, color: "FFFFFF", valign: "middle", fit: "shrink" });
+          sl.addShape("roundRect", { x: 10.1, y: yy + 0.22, w: 2.2 * (v / max) + 0.1, h: 0.26, fill: { color: i % 2 ? COR.clara : COR.det }, rectRadius: 0.05 });
+          sl.addText(fmtN(v as number), { x: 10.1 + 2.2 * (v / max) + 0.25, y: yy, w: 0.9, h: 0.7, fontFace: TIT, fontSize: 20, bold: true, color: "FFFFFF", valign: "middle" });
+        });
+      } else sl.addText("Nenhuma decisão registrada nesta edição.", { x: 5.9, y: 3, w: 6.8, h: 1, fontFace: COR_TXT, fontSize: 20, color: COR.clara });
     }
+    // ---- encerramento
+    const f = pp.addSlide(); f.background = { color: COR.marca };
+    f.addShape("ellipse", { x: 9.2, y: -1.6, w: 6, h: 6, fill: { color: COR.det, transparency: 65 } });
+    f.addText("Obrigado", { x: 0.9, y: 2.4, w: 9, h: 1.4, fontFace: TIT, fontSize: 64, bold: true, color: "FFFFFF" });
+    f.addShape("rect", { x: 0.95, y: 3.95, w: 1.3, h: 0.07, fill: { color: COR.det } });
+    f.addText(`${ed!.nome}  ·  ${periodo}`, { x: 0.9, y: 4.2, w: 11, h: 0.5, fontFace: COR_TXT, fontSize: 18, color: "FFFFFF" });
+    f.addText("VIDA VITORIOSA", { x: 0.9, y: 6.75, w: 6, h: 0.3, fontFace: COR_TXT, fontSize: 11, bold: true, color: COR.det, charSpacing: 6 });
+    void W;
     await pp.writeFile({ fileName: `Apresentacao_${ed!.nome.replace(/[^a-zA-Z0-9]+/g, "_")}.pptx` });
     aviso("Apresentação gerada.");
   }
