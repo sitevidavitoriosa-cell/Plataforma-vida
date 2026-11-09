@@ -4,7 +4,7 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import type { Acesso } from "@/lib/perm";
 import type { Edicao } from "@/lib/tipos";
-import { corDe } from "@/lib/cores";
+import { temaDe } from "@/lib/cores";
 
 type Ctx = { carregando: boolean; sessao: Session | null; acesso: Acesso | null; sair: () => Promise<void>; recarregar: () => Promise<void> };
 const AuthCtx = createContext<Ctx>({ carregando: true, sessao: null, acesso: null, sair: async () => {}, recarregar: async () => {} });
@@ -33,9 +33,10 @@ function EdicaoProvider({ children }: { children: React.ReactNode }) {
   const trocar = useCallback((novo: string) => { setId(novo); try { localStorage.setItem("vv-edicao", novo); } catch {} }, []);
 
   useEffect(() => {
-    const c = corDe(ed?.cor), r = document.documentElement.style;
-    r.setProperty("--color-marca", c.hex); r.setProperty("--color-marca-esc", c.esc); r.setProperty("--color-marca-clara", c.clara);
-  }, [ed?.cor]);
+    const t = temaDe(ed?.tipo, ed?.cor), r = document.documentElement.style;
+    r.setProperty("--color-marca", t.marca); r.setProperty("--color-marca-esc", t.esc); r.setProperty("--color-marca-clara", t.clara);
+    r.setProperty("--color-detalhe", t.detalhe); r.setProperty("--color-fundo", t.fundo);
+  }, [ed?.tipo, ed?.cor]);
 
   return <EdicaoCtx.Provider value={{ eds, ed, carregou, trocar, recarregar }}>{children}</EdicaoCtx.Provider>;
 }

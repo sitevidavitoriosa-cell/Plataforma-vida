@@ -28,7 +28,7 @@ export default function Painel() {
       </div>
 
       {ed ? (
-        <Cartao className="flex flex-col gap-1 p-5">
+        <Cartao className="flex flex-col gap-1 border-t-4 !border-t-detalhe p-5">
           <div className="text-xs font-extrabold uppercase tracking-wide text-marca">Vida {TIPOS[ed.tipo]} · rede {ed.cor}</div>
           <div className="text-2xl font-extrabold">{ed.nome}</div>
           <div className="text-sm text-suave">{dmy(ed.data_ini)}{ed.data_fim ? ` a ${dmy(ed.data_fim)}` : ""}{ed.local ? ` · ${ed.local}` : ""}</div>

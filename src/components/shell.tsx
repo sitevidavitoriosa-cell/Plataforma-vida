@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth, useEdicao } from "./provedores";
-import { corDe, TIPOS } from "@/lib/cores";
+import { temaDe, corDe, TIPOS } from "@/lib/cores";
 import { Carregando, Icone, Janela, Botao, cx } from "./ui";
 import { PERFIS, podeVer } from "@/lib/perm";
 
@@ -21,7 +21,7 @@ function SeletorEdicao() {
   const { eds, ed, trocar } = useEdicao();
   const [aberto, setAberto] = useState(false);
   if (!ed) return null;
-  const c = corDe(ed.cor);
+  const c = { hex: temaDe(ed.tipo, ed.cor).detalhe };
   return (
     <>
       <button type="button" onClick={() => setAberto(true)} className="flex min-h-10 items-center gap-2 rounded-full border border-borda bg-white px-3.5 text-sm font-bold">
@@ -33,7 +33,7 @@ function SeletorEdicao() {
             {eds.map((e) => (
               <button key={e.id} type="button" onClick={() => { trocar(e.id); setAberto(false); }}
                 className={cx("flex min-h-14 items-center gap-3 rounded-2xl border px-4 text-left", e.id === ed.id ? "border-marca bg-marca-clara" : "border-borda bg-white")}>
-                <span className="h-4 w-4 rounded-full" style={{ background: corDe(e.cor).hex }} />
+                <span className="h-4 w-4 rounded-full border border-borda" style={{ background: corDe(e.cor).hex }} />
                 <span className="flex-1"><b className="block">{e.nome}</b><span className="text-xs text-suave">Vida {TIPOS[e.tipo]} · rede {e.cor}</span></span>
               </button>
             ))}
@@ -78,7 +78,7 @@ export function Protegido({ children }: { children: React.ReactNode }) {
         <div className="mb-4 px-1"><SeletorEdicao /></div>
         <nav className="flex flex-col gap-1">
           {itens.map((i) => (
-            <Link key={i.href} href={i.href} className={cx("flex min-h-12 items-center gap-3 rounded-2xl px-3 text-[15px] font-bold", ativo(i.href) ? "bg-marca-clara text-marca-esc" : "text-suave hover:bg-fundo")}>
+            <Link key={i.href} href={i.href} className={cx("flex min-h-12 items-center gap-3 rounded-2xl px-3 text-[15px] font-bold", ativo(i.href) ? "border-l-4 border-detalhe bg-marca-clara text-marca-esc" : "text-suave hover:bg-fundo")}>
               <Icone n={i.icone} />{i.rotulo}
             </Link>
           ))}
