@@ -53,7 +53,7 @@ export function Estoque({ setor }: { setor?: string }) {
       {aba === "geral" && !setor && podeEscrever(acesso, "estoque") && (
         <div className="pb-3"><Botao v="sec" onClick={() => setImportando(true)} className="!min-h-11">Importar itens da planilha (Excel)</Botao></div>
       )}
-      {!equipe && aba === "geral" && <Geral itens={itens.dados} onAbrir={setAberto} />}
+      {!equipe && aba === "geral" && <Geral itens={itens.dados} envios={envios.dados} onAbrir={setAberto} />}
       {aba === "enviado" && ed && <Enviado equipe={equipe} itens={itens.dados} envios={envios.dados} edicoes={listaEd} ed={ed} recarregar={() => { todos.recarregar(); envios.recarregar(); }} setItens={todos.setDados} setEnvios={envios.setDados} />}
       {aba === "balanco" && ed && (equipe
         ? <BalancoEquipe setor={setor!} itens={itens.dados} envios={envios.dados} ed={ed} recarregar={() => { todos.recarregar(); envios.recarregar(); }} />
@@ -76,7 +76,8 @@ export function Estoque({ setor }: { setor?: string }) {
 }
 
 /* ---------------- Geral ---------------- */
-function Geral({ itens, onAbrir }: { itens: Item[]; onAbrir: (i: Item) => void }) {
+function Geral({ itens, envios, onAbrir }: { itens: Item[]; envios: Envio[]; onAbrir: (i: Item) => void }) {
+  const fora = (id: string) => envios.filter((x) => x.item_id === id && x.aplicado == null).reduce((s, x) => s + Number(x.env), 0);
   const [q, setQ] = useState("");
   const [soFalta, setSoFalta] = useState(false);
   const [abertos, setAbertos] = useState<Record<string, boolean>>({});
@@ -123,7 +124,7 @@ function Geral({ itens, onAbrir }: { itens: Item[]; onAbrir: (i: Item) => void }
                   </div>
                   <div className="text-right leading-tight">
                     <b className={cx("text-[22px]", low && "text-alerta")}>{fmtN(i.qtd)}</b>
-                    <div className="text-xs text-suave">{i.un}{i.min > 0 ? ` · mín. ${fmtN(i.min)}` : ""}</div>
+                    <div className="text-xs text-suave">{i.un}{i.min > 0 ? ` · mín. ${fmtN(i.min)}` : ""}{fora(i.id) > 0 ? ` · ${fmtN(fora(i.id))} fora` : ""}</div>
                   </div>
                 </button>
               );
@@ -153,9 +154,17 @@ function Enviado({ equipe, itens, envios, edicoes, ed, recarregar, setItens, set
   const totalItens = envios.filter((x) => x.edicao_id === ed.id).length;
   const totalUn = envios.filter((x) => x.edicao_id === ed.id).reduce((s, x) => s + Number(x.env), 0);
 
+  const foraOutras = (id: string) => envios.filter((x) => x.item_id === id && x.edicao_id !== ed.id && x.aplicado == null).reduce((s, x) => s + Number(x.env), 0);
+
   async function definir(i: Item, v: number) {
     const atual = doEd(i.id)?.env ?? 0;
     if (v === atual) return;
+    if (v - atual > i.qtd) {
+      const o = foraOutras(i.id);
+      aviso(`Só há ${fmtN(i.qtd)} ${i.un} disponíveis no estoque${o > 0 ? ` (${fmtN(o)} estão em outras edições)` : ""}.`);
+      recarregar();
+      return;
+    }
     // mostra já na tela; o banco confirma em seguida
     setItens((p) => (p ?? []).map((x) => (x.id === i.id ? { ...x, qtd: x.qtd + Number(atual) - v } : x)));
     setEnvios((p) => {
@@ -181,7 +190,7 @@ function Enviado({ equipe, itens, envios, edicoes, ed, recarregar, setItens, set
       <div key={i.id} className={cx("flex min-h-16 items-center gap-2.5 rounded-2xl border px-3 py-2", v > 0 ? "border-[#a9d3c2] bg-marca-clara" : "border-borda bg-white")}>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <b className="text-[15px]">{i.nome}</b>
-          {equipe ? <span className="text-xs text-suave">{i.un}</span> : <span className="text-xs text-suave">{i.setor} · no depósito {v > 0 && !fechado ? `${fmtN(i.qtd + v)} → ${fmtN(i.qtd)}` : fmtN(i.qtd)}</span>}
+          {equipe ? <span className="text-xs text-suave">{i.un}</span> : <span className="text-xs text-suave">{i.setor} · disponível {v > 0 && !fechado ? `${fmtN(i.qtd + v)} → ${fmtN(i.qtd)}` : fmtN(i.qtd)}{foraOutras(i.id) > 0 ? ` · ${fmtN(foraOutras(i.id))} em outras edições` : ""}</span>}
         </div>
         {pode && !fechado ? <Passo valor={v} onMudar={(n) => definir(i, n)} /> : <div className="text-right"><b>{fmtN(v)} {i.un}</b>{fechado && !equipe && <div className="text-xs text-suave">{doEd(i.id)?.aplicado != null ? "balanço conferido" : "balanço informado"}</div>}</div>}
       </div>
@@ -314,7 +323,7 @@ function BalancoPaiol({ itens, envios, ed, recarregar }: { itens: Item[]; envios
   let ultimo = "";
   return (
     <div className="flex flex-col gap-2.5">
-      <p className="m-0 px-1 text-sm text-suave">Cada equipe informa o que voltou. Aqui você confere a contagem no paiol e confirma: só então o estoque geral é atualizado.{aguardando ? ` ${aguardando} item(ns) ainda sem balanço do setor.` : ""}</p>
+      <p className="m-0 px-1 text-sm text-suave">Aqui você diz quanto voltou de cada item desta edição. Cada equipe informa o que voltou; você confere a contagem no paiol e confirma, e só então o estoque único é atualizado (as outras edições enxergam a nova quantidade).{aguardando ? ` ${aguardando} item(ns) ainda sem balanço do setor.` : ""}</p>
       {lista.map((r) => {
         const levou = Number(r.x.env) + Number(r.x.comp), v = contada(r.x), inf = r.x.informado, conf = r.x.aplicado != null;
         const dif = inf && !conf && v !== informada(r.x);
