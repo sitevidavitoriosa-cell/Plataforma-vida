@@ -5,9 +5,11 @@ import { dmy, fmtN, type Envio, type Item } from "@/lib/tipos";
 import { podeVerFicha } from "@/lib/perm";
 import { descricaoEd, temaDe } from "@/lib/cores";
 import { useAuth, useAviso, useEdicao } from "@/components/provedores";
+import { LinhaTempo, Pizza, corDaRede } from "@/components/graficos";
+import { fmtDia, resumoInscricoes } from "@/lib/inscricoes";
 import { Botao, Carregando, Chip, Titulo, Vazio } from "@/components/ui";
 
-type Enc = { id: string; edicao_id: string; nome: string; categoria: string | null; sexo: string | null; cancelada: boolean;
+type Enc = { id: string; edicao_id: string; nome: string; data_inscricao: string | null; categoria: string | null; sexo: string | null; cancelada: boolean;
   encontrista_saude: { tem_necessidade: boolean } | { tem_necessidade: boolean }[] | null;
   encontrista_espiritual: { batizado: boolean | null; rede: string | null } | { batizado: boolean | null; rede: string | null }[] | null };
 type Dec = { edicao_id: string; encontrista_id: string; botao: string; criado_em: string; por: string | null };
@@ -21,7 +23,7 @@ export default function Relatorio() {
   const itens = useLista<Item>("itens", "*", "nome");
   const envios = useLista<Envio>("envios");
   const decs = useLista<Dec>("decisoes");
-  const encs = useLista<Enc>("encontristas", "id, edicao_id, nome, categoria, sexo, cancelada, encontrista_saude(tem_necessidade), encontrista_espiritual(batizado, rede)", "nome");
+  const encs = useLista<Enc>("encontristas", "id, edicao_id, nome, data_inscricao, categoria, sexo, cancelada, encontrista_saude(tem_necessidade), encontrista_espiritual(batizado, rede)", "nome");
   const [sec, setSec] = useState({ materiais: true, pessoas: true, decisoes: true });
   const [nomes, setNomes] = useState(false);
   const admin = podeVerFicha(acesso);
@@ -50,6 +52,7 @@ export default function Relatorio() {
   const batizados = principais.filter((e) => um(e.encontrista_espiritual)?.batizado === true).length;
   const saude = ativos.filter((e) => um(e.encontrista_saude)?.tem_necessidade).length;
   const porBotao = conta(dec, (d) => d.botao);
+  const insc = resumoInscricoes(principais.map((e) => e.data_inscricao));
 
   async function excel() {
     const XLSX = await import("xlsx");
@@ -61,6 +64,7 @@ export default function Relatorio() {
     if (sec.pessoas && admin) {
       add("Pessoas", [["Indicador", "Valor"], ["Encontristas", principais.length], ["Equipe", equipe], ["Cancelados", pessoas.length - ativos.length], ["Batizados", batizados], ["Necessidade de saúde", saude],
         [], ["Rede", "Encontristas"], ...conta(principais, (e) => um(e.encontrista_espiritual)?.rede ?? ""), [], ["Sexo", "Encontristas"], ...conta(principais, (e) => e.sexo ?? "")]);
+      if (insc.comData > 0) add("Inscrições", [["Mês", "Inscrições"], ...insc.meses.map((m) => [m.rotulo, m.n]), [], ["Dia", "Inscrições"], ...insc.dias.map((d) => [fmtDia(d.data) + "/" + d.chave.slice(0, 4), d.n])]);
       if (nomes) add("Lista nominal", [["Nome", "Categoria", "Rede"], ...ativos.map((e) => [e.nome, e.categoria ?? "", um(e.encontrista_espiritual)?.rede ?? ""])]);
     }
     if (sec.decisoes) add("Decisões", [["Decisão", "Quantidade"], ...porBotao, ...(admin && nomes ? [[], ["Nome", "Decisão", "Data"], ...dec.map((d) => [nomePor.get(d.encontrista_id) ?? "", d.botao, new Date(d.criado_em).toLocaleDateString("pt-BR")])] : [])] as (string | number)[][]);
@@ -267,6 +271,23 @@ export default function Relatorio() {
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <div><h3 className="mb-2 text-base font-extrabold">Por rede</h3><Tab cab={["Rede", "Encontristas"]} linhas={conta(principais, (e) => um(e.encontrista_espiritual)?.rede ?? "")} /></div>
             <div><h3 className="mb-2 text-base font-extrabold">Por sexo</h3><Tab cab={["Sexo", "Encontristas"]} linhas={conta(principais, (e) => e.sexo ?? "")} /></div>
+          </div>
+          <div className="mt-4 flex flex-col gap-4 rounded-2xl border border-borda bg-white p-4 print:break-inside-avoid md:flex-row md:items-center">
+            <div className="flex flex-col items-center gap-2 md:w-1/2">
+              <h3 className="m-0 self-start text-base font-extrabold">Redes (pizza)</h3>
+              <Pizza fatias={Array.from(conta(principais, (e) => um(e.encontrista_espiritual)?.rede ?? "")).map(([nome, valor]) => ({ nome, valor, cor: corDaRede(nome) }))} />
+              <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs">{conta(principais, (e) => um(e.encontrista_espiritual)?.rede ?? "").map(([nome, valor]) => <span key={nome} className="flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full" style={{ background: corDaRede(nome) }} />{nome} ({valor})</span>)}</div>
+            </div>
+            <div className="min-w-0 md:w-1/2">
+              <h3 className="mb-2 text-base font-extrabold">Inscrições ao longo do tempo</h3>
+              {insc.comData === 0 ? <Vazio>Sem datas de inscrição. Importe a planilha de novo em “Encontristas”.</Vazio> : (
+                <>
+                  <LinhaTempo dias={insc.dias} acumulado cor={temaDe(ed).marca} />
+                  <p className="m-0 mt-2 text-sm">Mês com mais inscrições: <b>{insc.mesTopNome}</b> ({insc.mesTop?.n}) · Dia de pico: <b>{insc.pico ? fmtDia(insc.pico.data) : "–"}</b> ({insc.pico?.n})</p>
+                  <div className="mt-2"><Tab cab={["Mês", "Inscrições"]} linhas={insc.meses.map((m) => [m.rotulo, m.n])} /></div>
+                </>
+              )}
+            </div>
           </div>
           {nomes && (
             <div className="mt-4"><h3 className="mb-2 text-base font-extrabold">Lista nominal ({ativos.length})</h3>

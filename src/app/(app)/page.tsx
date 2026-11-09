@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import { useLista } from "@/lib/dados";
 import { dmy, fmtN, type Envio, type Item } from "@/lib/tipos";
 import { PERFIS, podeVerEstoque, podeVerFicha } from "@/lib/perm";
-import { descricaoEd } from "@/lib/cores";
+import { descricaoEd, temaDe } from "@/lib/cores";
+import { fmtDia, resumoInscricoes } from "@/lib/inscricoes";
+import { LinhaTempo, Pizza, corDaRede } from "@/components/graficos";
 import { useAuth, useEdicao } from "@/components/provedores";
 import { Carregando, Cartao, Janela, Selo, Vazio } from "@/components/ui";
 
 type Esp = { batizado: boolean | null; rede: string | null; igreja: string | null; em_celula: boolean | null; celula: string | null; lider_celula: string | null };
-type Enc = { id: string; edicao_id: string; nome: string; idade: number | null; categoria: string | null; cancelada: boolean; encontrista_saude: { tem_necessidade: boolean } | { tem_necessidade: boolean }[] | null; encontrista_espiritual: Esp | Esp[] | null };
+type Enc = { id: string; edicao_id: string; nome: string; idade: number | null; data_inscricao: string | null; categoria: string | null; cancelada: boolean; encontrista_saude: { tem_necessidade: boolean } | { tem_necessidade: boolean }[] | null; encontrista_espiritual: Esp | Esp[] | null };
 const um = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? v[0] ?? null : v ?? null);
 
 export default function Painel() {
@@ -65,8 +67,10 @@ export default function Painel() {
 }
 
 function KpisEncontristas({ edicaoId, nItens, nFalta }: { edicaoId: string; nItens: number; nFalta: number }) {
-  const lista = useLista<Enc>("encontristas", "id, edicao_id, nome, idade, categoria, cancelada, encontrista_saude(tem_necessidade), encontrista_espiritual(batizado, rede, igreja, em_celula, celula, lider_celula)", "nome");
+  const lista = useLista<Enc>("encontristas", "id, edicao_id, nome, idade, data_inscricao, categoria, cancelada, encontrista_saude(tem_necessidade), encontrista_espiritual(batizado, rede, igreja, em_celula, celula, lider_celula)", "nome");
   const [rede, setRede] = useState<string | null>(null);
+  const [acum, setAcum] = useState(false);
+  const { ed } = useEdicao();
   if (!lista.dados) return <Carregando />;
   const todos = lista.dados.filter((e) => e.edicao_id === edicaoId && !e.cancelada);
   const encs = todos.filter((e) => (e.categoria ?? "").trim() === "Encontrista");
@@ -76,6 +80,19 @@ function KpisEncontristas({ edicaoId, nItens, nFalta }: { edicaoId: string; nIte
   const redes = new Map<string, number>();
   encs.forEach((e) => { const r = um(e.encontrista_espiritual)?.rede || "Sem rede"; redes.set(r, (redes.get(r) ?? 0) + 1); });
   const max = Math.max(1, ...redes.values());
+  const tema = temaDe(ed);
+  const insc = resumoInscricoes(encs.map((e) => e.data_inscricao));
+  const fatias = Array.from(redes.entries()).sort((a, b) => b[1] - a[1]).map(([nome, valor]) => ({ nome, valor, cor: corDaRede(nome) }));
+  const pct = (n: number) => Math.round((n / Math.max(1, encs.length)) * 100);
+  const nCel = encs.filter((e) => um(e.encontrista_espiritual)?.em_celula === true).length;
+  const nIgr = encs.filter((e) => um(e.encontrista_espiritual)?.igreja).length;
+  const nSemRede = redes.get("Sem rede") ?? 0;
+  const perfilEsp = [
+    { t: "Batizados", v: bat, p: pct(bat) }, { t: "Não batizados", v: encs.length - bat, p: pct(encs.length - bat) },
+    { t: "Em célula", v: nCel, p: pct(nCel) }, { t: "Sem célula", v: encs.length - nCel, p: pct(encs.length - nCel) },
+    { t: "Com igreja", v: nIgr, p: pct(nIgr) }, { t: "Sem igreja", v: encs.length - nIgr, p: pct(encs.length - nIgr) },
+    { t: "Sem rede", v: nSemRede, p: pct(nSemRede) },
+  ];
   const daRede = rede ? encs.filter((e) => (um(e.encontrista_espiritual)?.rede || "Sem rede") === rede) : [];
   const kpis = [
     { t: "Encontristas", v: encs.length, href: "/encontristas" },
@@ -92,14 +109,44 @@ function KpisEncontristas({ edicaoId, nItens, nFalta }: { edicaoId: string; nIte
           </Link>
         ))}
       </div>
-      <Cartao className="flex flex-col gap-3 p-4">
-        <div className="flex items-center justify-between"><b>Redes dos encontristas</b><span className="text-sm text-suave">{bat} batizados · {nItens} itens enviados</span></div>
-        {redes.size === 0 && <Vazio>Importe a planilha em “Encontristas”.</Vazio>}
-        {Array.from(redes.entries()).sort((a, b) => b[1] - a[1]).map(([r, n]) => (
-          <button key={r} type="button" onClick={() => setRede(r)} aria-label={`Ver encontristas da rede ${r}`} className="flex min-h-9 items-center gap-3 rounded-xl text-left text-sm hover:bg-fundo"><span className="w-24 shrink-0 font-bold">{r}</span>
-            <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-fundo"><div className="h-full rounded-full bg-marca" style={{ width: `${(n / max) * 100}%` }} /></div><b className="w-8 text-right">{n}</b><span className="text-suave">›</span></button>
-        ))}
-        {redes.size > 0 && <p className="m-0 text-xs text-suave">Toque numa rede para ver quem é, a célula, se é batizado e a igreja.</p>}
+      <Cartao className="flex flex-col gap-6 p-4 md:flex-row md:gap-0">
+        <div className="flex min-w-0 flex-1 flex-col gap-3 md:pr-6">
+          <div className="flex items-center justify-between"><b>Redes dos encontristas</b><span className="text-sm text-suave">{bat} batizados · {nItens} itens enviados</span></div>
+          {redes.size === 0 ? <Vazio>Importe a planilha em “Encontristas”.</Vazio> : (
+            <div className="flex flex-col items-center gap-3">
+              <Pizza fatias={fatias} onEscolher={setRede} />
+              <div className="flex w-full flex-col gap-0.5">
+                {fatias.map((f) => (
+                  <button key={f.nome} type="button" onClick={() => setRede(f.nome)} aria-label={`Ver encontristas da rede ${f.nome}`} className="flex min-h-9 items-center gap-2 rounded-xl px-1 text-left text-sm hover:bg-fundo">
+                    <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: f.cor }} /><span className="min-w-0 flex-1 truncate font-bold">{f.nome}</span>
+                    <b>{f.valor}</b><span className="w-10 text-right text-xs text-suave">{Math.round((f.valor / Math.max(1, encs.length)) * 100)}%</span><span className="text-suave">›</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {redes.size > 0 && <p className="m-0 text-xs text-suave">Toque numa fatia ou numa rede para ver quem é, a célula, se é batizado e a igreja.</p>}
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col gap-3 border-t border-borda pt-5 md:border-l md:border-t-0 md:pl-6 md:pt-0">
+          <div className="flex items-center justify-between gap-2"><b>Inscrições ao longo do tempo</b>
+            <div className="flex gap-1 text-xs font-bold">
+              {[false, true].map((a) => <button key={String(a)} type="button" onClick={() => setAcum(a)} className={`min-h-8 rounded-full px-3 ${acum === a ? "bg-marca text-white" : "bg-fundo text-suave"}`}>{a ? "Acumulado" : "Por dia"}</button>)}
+            </div>
+          </div>
+          {insc.comData === 0 ? <Vazio>As datas de inscrição ainda não foram lidas. Importe a planilha de novo em “Encontristas” para preencher.</Vazio> : (
+            <>
+              <LinhaTempo dias={insc.dias} acumulado={acum} cor={tema.marca} />
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="rounded-2xl bg-fundo p-3"><div className="text-xs text-suave">Mês com mais inscrições</div><b>{insc.mesTopNome}</b> <span className="text-suave">({insc.mesTop?.n})</span></div>
+                <div className="rounded-2xl bg-fundo p-3"><div className="text-xs text-suave">Dia de pico</div><b>{insc.pico ? fmtDia(insc.pico.data) : "–"}</b> <span className="text-suave">({insc.pico?.n} inscrições)</span></div>
+              </div>
+              {insc.semData > 0 && <p className="m-0 text-xs text-suave">{insc.semData} inscrição(ões) sem data na planilha.</p>}
+            </>
+          )}
+        </div>
+      </Cartao>
+      <Cartao className="grid grid-cols-2 gap-3 p-4 md:grid-cols-4">
+        {perfilEsp.map((k) => (<div key={k.t}><div className="text-[22px] font-extrabold leading-none">{k.v}<span className="ml-1 text-sm font-bold text-suave">{k.p}%</span></div><div className="mt-1 text-sm text-suave">{k.t}</div></div>))}
       </Cartao>
       {rede && (
         <Janela titulo={`Rede ${rede} · ${daRede.length}`} onFechar={() => setRede(null)}>

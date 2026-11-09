@@ -40,12 +40,28 @@ const padroniza = (m: string) => {
   return s ? s.toLowerCase().replace(/(^|\s)(\S)/g, (_x, a, b) => a + b.toUpperCase()).replace(/\b(Da|De|Do|Das|Dos)\b/g, (x) => x.toLowerCase()) : "";
 };
 
+// Aceita data do Excel (Date ou número serial) e texto como 09/11/2026 14:30 ou 2026-11-09.
+function lerData(v: unknown): string | null {
+  if (v instanceof Date) return isNaN(v.getTime()) ? null : v.toISOString();
+  if (typeof v === "number" && v > 20000 && v < 80000) return new Date(Math.round((v - 25569) * 86400000)).toISOString();
+  const t = String(v ?? "").trim();
+  if (!t) return null;
+  const br = t.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})(?:\D+(\d{1,2}):(\d{2}))?/);
+  if (br) {
+    const ano = Number(br[3]) < 100 ? 2000 + Number(br[3]) : Number(br[3]);
+    const d = new Date(ano, Number(br[2]) - 1, Number(br[1]), Number(br[4] ?? 12), Number(br[5] ?? 0));
+    return isNaN(d.getTime()) ? null : d.toISOString();
+  }
+  const d = new Date(t);
+  return isNaN(d.getTime()) ? null : d.toISOString();
+}
+
 export function converter(linhas: unknown[][]): ResultadoLeitura {
   if (linhas.length < 2) return { itens: [], ignoradas: 0, semSaude: true };
   const cab = linhas[0].map(txt);
   const c = {
     nome: indice(cab, "nome"), email: indice(cab, "email"), cod: indice(cab, "codigo da inscricao"),
-    status: indice(cab, "status"), canc: indice(cab, "cancelada"), data: indice(cab, "data da inscricao"),
+    status: indice(cab, "status"), canc: indice(cab, "cancelada"), data: indice(cab, "data da inscri", "data de inscri", "data inscri", "inscrito em", "data do cadastro", "data de cadastro", "data da compra", "data do pedido", "criado em"),
     cat: indice(cab, "categoria"), rede: indice(cab, "qual a rede", "qual e a rede"),
     cel: indice(cab, "voce participa de celula"), sexo: indice(cab, "sexo"), bairro: indice(cab, "bairro"),
     bat: indice(cab, "voce ja e batizado", "voce e batizado"), mun: indice(cab, "municipio"),
@@ -73,7 +89,7 @@ export function converter(linhas: unknown[][]): ResultadoLeitura {
       cep: g(l, c.cep).replace(/\D/g, ""), sexo: padroniza(g(l, c.sexo)),
       idade: isFinite(idadeN) ? idadeN : null, estado_civil: g(l, c.civil),
       categoria: g(l, c.cat), status: g(l, c.status), cancelada: simNao(g(l, c.canc)) === true,
-      data_inscricao: d instanceof Date ? d.toISOString() : null,
+      data_inscricao: lerData(d),
       tem_necessidade: !semValor(necessidade), necessidade: semValor(necessidade) ? "" : necessidade,
       contatos: [g(l, c.c1), g(l, c.c2), g(l, c.c3)].filter((x) => !semValor(x)),
       batizado: simNao(g(l, c.bat)), igreja: semValor(igreja) ? "" : igreja,
