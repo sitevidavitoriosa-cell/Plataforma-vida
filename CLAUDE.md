@@ -20,10 +20,11 @@ O site antigo (arquivo único, Firebase) está em `legado/index.html` e serve s�
 - Tipos: Vida Base, Vida Kids, Vida BeOne. Uma edição é uma rede (Vida Roxa, Azul, Amarela, Laranja, Vermelha, Verde, Branca), ou Vida Base, Vida Kids, Vida BeOne; pode ser junto com outra rede (`rede2`, ex.: Vida Branca e Roxa). Visual: redes na própria cor (Branca = cinza), Base azul+amarelo, Kids azul+roxo, BeOne preto e branco (`EdicaoProvider`, `src/lib/cores.ts`).
 - A edição escolhida no topo vale para estoque, saúde, encontristas e secretaria.
 
-## Setores (`/setores`, abas por permissão)
-- Estoque (geral/enviado/balanço, `src/components/estoque.tsx`, aceita filtro de setor), Saúde, Secretaria 1 e os setores das equipes da pessoa.
+## Estoque (`/estoque`) e Equipes (`/setores`, aba "Equipes")
+- **Estoque** (`src/components/estoque.tsx`) é só do paiol (admin, coordenação, estoque; admin de edição nas edições dele): Geral (itens por setor), Enviado (registra o envio por edição) e Balanço (confere). O material que as equipes usam fica no estoque geral e quem administra é o paiol.
+- **Equipes** (Saúde, Secretaria 1 e demais setores): o servo vê só o que o paiol enviou para a equipe dele (`Estoque setor=...`, modo equipe). No Balanço informa o que voltou (nunca mais que o levado) e envia ao paiol (`salvar_volta`, `enviar_balanco`). O paiol confere e confirma (`conferir_balanco`, `reabrir_balanco`, `fechar_balanco`); só aí o estoque geral muda. Servo de setor não vê itens/envios de outros setores (RLS `ve_todo_estoque()`), nem envia material (`definir_envio` só `eh_paiol`).
 - Saúde: só `saude_lista` e `salvar_obs_saude` (admin e perfil saúde). Não lê a ficha.
-- Secretaria 1 (`pode_secretaria()`: admin ou equipe com o setor): Crachás (um PNG por rede no bucket privado `crachas`, posição do nome em `crachas_cfg`, PDF com jsPDF), Quartos (`quartos`, `quarto_ocupantes`, distribuição automática por sexo/vagas, PDF por quarto) e Material (estoque do setor). Nomes vêm de `nomes_edicao` (sem saúde/telefone).
+- Secretaria 1 (`pode_secretaria()`): Crachás (modelo PNG por rede/edição para encontristas e outro para servos com foto; fotos em `crachas_fotos`), Quartos (cadastro manual ou importação de planilha; link secreto por quarto `/q/[token]` com perfil dos encontristas, função `quarto_info`) e Material (equipe). Nomes vêm de `nomes_edicao` (sem saúde/telefone).
 
 ## Encontristas (ficha) – só administrador
 - Importação da planilha (.xlsx/.csv) em `/encontristas`, pela função `importar_encontristas` (chave: código da inscrição; reimportar atualiza). Só admin importa e vê.

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { msgErro, useLista } from "@/lib/dados";
 import { fmtN, norm, num, type Edicao, type Envio, type Equipe, type Item } from "@/lib/tipos";
-import { podeEnviar, podeEscrever, setoresDaEquipe } from "@/lib/perm";
+import { ehPaiol, podeEscrever, setoresDaEquipe } from "@/lib/perm";
 import { useAuth, useAviso, useEdicao } from "@/components/provedores";
 import { lerInventario, type ItemInv } from "@/lib/inventario";
 import { Botao, Campo, Carregando, Chip, Cartao, Icone, Janela, Passo, Selo, Seletor, Titulo, Vazio, cx } from "@/components/ui";
@@ -19,11 +19,12 @@ export function Estoque({ setor }: { setor?: string }) {
   const envios = useLista<Envio>("envios");
   const equipes = useLista<Equipe>("equipes", "*", "nome");
   const { eds: listaEd, ed } = useEdicao();
-  const [aba, setAba] = useState<Aba>("geral");
+  const equipe = !!setor; // dentro de Equipes: só vê o que recebeu e informa o balanço; o estoque geral fica em /estoque
+  const [aba, setAba] = useState<Aba>(equipe ? "enviado" : "geral");
   const [aberto, setAberto] = useState<Item | "novo" | null>(null);
   const [importando, setImportando] = useState(false);
 
-  useEffect(() => { try { const a = localStorage.getItem("vv-aba-estoque") as Aba | null; if (a) setAba(a); } catch {} }, []);
+  useEffect(() => { try { const a = localStorage.getItem("vv-aba-estoque") as Aba | null; if (a && (!equipe || a !== "geral")) setAba(a); } catch {} }, [equipe]);
   const trocaAba = (a: Aba) => { setAba(a); try { localStorage.setItem("vv-aba-estoque", a); } catch {} };
 
   const setores = useMemo(() => {
@@ -42,8 +43,8 @@ export function Estoque({ setor }: { setor?: string }) {
   return (
     <div>
       <div className="flex gap-2 overflow-x-auto pb-3">
-        <Chip ativo={aba === "geral"} onClick={() => trocaAba("geral")}>Geral</Chip>
-        <Chip ativo={aba === "enviado"} onClick={() => trocaAba("enviado")}>Enviado</Chip>
+        {!equipe && <Chip ativo={aba === "geral"} onClick={() => trocaAba("geral")}>Geral</Chip>}
+        <Chip ativo={aba === "enviado"} onClick={() => trocaAba("enviado")}>{equipe ? "Material recebido" : "Enviado"}</Chip>
         <Chip ativo={aba === "balanco"} onClick={() => trocaAba("balanco")}>Balanço</Chip>
       </div>
 
@@ -52,11 +53,13 @@ export function Estoque({ setor }: { setor?: string }) {
       {aba === "geral" && !setor && podeEscrever(acesso, "estoque") && (
         <div className="pb-3"><Botao v="sec" onClick={() => setImportando(true)} className="!min-h-11">Importar itens da planilha (Excel)</Botao></div>
       )}
-      {aba === "geral" && <Geral itens={itens.dados} onAbrir={setAberto} />}
-      {aba === "enviado" && ed && <Enviado itens={itens.dados} envios={envios.dados} edicoes={listaEd} ed={ed} recarregar={() => { todos.recarregar(); envios.recarregar(); }} setItens={todos.setDados} setEnvios={envios.setDados} />}
-      {aba === "balanco" && ed && <Balanco itens={itens.dados} envios={envios.dados} ed={ed} recarregar={() => { todos.recarregar(); envios.recarregar(); }} setEnvios={envios.setDados} />}
+      {!equipe && aba === "geral" && <Geral itens={itens.dados} onAbrir={setAberto} />}
+      {aba === "enviado" && ed && <Enviado equipe={equipe} itens={itens.dados} envios={envios.dados} edicoes={listaEd} ed={ed} recarregar={() => { todos.recarregar(); envios.recarregar(); }} setItens={todos.setDados} setEnvios={envios.setDados} />}
+      {aba === "balanco" && ed && (equipe
+        ? <BalancoEquipe setor={setor!} itens={itens.dados} envios={envios.dados} ed={ed} recarregar={() => { todos.recarregar(); envios.recarregar(); }} />
+        : <BalancoPaiol itens={itens.dados} envios={envios.dados} ed={ed} recarregar={() => { todos.recarregar(); envios.recarregar(); }} />)}
 
-      {aba === "geral" && podeAlgum && (
+      {!equipe && aba === "geral" && podeAlgum && (
         <button type="button" onClick={() => setAberto("novo")} className="fixed right-4 z-30 flex min-h-14 items-center gap-2 rounded-full bg-marca px-5 text-base font-extrabold text-white shadow-lg md:bottom-8 md:right-8" style={{ bottom: "calc(env(safe-area-inset-bottom) + 84px)" }}>
           <Icone n="mais1" tam={20} />Novo item
         </button>
@@ -133,8 +136,8 @@ function Geral({ itens, onAbrir }: { itens: Item[]; onAbrir: (i: Item) => void }
 }
 
 /* ---------------- Enviado ---------------- */
-function Enviado({ itens, envios, edicoes, ed, recarregar, setItens, setEnvios }: {
-  itens: Item[]; envios: Envio[]; edicoes: Edicao[]; ed: Edicao; recarregar: () => void;
+function Enviado({ equipe, itens, envios, edicoes, ed, recarregar, setItens, setEnvios }: {
+  equipe: boolean; itens: Item[]; envios: Envio[]; edicoes: Edicao[]; ed: Edicao; recarregar: () => void;
   setItens: React.Dispatch<React.SetStateAction<Item[] | null>>; setEnvios: React.Dispatch<React.SetStateAction<Envio[] | null>>;
 }) {
   const { acesso } = useAuth();
@@ -145,7 +148,7 @@ function Enviado({ itens, envios, edicoes, ed, recarregar, setItens, setEnvios }
   const lista = itens.filter((i) => !nq || norm(i.nome + " " + i.setor).includes(nq));
   const ord = (a: Item, b: Item) => a.setor.localeCompare(b.setor) || a.nome.localeCompare(b.nome);
   const enviados = lista.filter((i) => doEd(i.id)).sort(ord);
-  const resto = lista.filter((i) => !doEd(i.id)).sort(ord);
+  const resto = equipe ? [] : lista.filter((i) => !doEd(i.id)).sort(ord);
   const anterior = edicoes.filter((e) => e.id !== ed.id && (e.data_ini ?? "") <= (ed.data_ini ?? "") && envios.some((x) => x.edicao_id === e.id)).sort((a, b) => (b.data_ini ?? "").localeCompare(a.data_ini ?? ""))[0];
   const totalItens = envios.filter((x) => x.edicao_id === ed.id).length;
   const totalUn = envios.filter((x) => x.edicao_id === ed.id).reduce((s, x) => s + Number(x.env), 0);
@@ -172,27 +175,28 @@ function Enviado({ itens, envios, edicoes, ed, recarregar, setItens, setEnvios }
   }
 
   const linha = (i: Item) => {
-    const x = doEd(i.id), v = x ? Number(x.env) : 0, fechado = !!x && x.aplicado != null;
-    const pode = podeEnviar(acesso, i.setor);
+    const x = doEd(i.id), v = x ? Number(x.env) : 0, fechado = !!x && (x.aplicado != null || !!x.informado);
+    const pode = !equipe && ehPaiol(acesso);
     return (
       <div key={i.id} className={cx("flex min-h-16 items-center gap-2.5 rounded-2xl border px-3 py-2", v > 0 ? "border-[#a9d3c2] bg-marca-clara" : "border-borda bg-white")}>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <b className="text-[15px]">{i.nome}</b>
-          <span className="text-xs text-suave">{i.setor} · no depósito {v > 0 && !fechado ? `${fmtN(i.qtd + v)} → ${fmtN(i.qtd)}` : fmtN(i.qtd)}</span>
+          {equipe ? <span className="text-xs text-suave">{i.un}</span> : <span className="text-xs text-suave">{i.setor} · no depósito {v > 0 && !fechado ? `${fmtN(i.qtd + v)} → ${fmtN(i.qtd)}` : fmtN(i.qtd)}</span>}
         </div>
-        {pode && !fechado ? <Passo valor={v} onMudar={(n) => definir(i, n)} /> : <div className="text-right"><b>{fmtN(v)} {i.un}</b>{fechado && <div className="text-xs text-suave">balanço fechado</div>}</div>}
+        {pode && !fechado ? <Passo valor={v} onMudar={(n) => definir(i, n)} /> : <div className="text-right"><b>{fmtN(v)} {i.un}</b>{fechado && !equipe && <div className="text-xs text-suave">{doEd(i.id)?.aplicado != null ? "balanço conferido" : "balanço informado"}</div>}</div>}
       </div>
     );
   };
 
   return (
     <div className="flex flex-col gap-2.5">
+      {equipe && <p className="m-0 px-1 text-sm text-suave">É o material que o paiol enviou para a sua equipe nesta edição. {enviados.length === 0 ? "Nada foi enviado ainda." : "No fim, informe o que voltou em Balanço."}</p>}
       <div className="flex gap-2">
         <div className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl border border-borda bg-white px-3">
           <Icone n="busca" tam={20} />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar item pelo nome" aria-label="Buscar item" className="min-h-12 min-w-0 flex-1 bg-transparent outline-none" />
         </div>
-        {anterior && <Botao v="suave" onClick={copiar} className="!px-3 !text-sm">Copiar da última</Botao>}
+        {!equipe && anterior && ehPaiol(acesso) && <Botao v="suave" onClick={copiar} className="!px-3 !text-sm">Copiar da última</Botao>}
       </div>
       {enviados.length > 0 && <div className="px-1 pt-1 text-[13px] font-extrabold uppercase tracking-wide text-marca">Enviados · {enviados.length}</div>}
       {enviados.map(linha)}
@@ -200,39 +204,108 @@ function Enviado({ itens, envios, edicoes, ed, recarregar, setItens, setEnvios }
       {resto.map(linha)}
       {lista.length === 0 && <Vazio>Nenhum item com esse nome.</Vazio>}
 
-      <div className="fixed inset-x-0 z-30 flex items-center justify-between gap-3 border-t border-borda bg-white px-4 py-3 md:left-64" style={{ bottom: "calc(env(safe-area-inset-bottom) + 66px)" }}>
-        <div className="leading-tight"><b>{totalItens} itens · {fmtN(totalUn)} un.</b><div className="text-xs text-suave">O estoque geral já desconta</div></div>
-        <Selo tom="ok">Segue para o Balanço</Selo>
-      </div>
+      {!equipe && (
+        <div className="fixed inset-x-0 z-30 flex items-center justify-between gap-3 border-t border-borda bg-white px-4 py-3 md:left-64" style={{ bottom: "calc(env(safe-area-inset-bottom) + 66px)" }}>
+          <div className="leading-tight"><b>{totalItens} itens · {fmtN(totalUn)} un.</b><div className="text-xs text-suave">O estoque geral já desconta</div></div>
+          <Selo tom="ok">Segue para o Balanço</Selo>
+        </div>
+      )}
       <div className="h-16" />
     </div>
   );
 }
 
-/* ---------------- Balanço ---------------- */
-function Balanco({ itens, envios, ed, recarregar, setEnvios }: { itens: Item[]; envios: Envio[]; ed: Edicao; recarregar: () => void; setEnvios: React.Dispatch<React.SetStateAction<Envio[] | null>> }) {
-  const { acesso } = useAuth();
+/* ---------------- Balanço da equipe (servo do setor) ---------------- */
+function BalancoEquipe({ setor, itens, envios, ed, recarregar }: { setor: string; itens: Item[]; envios: Envio[]; ed: Edicao; recarregar: () => void }) {
   const aviso = useAviso();
-  const [fechando, setFechando] = useState(false);
-  const lista = envios.filter((x) => x.edicao_id === ed.id).map((x) => ({ x, it: itens.find((i) => i.id === x.item_id)! })).filter((r) => r.it)
-    .sort((a, b) => a.it.setor.localeCompare(b.it.setor) || a.it.nome.localeCompare(b.it.nome));
+  const [enviando, setEnviando] = useState(false);
+  const lista = envios.filter((x) => x.edicao_id === ed.id).map((x) => ({ x, it: itens.find((i) => i.id === x.item_id)! })).filter((r) => r.it).sort((a, b) => a.it.nome.localeCompare(b.it.nome));
   const volta = (x: Envio) => (x.volta == null ? Number(x.env) + Number(x.comp) : Number(x.volta));
-  const faltas = lista.filter((r) => !r.it.cons && Number(r.x.env) + Number(r.x.comp) - volta(r.x) > 0).length;
-  const pendentes = lista.filter((r) => r.x.aplicado == null || volta(r.x) !== Number(r.x.aplicado)).length;
-  const podeFechar = lista.some((r) => podeEnviar(acesso, r.it.setor));
+  const editaveis = lista.filter((r) => r.x.aplicado == null && !r.x.informado);
 
   async function salvar(r: { x: Envio; it: Item }, campo: "volta" | "comp", v: number) {
-    setEnvios((p) => (p ?? []).map((e) => (e.edicao_id === r.x.edicao_id && e.item_id === r.x.item_id ? { ...e, [campo]: v } : e)));
-    const { error } = await supabase.from("envios").update({ [campo]: v }).match({ edicao_id: r.x.edicao_id, item_id: r.x.item_id });
+    const limite = campo === "volta" ? Number(r.x.env) + Number(r.x.comp) : Infinity;
+    if (v > limite) { aviso(`Só levou ${fmtN(limite)}. Não dá para voltar mais que isso.`); recarregar(); return; }
+    const { error } = await supabase.rpc("salvar_volta", { p_edicao: ed.id, p_item: r.x.item_id, p_volta: campo === "volta" ? v : null, p_comp: campo === "comp" ? v : null });
     if (error) aviso(msgErro(error));
     recarregar();
   }
+  async function enviar() {
+    setEnviando(true);
+    const { data, error } = await supabase.rpc("enviar_balanco", { p_edicao: ed.id, p_setor: setor });
+    setEnviando(false);
+    if (error) aviso(msgErro(error)); else aviso(`Balanço enviado ao paiol (${data ?? 0} itens). Agora eles conferem.`);
+    recarregar();
+  }
 
-  async function fechar() {
-    setFechando(true);
+  if (lista.length === 0) return <Vazio>Nada foi enviado para a sua equipe nesta edição. Quando o paiol enviar, o balanço aparece aqui.</Vazio>;
+  return (
+    <div className="flex flex-col gap-2.5">
+      <p className="m-0 px-1 text-sm text-suave">Para cada item, diga quanto <b>voltou</b>. O que não voltou conta como usado. Não dá para passar do que você levou.</p>
+      {lista.map((r) => {
+        const v = volta(r.x), levou = Number(r.x.env) + Number(r.x.comp), usou = levou - v;
+        const conferido = r.x.aplicado != null, enviado = !!r.x.informado && !conferido, livre = !conferido && !enviado;
+        return (
+          <div key={r.x.item_id} className={cx("flex flex-col gap-2.5 rounded-3xl border-2 bg-white p-3.5", conferido ? "border-[#a9d3c2]" : "border-borda")}>
+            <div className="flex items-center justify-between gap-2">
+              <b className="text-base">{r.it.nome}</b>
+              <span className="whitespace-nowrap text-[13px] text-suave">levou <b className="text-[15px] text-texto">{fmtN(levou)}</b> {r.it.un}</span>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-col"><span className="text-xs font-bold text-suave">Voltou</span>
+                <span className="text-[13px] font-bold">{usou === 0 ? "nada usado" : `usou ${fmtN(usou)}`}</span></div>
+              {livre ? <Passo grande valor={v} onMudar={(n) => salvar(r, "volta", n)} /> : <b className="text-[26px]">{fmtN(v)}</b>}
+            </div>
+            {livre && (
+              <label className="flex items-center justify-end gap-1.5 text-xs text-suave">comprado/extra levado
+                <input inputMode="decimal" defaultValue={String(r.x.comp).replace(".", ",")} onBlur={(e) => { const n = num(e.target.value || "0"); if (isFinite(n) && n >= 0 && n !== Number(r.x.comp)) salvar(r, "comp", n); }} className="h-9 w-14 rounded-lg border border-borda bg-white text-center text-texto" aria-label="Quantidade comprada" />
+              </label>
+            )}
+            {enviado && <span className="text-xs font-bold text-suave">Enviado ao paiol, aguardando a conferência.</span>}
+            {conferido && <span className="text-xs font-bold text-marca">Conferido pelo paiol ✓</span>}
+          </div>
+        );
+      })}
+      <div className="h-24" />
+      {editaveis.length > 0 && (
+        <div className="fixed inset-x-0 z-30 flex flex-col gap-2 border-t border-borda bg-white px-4 py-3 md:left-64" style={{ bottom: "calc(env(safe-area-inset-bottom) + 66px)" }}>
+          <div className="text-[13px] text-suave">Quando tudo estiver certo, envie ao paiol. Depois de enviar, só o paiol altera.</div>
+          <Botao onClick={enviar} disabled={enviando} bloco>{enviando ? "Enviando…" : `Enviar balanço ao paiol (${editaveis.length})`}</Botao>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------------- Balanço do paiol (confere o que o setor informou) ---------------- */
+function BalancoPaiol({ itens, envios, ed, recarregar }: { itens: Item[]; envios: Envio[]; ed: Edicao; recarregar: () => void }) {
+  const { acesso } = useAuth();
+  const aviso = useAviso();
+  const pode = ehPaiol(acesso);
+  const [conta, setConta] = useState<Record<string, number>>({});
+  const [lote, setLote] = useState(false);
+  const lista = envios.filter((x) => x.edicao_id === ed.id).map((x) => ({ x, it: itens.find((i) => i.id === x.item_id)! })).filter((r) => r.it)
+    .sort((a, b) => a.it.setor.localeCompare(b.it.setor) || a.it.nome.localeCompare(b.it.nome));
+  const informada = (x: Envio) => (x.volta == null ? Number(x.env) + Number(x.comp) : Number(x.volta));
+  const contada = (x: Envio) => conta[x.item_id] ?? informada(x);
+  const aConferir = lista.filter((r) => r.x.informado && r.x.aplicado == null);
+  const aguardando = lista.filter((r) => !r.x.informado && r.x.aplicado == null).length;
+
+  async function conferir(r: { x: Envio; it: Item }) {
+    const { error } = await supabase.rpc("conferir_balanco", { p_edicao: ed.id, p_item: r.x.item_id, p_volta: contada(r.x) });
+    if (error) aviso(msgErro(error)); else aviso(`${r.it.nome}: conferido.`);
+    recarregar();
+  }
+  async function devolver(r: { x: Envio }) {
+    const { error } = await supabase.rpc("reabrir_balanco", { p_edicao: ed.id, p_item: r.x.item_id });
+    if (error) aviso(msgErro(error)); else aviso("Devolvido ao setor para refazer.");
+    recarregar();
+  }
+  async function confirmarTodos() {
+    setLote(true);
     const { data, error } = await supabase.rpc("fechar_balanco", { p_edicao: ed.id });
-    setFechando(false);
-    if (error) aviso(msgErro(error)); else aviso(`Balanço fechado. ${data ?? 0} itens atualizados no estoque geral.`);
+    setLote(false);
+    if (error) aviso(msgErro(error)); else aviso(`${data ?? 0} itens confirmados e somados ao estoque.`);
     recarregar();
   }
 
@@ -241,43 +314,50 @@ function Balanco({ itens, envios, ed, recarregar, setEnvios }: { itens: Item[]; 
   let ultimo = "";
   return (
     <div className="flex flex-col gap-2.5">
-      <p className="m-0 px-1 text-sm text-suave">Começa igual ao enviado. Toque em − para o que não voltou e em + para o que sobrou a mais.</p>
+      <p className="m-0 px-1 text-sm text-suave">Cada equipe informa o que voltou. Aqui você confere a contagem no paiol e confirma: só então o estoque geral é atualizado.{aguardando ? ` ${aguardando} item(ns) ainda sem balanço do setor.` : ""}</p>
       {lista.map((r) => {
-        const v = volta(r.x), cons = Number(r.x.env) + Number(r.x.comp) - v, falta = !r.it.cons && cons > 0;
-        const pode = podeEnviar(acesso, r.it.setor);
+        const levou = Number(r.x.env) + Number(r.x.comp), v = contada(r.x), inf = r.x.informado, conf = r.x.aplicado != null;
+        const dif = inf && !conf && v !== informada(r.x);
         const cab = r.it.setor !== ultimo ? (ultimo = r.it.setor) : "";
-        const depois = r.it.qtd + (v - Number(r.x.aplicado ?? 0));
         return (
           <div key={r.x.item_id} className="flex flex-col gap-2.5">
             {cab && <div className="px-1 pt-3 text-[13px] font-extrabold uppercase tracking-wide text-suave">{cab}</div>}
-            <div className={cx("flex flex-col gap-2.5 rounded-3xl border-2 bg-white p-3.5", falta ? "border-[#e7b8ab]" : "border-borda")}>
+            <div className={cx("flex flex-col gap-2.5 rounded-3xl border-2 bg-white p-3.5", conf ? "border-[#a9d3c2]" : dif ? "border-[#e7b8ab]" : "border-borda")}>
               <div className="flex items-center justify-between gap-2">
                 <b className="text-base">{r.it.nome}</b>
-                <span className="whitespace-nowrap text-[13px] text-suave">enviado <b className="text-[15px] text-texto">{fmtN(r.x.env)}</b></span>
+                <span className="whitespace-nowrap text-[13px] text-suave">levou <b className="text-[15px] text-texto">{fmtN(levou)}</b></span>
               </div>
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex flex-col"><span className="text-xs font-bold text-suave">Voltou</span>
-                  <span className={cx("text-[13px] font-bold", falta && "text-alerta")}>{cons < 0 ? `sobrou ${fmtN(-cons)} a mais` : cons === 0 ? "nada consumido" : `consumiu ${fmtN(cons)}`}</span>
+              <div className="text-xs font-bold text-suave">
+                {conf ? <span className="text-marca">Conferido: voltou {fmtN(Number(r.x.aplicado))} · usou {fmtN(levou - Number(r.x.aplicado))}</span>
+                  : inf ? <>O setor informou: voltou {fmtN(informada(r.x))} · usou {fmtN(levou - informada(r.x))}</>
+                  : <>Aguardando o setor informar</>}
+              </div>
+              {(inf || conf) && pode && (
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex flex-col"><span className="text-xs font-bold text-suave">{conf ? "Contagem confirmada" : "Sua contagem"}</span>
+                    <span className="text-[13px] font-bold">{levou - v === 0 ? "nada usado" : `usado ${fmtN(levou - v)}`}</span></div>
+                  <Passo grande valor={v} onMudar={(n) => { if (n > levou) { aviso(`Só foram ${fmtN(levou)}.`); return; } setConta((c) => ({ ...c, [r.x.item_id]: n })); }} />
                 </div>
-                {pode ? <Passo grande valor={v} onMudar={(n) => salvar(r, "volta", n)} /> : <b className="text-[26px]">{fmtN(v)}</b>}
-              </div>
-              <div className="flex items-center justify-between text-xs text-suave">
-                <span>No estoque geral depois: <b className="text-texto">{fmtN(depois)}</b>{r.it.min > 0 && depois < r.it.min ? <span className="text-alerta"> · abaixo do mínimo ({fmtN(r.it.min)})</span> : null}</span>
-                {pode && <label className="flex items-center gap-1.5">comprado
-                  <input inputMode="decimal" defaultValue={String(r.x.comp).replace(".", ",")} onBlur={(e) => { const n = num(e.target.value || "0"); if (isFinite(n) && n >= 0 && n !== Number(r.x.comp)) salvar(r, "comp", n); }} className="h-9 w-14 rounded-lg border border-borda bg-white text-center text-texto" aria-label="Quantidade comprada" />
-                </label>}
-              </div>
-              {falta && <div className="rounded-xl bg-alerta-clara px-3 py-2 text-[13px] font-bold text-[#8e2e18]">Faltou voltar {fmtN(cons)}. Este item não é consumível: confira antes de fechar.</div>}
-              {r.x.aplicado != null && <span className="text-xs font-bold text-marca">Balanço já aplicado ao estoque</span>}
+              )}
+              {dif && <div className="rounded-xl bg-alerta-clara px-3 py-2 text-[13px] font-bold text-[#8e2e18]">O setor informou {fmtN(informada(r.x))}, você contou {fmtN(v)}. Se confirmar, vale a sua contagem.</div>}
+              {pode && inf && !conf && (
+                <div className="flex gap-2">
+                  <Botao v="sec" onClick={() => devolver(r)} className="!min-h-11 flex-1">Devolver ao setor</Botao>
+                  <Botao onClick={() => conferir(r)} className="!min-h-11 flex-1">Confirmar</Botao>
+                </div>
+              )}
+              {pode && conf && v !== Number(r.x.aplicado) && <Botao onClick={() => conferir(r)} className="!min-h-11">Corrigir contagem</Botao>}
             </div>
           </div>
         );
       })}
       <div className="h-24" />
-      <div className="fixed inset-x-0 z-30 flex flex-col gap-2 border-t border-borda bg-white px-4 py-3 md:left-64" style={{ bottom: "calc(env(safe-area-inset-bottom) + 66px)" }}>
-        <div className="text-[13px] text-suave">O que voltou entra no estoque geral. O consumo fica no relatório da edição.{faltas ? ` ${faltas} item(ns) não consumível(is) não voltou inteiro.` : ""}</div>
-        {podeFechar && <Botao onClick={fechar} disabled={fechando || pendentes === 0} bloco>{pendentes === 0 ? "Balanço fechado" : fechando ? "Fechando…" : `Fechar balanço (${pendentes})`}</Botao>}
-      </div>
+      {pode && aConferir.length > 0 && (
+        <div className="fixed inset-x-0 z-30 flex flex-col gap-2 border-t border-borda bg-white px-4 py-3 md:left-64" style={{ bottom: "calc(env(safe-area-inset-bottom) + 66px)" }}>
+          <div className="text-[13px] text-suave">Confirma tudo como o setor informou. Quem você contou diferente, confirme item por item antes.</div>
+          <Botao onClick={confirmarTodos} disabled={lote} bloco>{lote ? "Confirmando…" : `Confirmar todos como informado (${aConferir.length})`}</Botao>
+        </div>
+      )}
     </div>
   );
 }

@@ -11,7 +11,8 @@ import { entradasSetores, hrefSetor, type EntradaSetor } from "@/lib/setores";
 
 const ITENS = [
   { href: "/", modulo: "inicio", rotulo: "Painel", icone: "inicio" },
-  { href: "/setores", modulo: "setores", rotulo: "Setores", icone: "estoque" },
+  { href: "/estoque", modulo: "estoque", rotulo: "Estoque", icone: "estoque" },
+  { href: "/setores", modulo: "setores", rotulo: "Equipes", icone: "pessoas" },
   { href: "/edicoes", modulo: "edicoes", rotulo: "Edições", icone: "edicoes" },
   { href: "/encontristas", modulo: "encontristas", rotulo: "Encontristas", icone: "pessoas" },
   { href: "/financeiro", modulo: "financeiro", rotulo: "Financeiro", icone: "financeiro" },
@@ -36,7 +37,7 @@ function ListaSetoresInterna({ entradas, onEscolher }: { entradas: EntradaSetor[
     <div className="flex flex-col">
       {entradas.map((e, i) => (
         <div key={e.id}>
-          {e.grupo === "setor" && entradas[i - 1]?.grupo !== "setor" && <div className="px-3 pb-1 pt-3 text-[11px] font-extrabold uppercase tracking-wide text-suave">Setores do estoque</div>}
+          {e.grupo === "setor" && entradas[i - 1]?.grupo !== "setor" && <div className="px-3 pb-1 pt-3 text-[11px] font-extrabold uppercase tracking-wide text-suave">Outras equipes</div>}
           <Link href={hrefSetor(e.id)} onClick={onEscolher} className={cx("flex min-h-10 items-center rounded-xl px-3 text-[14px] font-bold", params === e.id ? "bg-marca-clara text-marca-esc" : "text-suave hover:bg-fundo")}>{e.nome}</Link>
         </div>
       ))}
@@ -156,8 +157,8 @@ export function Protegido({ children }: { children: React.ReactNode }) {
       </nav>
 
       {folhaSetores && (
-        <Janela titulo="Setores" onFechar={() => setFolhaSetores(false)}>
-          {entradas.length === 0 ? <p className="m-0 text-suave">Você ainda não está em nenhum setor.</p> : <ListaSetores entradas={entradas} onEscolher={() => setFolhaSetores(false)} />}
+        <Janela titulo="Equipes" onFechar={() => setFolhaSetores(false)}>
+          {entradas.length === 0 ? <p className="m-0 text-suave">Você ainda não está em nenhuma equipe.</p> : <ListaSetores entradas={entradas} onEscolher={() => setFolhaSetores(false)} />}
         </Janela>
       )}
 

@@ -37,6 +37,7 @@ export const setoresDaEquipe = (a: Acesso | null) => (a ? a.equipes.flatMap((e) 
 
 export function podeVer(a: Acesso | null, modulo: string): boolean {
   if (!a) return false;
+  if (modulo === "estoque") return podeVerEstoque(a);
   if (modulo === "setores") return ["admin", "coordenacao", "estoque", "saude", "admin_edicao"].includes(a.perfil) || setoresDaEquipe(a).length > 0;
   const l = VE[modulo];
   return !l || l.includes(a.perfil);
@@ -57,6 +58,9 @@ export const podeVerSaude = (a: Acesso | null) => !!a && ["admin", "saude", "adm
 /** Secretaria 1 (crachás e quartos): administrador ou quem está na equipe com esse setor. */
 export const podeSecretaria = (a: Acesso | null) => !!a && (["admin", "admin_edicao"].includes(a.perfil) || setoresDaEquipe(a).includes("Secretaria 1"));
 /** Estoque (geral e por setor). */
-export const podeVerEstoque = (a: Acesso | null) => !!a && ["admin", "coordenacao", "estoque", "visitante", "financeiro", "decisoes", "admin_edicao"].includes(a.perfil);
+export const podeVerEstoque = (a: Acesso | null) =>
+  !!a && (["admin", "coordenacao", "estoque", "financeiro", "decisoes", "admin_edicao"].includes(a.perfil) || (a.perfil === "visitante" && setoresDaEquipe(a).length === 0));
+/** Paiol: quem guarda o material, registra o envio e confere o balanço (administrador, coordenação, estoque; admin de edição nas edições dele). */
+export const ehPaiol = (a: Acesso | null) => !!a && ["admin", "coordenacao", "estoque", "admin_edicao"].includes(a.perfil);
 /** Enviar material e fechar balanço: quem edita o setor, ou o admin de edição (na edição dele). */
 export const podeEnviar = (a: Acesso | null, setor: string) => !!a && (podeEscrever(a, "estoque", setor) || a.perfil === "admin_edicao");

@@ -3,10 +3,9 @@ import { podeSecretaria, podeVerEstoque, podeVerSaude, setoresDaEquipe, type Ace
 export type EntradaSetor = { id: string; nome: string; grupo: "geral" | "setor" };
 const ESPECIAIS = ["Secretaria 1", "Saúde"];
 
-/** Abas/subdivisões de Setores que a pessoa pode ver: Estoque geral, Saúde, Secretaria 1 e cada setor do estoque. */
+/** Equipes que a pessoa pode ver: Saúde, Secretaria 1 e as demais equipes/setores (cada uma com o material que recebeu). O estoque geral fica em /estoque. */
 export function entradasSetores(a: Acesso | null, setoresDosItens: string[]): EntradaSetor[] {
   const l: EntradaSetor[] = [];
-  if (podeVerEstoque(a)) l.push({ id: "estoque", nome: "Estoque geral", grupo: "geral" });
   if (podeVerSaude(a)) l.push({ id: "saude", nome: "Saúde", grupo: "geral" });
   if (podeSecretaria(a)) l.push({ id: "secretaria", nome: "Secretaria 1", grupo: "geral" });
   const visiveis = podeVerEstoque(a) ? setoresDosItens : [];

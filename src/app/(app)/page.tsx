@@ -46,12 +46,12 @@ export default function Painel() {
         <div className="flex items-center justify-between px-4 pb-2 pt-4"><b className="text-base">Precisa de atenção</b>{falta.length > 0 && <Selo tom="alerta">{falta.length}</Selo>}</div>
         {falta.length === 0 && <Vazio>Nada abaixo do mínimo.</Vazio>}
         {falta.slice(0, 6).map((i) => (
-          <Link key={i.id} href="/setores" className="flex items-center justify-between gap-3 border-t border-borda px-4 py-3">
+          <Link key={i.id} href="/estoque" className="flex items-center justify-between gap-3 border-t border-borda px-4 py-3">
             <div className="min-w-0"><b className="block truncate text-[15px]">{i.nome}</b><span className="text-xs text-suave">{i.setor}</span></div>
             <div className="text-right leading-tight"><b className="text-lg text-alerta">{fmtN(i.qtd)}</b><div className="text-xs text-suave">mín. {fmtN(i.min)}</div></div>
           </Link>
         ))}
-        {falta.length > 6 && <Link href="/setores" className="block border-t border-borda px-4 py-3 text-center text-sm font-bold text-marca">Ver todos os {falta.length}</Link>}
+        {falta.length > 6 && <Link href="/estoque" className="block border-t border-borda px-4 py-3 text-center text-sm font-bold text-marca">Ver todos os {falta.length}</Link>}
       </Cartao>
     </div>
   );
@@ -72,7 +72,7 @@ function KpisEncontristas({ edicaoId, nItens, nFalta }: { edicaoId: string; nIte
     { t: "Encontristas", v: encs.length, href: "/encontristas" },
     { t: "Equipe", v: equipe, href: "/encontristas" },
     { t: "Com necessidade de saúde", v: saude, href: "/setores" },
-    { t: "Itens em falta", v: nFalta, href: "/setores" },
+    { t: "Itens em falta", v: nFalta, href: "/estoque" },
   ];
   return (
     <>

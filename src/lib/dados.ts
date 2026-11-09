@@ -38,6 +38,11 @@ const MSG: Record<string, string> = {
   sem_permissao: "Você não tem permissão para isso.",
   sem_estoque: "Não há essa quantidade no estoque.",
   balanco_fechado: "O balanço deste item já foi fechado.",
+  balanco_informado: "O setor já entregou o balanço deste item. Devolva ao setor antes de mudar o envio.",
+  acima_do_enviado: "Não pode ser mais do que foi levado.",
+  ja_enviado: "Este balanço já foi enviado ao paiol.",
+  ja_conferido: "O paiol já conferiu este item.",
+  sem_envio: "Este item não foi enviado para a edição.",
   item_inexistente: "Item não encontrado.",
   quantidade_invalida: "Quantidade inválida.",
 };
