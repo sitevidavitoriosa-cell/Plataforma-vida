@@ -1,6 +1,6 @@
 "use client";
 import { CORES } from "@/lib/cores";
-import { fmtDia, type PontoDia } from "@/lib/inscricoes";
+import { fmtDia, fmtDiaAno, type PontoDia } from "@/lib/inscricoes";
 
 const semAcento = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 // Cor da rede: Roxa, Azul, Amarela… (Branca = cinza). Sem rede / outros = cinzas claros.
@@ -58,8 +58,8 @@ export function LinhaTempo({ dias, acumulado, cor = "#6b4fbb" }: { dias: PontoDi
       <path d={area} fill={cor} opacity="0.12" />
       <path d={linha} fill="none" stroke={cor} strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" />
       {todos.length <= 40 && ys.map((v, i) => <circle key={i} cx={x(i)} cy={y(v)} r="1.8" fill={cor}><title>{`${fmtDia(todos[i].data)}: ${v}`}</title></circle>)}
-      <text x={L} y={H - 6} fontSize="7.5" fill="#76766f">{fmtDia(todos[0].data)}</text>
-      <text x={W - R} y={H - 6} fontSize="7.5" textAnchor="end" fill="#76766f">{fmtDia(todos[todos.length - 1].data)}</text>
+      <text x={L} y={H - 6} fontSize="7.5" fill="#76766f">{fmtDiaAno(todos[0].data)}</text>
+      <text x={W - R} y={H - 6} fontSize="7.5" textAnchor="end" fill="#76766f">{fmtDiaAno(todos[todos.length - 1].data)}</text>
     </svg>
   );
 }

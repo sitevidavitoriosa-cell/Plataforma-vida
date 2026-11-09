@@ -7,7 +7,7 @@ import { podeVerFicha } from "@/lib/perm";
 import { descricaoEd, temaDe } from "@/lib/cores";
 import { useAuth, useAviso, useEdicao } from "@/components/provedores";
 import { LinhaTempo, Pizza, corDaRede } from "@/components/graficos";
-import { fmtDia, resumoInscricoes } from "@/lib/inscricoes";
+import { fmtDia, fmtDiaAno, resumoInscricoes } from "@/lib/inscricoes";
 import { Botao, Carregando, Chip, Titulo, Vazio } from "@/components/ui";
 
 type Enc = { id: string; edicao_id: string; nome: string; data_inscricao: string | null; categoria: string | null; sexo: string | null; cancelada: boolean;
@@ -184,7 +184,7 @@ export default function Relatorio() {
           { x: 0.7, y: 2.3, w: 5.4, h: 4.6, holeSize: 55, chartColors: redes2.map((x) => corDaRede(x[0]).replace("#", "")), showLegend: true, legendPos: "r", legendFontSize: 12, legendFontFace: COR_TXT, showPercent: true, showValue: false, dataLabelColor: "FFFFFF", dataLabelFontSize: 11, dataBorder: { pt: 1.5, color: "FFFFFF" } } as never);
       }
       if (insc.comData) {
-        sl.addText("INSCRIÇÕES ACUMULADAS", { x: 6.6, y: 2.0, w: 6, h: 0.3, fontFace: COR_TXT, fontSize: 11, bold: true, color: COR.det, charSpacing: 5 });
+        sl.addText(`INSCRIÇÕES DESTA EDIÇÃO  ·  ${insc.ini ? fmtDiaAno(insc.ini) : ""} A ${insc.fim ? fmtDiaAno(insc.fim) : ""}`, { x: 6.6, y: 2.0, w: 6.4, h: 0.3, fontFace: COR_TXT, fontSize: 11, bold: true, color: COR.det, charSpacing: 5 });
         let ac = 0;
         sl.addChart("line" as never, [{ name: "Inscrições", labels: insc.dias.map((d) => fmtDia(d.data)), values: insc.dias.map((d) => (ac += d.n)) }],
           { x: 6.5, y: 2.3, w: 6.3, h: 3.6, chartColors: [COR.marca], lineSize: 3, lineDataSymbolSize: 6, catAxisLabelFontSize: 10, valAxisLabelFontSize: 10, catAxisLabelColor: COR.suave, valAxisLabelColor: COR.suave, valGridLine: { color: COR.linha, size: 0.5 }, showLegend: false } as never);
@@ -298,7 +298,8 @@ export default function Relatorio() {
               <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs">{conta(principais, (e) => um(e.encontrista_espiritual)?.rede ?? "").map(([nome, valor]) => <span key={nome} className="flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full" style={{ background: corDaRede(nome) }} />{nome} ({valor})</span>)}</div>
             </div>
             <div className="min-w-0 md:w-1/2">
-              <h3 className="mb-2 text-base font-extrabold">Inscrições ao longo do tempo</h3>
+              <h3 className="mb-1 text-base font-extrabold">Inscrições desta edição</h3>
+              {insc.comData > 0 && <p className="m-0 mb-2 text-xs text-suave">{ed.nome}: inscrições abertas de {insc.ini ? fmtDiaAno(insc.ini) : ""} a {insc.fim ? fmtDiaAno(insc.fim) : ""} ({insc.diasAbertos} dias) · {insc.comData} encontristas inscritos</p>}
               {insc.comData === 0 ? <Vazio>Sem datas de inscrição. Importe a planilha de novo em “Encontristas”.</Vazio> : (
                 <>
                   <LinhaTempo dias={insc.dias} acumulado cor={temaDe(ed).marca} />

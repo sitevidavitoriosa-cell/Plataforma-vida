@@ -6,7 +6,7 @@ import { useLista } from "@/lib/dados";
 import { dmy, fmtN, type Envio, type Item } from "@/lib/tipos";
 import { PERFIS, podeVerEstoque, podeVerFicha } from "@/lib/perm";
 import { descricaoEd, temaDe } from "@/lib/cores";
-import { fmtDia, resumoInscricoes } from "@/lib/inscricoes";
+import { fmtDia, fmtDiaAno, resumoInscricoes } from "@/lib/inscricoes";
 import { LinhaTempo, Pizza, corDaRede } from "@/components/graficos";
 import { useAuth, useEdicao } from "@/components/provedores";
 import { Carregando, Cartao, Janela, Selo, Vazio } from "@/components/ui";
@@ -142,13 +142,14 @@ function KpisEncontristas({ edicaoId, nItens, nFalta }: { edicaoId: string; nIte
           {redes.size > 0 && <p className="m-0 text-xs text-suave">Toque numa fatia ou numa rede para ver quem é, a célula, se é batizado e a igreja.</p>}
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-3 border-t border-borda pt-5 md:border-l md:border-t-0 md:pl-6 md:pt-0">
-          <div className="flex items-center justify-between gap-2"><b>Inscrições ao longo do tempo</b>
+          <div className="flex items-center justify-between gap-2"><b>Inscrições desta edição</b>
             <div className="flex gap-1 text-xs font-bold">
               {[false, true].map((a) => <button key={String(a)} type="button" onClick={() => setAcum(a)} className={`min-h-8 rounded-full px-3 ${acum === a ? "bg-marca text-white" : "bg-fundo text-suave"}`}>{a ? "Acumulado" : "Por dia"}</button>)}
             </div>
           </div>
           {insc.comData === 0 ? <Vazio>As datas de inscrição ainda não foram lidas. Importe a planilha de novo em “Encontristas” para preencher.</Vazio> : (
             <>
+              <p className="m-0 text-xs text-suave">{ed?.nome}: inscrições abertas de {insc.ini ? fmtDiaAno(insc.ini) : ""} a {insc.fim ? fmtDiaAno(insc.fim) : ""} ({insc.diasAbertos} dias) · {insc.comData} encontristas</p>
               <LinhaTempo dias={insc.dias} acumulado={acum} cor={tema.marca} />
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div className="rounded-2xl bg-fundo p-3"><div className="text-xs text-suave">Mês com mais inscrições</div><b>{insc.mesTopNome}</b> <span className="text-suave">({insc.mesTop?.n})</span></div>

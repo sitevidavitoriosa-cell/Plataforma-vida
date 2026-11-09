@@ -24,6 +24,9 @@ export function resumoInscricoes(datas: (string | null | undefined)[]) {
   const pico = listaDias.reduce<PontoDia | null>((m, x) => (!m || x.n > m.n ? x : m), null);
   const mesTop = listaMeses.reduce<PontoMes | null>((m, x) => (!m || x.n > m.n ? x : m), null);
   const mesTopNome = mesTop ? `${MESES_LONGOS[Number(mesTop.chave.slice(5)) - 1]} de ${mesTop.chave.slice(0, 4)}` : "";
-  return { dias: listaDias, meses: listaMeses, pico, mesTop, mesTopNome, semData, comData: listaDias.reduce((s, x) => s + x.n, 0) };
+  const ini = listaDias[0]?.data ?? null, fim = listaDias[listaDias.length - 1]?.data ?? null;
+  const diasAbertos = ini && fim ? Math.round((fim.getTime() - ini.getTime()) / 86400000) + 1 : 0;
+  return { ini, fim, diasAbertos, dias: listaDias, meses: listaMeses, pico, mesTop, mesTopNome, semData, comData: listaDias.reduce((s, x) => s + x.n, 0) };
 }
+export const fmtDiaAno = (d: Date) => `${dd(d.getDate())}/${dd(d.getMonth() + 1)}/${d.getFullYear()}`;
 export const fmtDia = (d: Date) => `${dd(d.getDate())}/${dd(d.getMonth() + 1)}`;
