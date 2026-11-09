@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { msgErro } from "@/lib/dados";
 import { norm } from "@/lib/tipos";
+import { ContatoLinha } from "@/components/contato";
 import { useAviso, useEdicao } from "@/components/provedores";
 import { Botao, Carregando, Cartao, Chip, Icone, Janela, Selo, Vazio } from "@/components/ui";
 
@@ -75,7 +76,7 @@ function Detalhe({ l, onFechar, onSalvo }: { l: Linha; onFechar: () => void; onS
     <Janela titulo={l.nome} onFechar={onFechar}>
       <div className="flex flex-col gap-3">
         <div><div className="text-xs font-bold uppercase text-suave">Necessidade</div><p className="m-0">{l.necessidade}</p></div>
-        {l.contatos && l.contatos.length > 0 && <div><div className="text-xs font-bold uppercase text-suave">Contato de emergência</div>{l.contatos.map((c, i) => <p key={i} className="m-0">{c}</p>)}</div>}
+        {l.contatos && l.contatos.length > 0 && <div><div className="text-xs font-bold uppercase text-suave">Contato de emergência</div>{l.contatos.map((c, i) => <ContatoLinha key={i} texto={c} />)}</div>}
         <label className="flex flex-col gap-1.5 text-sm font-bold">Observação da equipe de saúde
           <textarea value={obs} onChange={(e) => setObs(e.target.value)} rows={3} className="rounded-2xl border border-borda bg-white p-3 text-base font-normal outline-none focus:border-marca" placeholder="Ex.: medicação guardada com a enfermeira" />
         </label>

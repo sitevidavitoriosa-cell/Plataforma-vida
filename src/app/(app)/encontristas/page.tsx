@@ -5,6 +5,7 @@ import { msgErro, useLista } from "@/lib/dados";
 import { norm, type Edicao } from "@/lib/tipos";
 import { podeVerFicha } from "@/lib/perm";
 import { lerArquivo, type ItemImport } from "@/lib/importar";
+import { ContatoLinha } from "@/components/contato";
 import { useAuth, useAviso, useEdicao } from "@/components/provedores";
 import { Botao, Campo, Carregando, Cartao, Chip, Icone, Janela, Selo, Seletor, Titulo, Vazio } from "@/components/ui";
 
@@ -140,7 +141,7 @@ function Ficha({ e, verSaude, verEsp, onFechar, onSalvo }: { e: Enc; verSaude: b
             <p className="my-1.5 whitespace-pre-wrap text-[15px]">{s?.tem_necessidade ? s.necessidade : "Sem necessidade informada."}</p>
             {!!s?.contatos.length && <>
               <div className="mt-2 text-[13px] font-bold text-suave">Contatos de emergência</div>
-              {s.contatos.map((c, i) => <div key={i} className="text-[15px]">{c}</div>)}
+              {s.contatos.map((c, i) => <ContatoLinha key={i} texto={c} />)}
             </>}
             {podeObs && (
               <div className="mt-3 flex flex-col gap-2">
