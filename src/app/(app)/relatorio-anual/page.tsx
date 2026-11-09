@@ -5,6 +5,8 @@ import { dmy, fmtN, type Edicao } from "@/lib/tipos";
 import { descricaoEd, temaDe } from "@/lib/cores";
 import { resumoInscricoes, fmtDia } from "@/lib/inscricoes";
 import { LinhaTempo, Pizza, corDaRede } from "@/components/graficos";
+import { perfilDe, pc } from "@/lib/perfil";
+import { cartao, slidePerfil, slidePessoas, slideRedes, type Deck } from "@/lib/slidesVida";
 import { useAuth, useAviso } from "@/components/provedores";
 import { Botao, Carregando, Chip, Titulo, Vazio } from "@/components/ui";
 
@@ -42,10 +44,11 @@ export default function RelatorioAnual() {
   const redesMap = new Map<string, number>();
   principais.forEach((e) => { const r = um(e.encontrista_espiritual)?.rede || "Sem rede"; redesMap.set(r, (redesMap.get(r) ?? 0) + 1); });
   const redes = Array.from(redesMap.entries()).sort((a, b) => b[1] - a[1]);
+  const perfilAno = perfilDe(principais.map((e) => um(e.encontrista_espiritual)));
   const insc = resumoInscricoes(principais.map((e) => e.data_inscricao));
   const porEd = eds.map((e) => {
     const ps = principais.filter((x) => x.edicao_id === e.id);
-    return { e, enc: ps.length, equipe: doAno.filter((x) => x.edicao_id === e.id).length - ps.length,
+    return { e, p: perfilDe(ps.map((x) => um(x.encontrista_espiritual))), enc: ps.length, equipe: doAno.filter((x) => x.edicao_id === e.id).length - ps.length,
       bat: ps.filter((x) => um(x.encontrista_espiritual)?.batizado === true).length, dec: decs.dados!.filter((d) => d.edicao_id === e.id).length };
   });
 
@@ -55,7 +58,8 @@ export default function RelatorioAnual() {
       const add = (nome: string, rows: (string | number)[][]) => XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), nome.slice(0, 31));
       add("Resumo", [["Ano", ano], ["Edições", eds.length], ["Encontristas", principais.length], ["Equipe", equipe], ["Batizados", bat], ["Em célula", cel], ["Com igreja", igr], ["Decisões", nDec],
         ["Mês com mais inscrições", insc.mesTopNome], ["Inscrições nesse mês", insc.mesTop?.n ?? 0], ["Dia de pico", insc.pico ? fmtDia(insc.pico.data) : ""], ["Inscrições no pico", insc.pico?.n ?? 0]]);
-      add("Edições", [["Edição", "Rede/tipo", "Início", "Fim", "Encontristas", "Equipe", "Batizados", "Decisões"], ...porEd.map((x) => [x.e.nome, descricaoEd(x.e), dmy(x.e.data_ini), dmy(x.e.data_fim), x.enc, x.equipe, x.bat, x.dec])]);
+      add("Edições", [["Edição", "Rede/tipo", "Início", "Fim", "Encontristas", "Equipe", "Batizados", "Não batizados", "Em célula", "Sem célula", "Com igreja", "Sem igreja", "Sem rede", "Decisões"], ...porEd.map((x) => [x.e.nome, descricaoEd(x.e), dmy(x.e.data_ini), dmy(x.e.data_fim), x.enc, x.equipe, x.p.bat, x.p.nbat, x.p.cel, x.p.scel, x.p.igr, x.p.sigr, x.p.srede, x.dec])]);
+      add("Perfil espiritual", [["Indicador", "Pessoas", "%"], ["Batizados", perfilAno.bat, pc(perfilAno.bat, perfilAno.total)], ["Não batizados", perfilAno.nbat, pc(perfilAno.nbat, perfilAno.total)], ["Em célula", perfilAno.cel, pc(perfilAno.cel, perfilAno.total)], ["Sem célula", perfilAno.scel, pc(perfilAno.scel, perfilAno.total)], ["Com igreja", perfilAno.igr, pc(perfilAno.igr, perfilAno.total)], ["Sem igreja", perfilAno.sigr, pc(perfilAno.sigr, perfilAno.total)], ["Sem rede", perfilAno.srede, pc(perfilAno.srede, perfilAno.total)]]);
       add("Redes", [["Rede", "Encontristas"], ...redes]);
       add("Inscrições por mês", [["Mês", "Inscrições"], ...insc.meses.map((m) => [m.rotulo, m.n])]);
       add("Inscrições por dia", [["Dia", "Inscrições"], ...insc.dias.map((d) => [fmtDia(d.data) + "/" + d.chave.slice(0, 4), d.n])]);
@@ -95,23 +99,40 @@ export default function RelatorioAnual() {
     c.addText(`${eds.length} edição(ões)  ·  ${fmtN(principais.length)} encontristas`, { x: 0.9, y: 4.65, w: 7.2, h: 0.6, fontFace: TXT, fontSize: 18, color: "E6E6E0" });
     c.addText("VIDA VITORIOSA", { x: 0.9, y: 6.75, w: 6, h: 0.3, fontFace: TXT, fontSize: 11, bold: true, color: COR.det, charSpacing: 6 });
 
-    const r = base("01", "Resumo", "O ano em números", `${eds.length} edição(ões) em ${ano}`);
-    ([[principais.length, "encontristas"], [equipe, "pessoas na equipe"], [bat, `batizados (${pct(bat, principais.length)})`], [nDec, "decisões registradas"], [cel, `em célula (${pct(cel, principais.length)})`], [igr, `com igreja (${pct(igr, principais.length)})`]] as [number, string][])
-      .forEach(([v, rot], i) => dado(r, v, rot, 0.9 + (i % 3) * 4.0, 2.2 + Math.floor(i / 3) * 2.2, 4.0, 48));
-
-    const e = base("02", "Edições", "Comparativo das edições", "Quem participou em cada uma");
-    const nb = { type: "none" as const }, fio = (cor: string, pt = 0.75) => ({ type: "solid" as const, color: cor, pt });
-    const cab = ["Edição", "Encontristas", "Equipe", "Batizados", "Decisões"].map((h, i) => ({ text: h.toUpperCase(), options: { bold: true, fontSize: 10, color: COR.suave, align: i ? "right" : "left", border: [nb, nb, fio(COR.marca, 1.5), nb] } }));
-    const corpo = porEd.slice(0, 9).map((x) => [x.e.nome, x.enc, x.equipe, x.bat, x.dec].map((v, i) => ({ text: typeof v === "number" ? fmtN(v) : String(v), options: { align: i ? "right" : "left", bold: i === 1, color: i === 1 ? COR.esc : COR.txt, border: [nb, nb, fio(COR.linha), nb] } })));
-    e.addTable([cab, ...corpo] as never, { x: 0.9, y: 2.1, w: 11.6, colW: [5.0, 1.7, 1.6, 1.7, 1.6], fontFace: TXT, fontSize: 14, rowH: 0.46, valign: "middle" });
-
-    const g = base("03", "Perfil", "Redes e inscrições", "De onde vêm os encontristas e em quais meses se inscrevem");
-    if (redes.length) g.addChart("doughnut" as never, [{ name: "Redes", labels: redes.map((x) => x[0]), values: redes.map((x) => x[1]) }],
-      { x: 0.7, y: 2.1, w: 5.4, h: 4.7, holeSize: 55, chartColors: redes.map((x) => hx(corDaRede(x[0]))), showLegend: true, legendPos: "r", legendFontSize: 12, legendFontFace: TXT, showPercent: true, showValue: false, dataLabelColor: "FFFFFF", dataLabelFontSize: 11, dataBorder: { pt: 1.5, color: "FFFFFF" } } as never);
+    const d: Deck = { pp, COR, TIT, TXT, base };
+    const sexos = Array.from(principais.reduce((m, e) => m.set(e.sexo ?? "", (m.get(e.sexo ?? "") ?? 0) + 1), new Map<string, number>()).entries()).sort((a, b) => b[1] - a[1]) as [string, number][];
+    let k = 1; const nn = () => String(k++).padStart(2, "0");
+    slidePessoas(d, nn(), { cards: [[principais.length, "encontristas no ano"], [equipe, "pessoas na equipe"], [eds.length, "edições"], [nDec, "decisões registradas"]], sexos, titulo: "O ano em números", sub: `${eds.length} edição(ões) em ${ano}` });
+    if (principais.length) slidePerfil(d, nn(), perfilAno, `Todas as edições de ${ano} juntas`);
+    if (redes.length) slideRedes(d, nn(), redes, `Redes dos encontristas em ${ano}`);
     if (insc.meses.length) {
-      g.addChart("bar" as never, [{ name: "Inscrições", labels: insc.meses.map((m) => m.rotulo), values: insc.meses.map((m) => m.n) }],
-        { x: 6.5, y: 2.1, w: 6.3, h: 3.9, barDir: "col", chartColors: [COR.marca], catAxisLabelFontSize: 10, valAxisLabelFontSize: 10, catAxisLabelColor: COR.suave, valAxisLabelColor: COR.suave, valGridLine: { color: COR.linha, size: 0.5 }, showLegend: false, showValue: true, dataLabelFontSize: 10 } as never);
-      g.addText(`Mês com mais inscrições: ${insc.mesTopNome} (${insc.mesTop?.n})`, { x: 6.6, y: 6.15, w: 6.2, h: 0.6, fontFace: TXT, fontSize: 14, color: COR.esc });
+      const sl = base(nn(), "Inscrições", "Quando as pessoas se inscrevem", "Inscrições por mês, somando as edições do ano");
+      cartao(d, sl, 0.9, 2.05, 8.1, 4.8);
+      sl.addText("INSCRIÇÕES POR MÊS", { x: 1.25, y: 2.25, w: 5, h: 0.3, fontFace: TXT, fontSize: 10.5, bold: true, color: COR.det, charSpacing: 4 });
+      sl.addChart("bar" as never, [{ name: "Inscrições", labels: insc.meses.map((m) => m.rotulo), values: insc.meses.map((m) => m.n) }],
+        { x: 1.1, y: 2.6, w: 7.7, h: 4.1, barDir: "col", barGapWidthPct: 45, chartColors: [COR.marca], catAxisLabelFontSize: 11, valAxisLabelFontSize: 10, catAxisLabelColor: COR.suave, valAxisLabelColor: COR.suave, valGridLine: { color: "ECEBE5", size: 0.5 }, showLegend: false, showValue: true, dataLabelFontSize: 11, dataLabelColor: COR.esc } as never);
+      ([["Mês com mais inscrições", insc.mesTopNome || "–"], ["Inscrições nesse mês", String(insc.mesTop?.n ?? 0)], ["Dia de pico", insc.pico ? `${fmtDia(insc.pico.data)} · ${insc.pico.n}` : "–"], ["Total no período", String(insc.comData)]] as [string, string][]).forEach(([r, v], idx) => {
+        const y = 2.05 + idx * 1.2;
+        cartao(d, sl, 9.25, y, 3.25, 1.05);
+        sl.addShape("rect", { x: 9.25, y: y + 0.18, w: 0.07, h: 0.69, fill: { color: COR.det } });
+        sl.addText(r.toUpperCase(), { x: 9.5, y: y + 0.12, w: 2.9, h: 0.3, fontFace: TXT, fontSize: 9.5, bold: true, color: COR.suave, charSpacing: 3 });
+        sl.addText(v, { x: 9.5, y: y + 0.4, w: 2.9, h: 0.55, fontFace: TIT, fontSize: 20, bold: true, color: COR.esc, fit: "shrink" });
+      });
+    }
+    if (porEd.length) {
+      const t = base(nn(), "Vida por Vida", "Cada edição em números", "Batismo, célula e rede de cada uma");
+      cartao(d, t, 0.9, 2.05, 11.6, 4.8);
+      const nb = { type: "none" as const }, fio = (cor: string, pt = 0.75) => ({ type: "solid" as const, color: cor, pt });
+      const cab = ["Edição", "Encontristas", "Batizados", "Não batizados", "Em célula", "Sem célula", "Sem rede"].map((h, i) => ({ text: h.toUpperCase(), options: { bold: true, fontSize: 9.5, color: "FFFFFF", fill: { color: COR.marca }, align: i ? "center" : "left", valign: "middle", border: [nb, nb, nb, nb] } }));
+      const corpo = porEd.slice(0, 9).map((x, r) => [x.e.nome, x.enc, x.p.bat, x.p.nbat, x.p.cel, x.p.scel, x.p.srede].map((v, i) => ({ text: typeof v === "number" ? fmtN(v) : String(v), options: { align: i ? "center" : "left", bold: i === 0 || i === 1, fontSize: 13, color: i === 0 ? COR.esc : COR.txt, fill: { color: r % 2 ? "FFFFFF" : COR.fundo }, border: [nb, nb, fio(COR.linha), nb] } })));
+      t.addTable([cab, ...corpo] as never, { x: 1.15, y: 2.3, w: 11.1, colW: [3.3, 1.4, 1.2, 1.4, 1.3, 1.3, 1.2], fontFace: TXT, rowH: 0.46, valign: "middle" });
+      const g = base(nn(), "Vida por Vida", "Quem está mais perto", "Percentual de cada edição sobre seus encontristas");
+      cartao(d, g, 0.9, 2.05, 11.6, 4.8);
+      g.addChart("bar" as never, [
+        { name: "Batizados", labels: porEd.map((x) => x.e.nome), values: porEd.map((x) => pc(x.p.bat, x.p.total)) },
+        { name: "Em célula", labels: porEd.map((x) => x.e.nome), values: porEd.map((x) => pc(x.p.cel, x.p.total)) },
+        { name: "Com igreja", labels: porEd.map((x) => x.e.nome), values: porEd.map((x) => pc(x.p.igr, x.p.total)) },
+      ], { x: 1.1, y: 2.2, w: 11.2, h: 4.5, barDir: "col", barGapWidthPct: 60, chartColors: [COR.marca, COR.det, "9A9A94"], valAxisMaxVal: 100, valAxisLabelFormatCode: "0\"%\"", showLegend: true, legendPos: "b", legendFontSize: 12, legendFontFace: TXT, showValue: true, dataLabelFormatCode: "0\"%\"", dataLabelFontSize: 10, catAxisLabelFontSize: 11, valGridLine: { color: "ECEBE5", size: 0.5 }, catAxisLabelColor: COR.suave, valAxisLabelColor: COR.suave } as never);
     }
     const f = pp.addSlide(); f.background = { color: COR.marca };
     f.addText("Obrigado", { x: 0.9, y: 2.4, w: 9, h: 1.4, fontFace: TIT, fontSize: 64, bold: true, color: "FFFFFF" });
@@ -148,6 +169,13 @@ export default function RelatorioAnual() {
         <Kpi v={`${bat} · ${pct(bat, principais.length)}`} t="batizados" /><Kpi v={`${cel} · ${pct(cel, principais.length)}`} t="em célula" /><Kpi v={`${igr} · ${pct(igr, principais.length)}`} t="com igreja" />
       </div>
 
+      <h2 className="mb-3 mt-8 border-b-2 border-detalhe pb-1.5 text-xl font-extrabold">Perfil espiritual</h2>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 print:break-inside-avoid">
+        {([["Batizados", perfilAno.bat], ["Não batizados", perfilAno.nbat], ["Em célula", perfilAno.cel], ["Sem célula", perfilAno.scel], ["Com igreja", perfilAno.igr], ["Sem igreja", perfilAno.sigr], ["Com rede", perfilAno.comRede], ["Sem rede", perfilAno.srede]] as [string, number][]).map(([t, v]) => (
+          <div key={t} className="rounded-2xl border border-borda bg-white p-3"><div className="text-2xl font-extrabold leading-none">{v}<span className="ml-1.5 text-sm font-bold text-suave">{pc(v, perfilAno.total)}%</span></div><div className="mt-1 text-sm text-suave">{t}</div></div>
+        ))}
+      </div>
+
       <h2 className="mb-3 mt-8 border-b-2 border-detalhe pb-1.5 text-xl font-extrabold">Redes e inscrições</h2>
       <div className="flex flex-col gap-6 rounded-2xl border border-borda bg-white p-4 print:break-inside-avoid md:flex-row md:items-start">
         <div className="flex flex-col items-center gap-2 md:w-1/2">
@@ -173,8 +201,8 @@ export default function RelatorioAnual() {
       <h2 className="mb-3 mt-8 border-b-2 border-detalhe pb-1.5 text-xl font-extrabold">Comparativo das edições</h2>
       <div className="overflow-x-auto rounded-2xl border border-borda bg-white print:overflow-visible">
         <table className="w-full border-collapse text-sm">
-          <thead><tr className="bg-marca-clara text-left"><th className="px-3 py-2">Edição</th><th className="px-3 py-2">Período</th><th className="px-3 py-2 text-right">Encontristas</th><th className="px-3 py-2 text-right">Equipe</th><th className="px-3 py-2 text-right">Batizados</th><th className="px-3 py-2 text-right">Decisões</th></tr></thead>
-          <tbody>{porEd.map((x) => <tr key={x.e.id} className="border-t border-borda print:break-inside-avoid"><td className="px-3 py-1.5"><b>{x.e.nome}</b><div className="text-xs text-suave">{descricaoEd(x.e)}</div></td><td className="px-3 py-1.5">{dmy(x.e.data_ini)}</td><td className="px-3 py-1.5 text-right">{x.enc}</td><td className="px-3 py-1.5 text-right">{x.equipe}</td><td className="px-3 py-1.5 text-right">{x.bat}</td><td className="px-3 py-1.5 text-right">{x.dec}</td></tr>)}</tbody>
+          <thead><tr className="bg-marca-clara text-left"><th className="px-3 py-2">Edição</th><th className="px-3 py-2">Período</th><th className="px-3 py-2 text-right">Encontristas</th><th className="px-3 py-2 text-right">Equipe</th><th className="px-3 py-2 text-right">Batizados</th><th className="px-3 py-2 text-right">Não batiz.</th><th className="px-3 py-2 text-right">Em célula</th><th className="px-3 py-2 text-right">Sem célula</th><th className="px-3 py-2 text-right">Sem rede</th><th className="px-3 py-2 text-right">Decisões</th></tr></thead>
+          <tbody>{porEd.map((x) => <tr key={x.e.id} className="border-t border-borda print:break-inside-avoid"><td className="px-3 py-1.5"><b>{x.e.nome}</b><div className="text-xs text-suave">{descricaoEd(x.e)}</div></td><td className="px-3 py-1.5">{dmy(x.e.data_ini)}</td><td className="px-3 py-1.5 text-right">{x.enc}</td><td className="px-3 py-1.5 text-right">{x.equipe}</td><td className="px-3 py-1.5 text-right">{x.p.bat}</td><td className="px-3 py-1.5 text-right">{x.p.nbat}</td><td className="px-3 py-1.5 text-right">{x.p.cel}</td><td className="px-3 py-1.5 text-right">{x.p.scel}</td><td className="px-3 py-1.5 text-right">{x.p.srede}</td><td className="px-3 py-1.5 text-right">{x.dec}</td></tr>)}</tbody>
         </table>
       </div>
     </div>

@@ -7,12 +7,15 @@ import { podeVerFicha } from "@/lib/perm";
 import { descricaoEd, temaDe } from "@/lib/cores";
 import { useAuth, useAviso, useEdicao } from "@/components/provedores";
 import { LinhaTempo, Pizza, corDaRede } from "@/components/graficos";
+import { perfilDe, pc } from "@/lib/perfil";
+import { slideInscricoes, slidePerfil, slidePessoas, slideRedes, type Deck } from "@/lib/slidesVida";
 import { fmtDia, fmtDiaAno, resumoInscricoes } from "@/lib/inscricoes";
 import { Botao, Carregando, Chip, Titulo, Vazio } from "@/components/ui";
 
+type Esp = { batizado: boolean | null; rede: string | null; igreja: string | null; em_celula: boolean | null };
 type Enc = { id: string; edicao_id: string; nome: string; data_inscricao: string | null; categoria: string | null; sexo: string | null; cancelada: boolean;
   encontrista_saude: { tem_necessidade: boolean } | { tem_necessidade: boolean }[] | null;
-  encontrista_espiritual: { batizado: boolean | null; rede: string | null } | { batizado: boolean | null; rede: string | null }[] | null };
+  encontrista_espiritual: Esp | Esp[] | null };
 type Dec = { edicao_id: string; encontrista_id: string; botao: string; criado_em: string; por: string | null };
 const um = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? v[0] ?? null : v ?? null);
 const conta = <T,>(l: T[], f: (x: T) => string) => { const m = new Map<string, number>(); l.forEach((x) => { const k = f(x) || "Não informado"; m.set(k, (m.get(k) ?? 0) + 1); }); return Array.from(m.entries()).sort((a, b) => b[1] - a[1]); };
@@ -24,7 +27,7 @@ export default function Relatorio() {
   const itens = useLista<Item>("itens", "*", "nome");
   const envios = useLista<Envio>("envios");
   const decs = useLista<Dec>("decisoes");
-  const encs = useLista<Enc>("encontristas", "id, edicao_id, nome, data_inscricao, categoria, sexo, cancelada, encontrista_saude(tem_necessidade), encontrista_espiritual(batizado, rede)", "nome");
+  const encs = useLista<Enc>("encontristas", "id, edicao_id, nome, data_inscricao, categoria, sexo, cancelada, encontrista_saude(tem_necessidade), encontrista_espiritual(batizado, rede, igreja, em_celula)", "nome");
   const [sec, setSec] = useState({ materiais: true, pessoas: true, decisoes: true });
   const [nomes, setNomes] = useState(false);
   const admin = podeVerFicha(acesso);
@@ -54,6 +57,7 @@ export default function Relatorio() {
   const saude = ativos.filter((e) => um(e.encontrista_saude)?.tem_necessidade).length;
   const porBotao = conta(dec, (d) => d.botao);
   const insc = resumoInscricoes(principais.map((e) => e.data_inscricao));
+  const perfil = perfilDe(principais.map((e) => um(e.encontrista_espiritual)));
   const redes2 = conta(principais, (e) => um(e.encontrista_espiritual)?.rede ?? "").map(([a, b]) => [a || "Sem rede", b] as [string, number]);
 
   async function excel() {
@@ -66,6 +70,7 @@ export default function Relatorio() {
     if (sec.pessoas && admin) {
       add("Pessoas", [["Indicador", "Valor"], ["Encontristas", principais.length], ["Equipe", equipe], ["Cancelados", pessoas.length - ativos.length], ["Batizados", batizados], ["Necessidade de saúde", saude],
         [], ["Rede", "Encontristas"], ...conta(principais, (e) => um(e.encontrista_espiritual)?.rede ?? ""), [], ["Sexo", "Encontristas"], ...conta(principais, (e) => e.sexo ?? "")]);
+      add("Perfil espiritual", [["Indicador", "Pessoas", "% dos encontristas"], ["Batizados", perfil.bat, pc(perfil.bat, perfil.total)], ["Não batizados", perfil.nbat, pc(perfil.nbat, perfil.total)], ["Em célula", perfil.cel, pc(perfil.cel, perfil.total)], ["Sem célula", perfil.scel, pc(perfil.scel, perfil.total)], ["Com igreja", perfil.igr, pc(perfil.igr, perfil.total)], ["Sem igreja", perfil.sigr, pc(perfil.sigr, perfil.total)], ["Com rede", perfil.comRede, pc(perfil.comRede, perfil.total)], ["Sem rede", perfil.srede, pc(perfil.srede, perfil.total)]]);
       if (insc.comData > 0) add("Inscrições", [["Mês", "Inscrições"], ...insc.meses.map((m) => [m.rotulo, m.n]), [], ["Dia", "Inscrições"], ...insc.dias.map((d) => [fmtDia(d.data) + "/" + d.chave.slice(0, 4), d.n])]);
       if (nomes) add("Lista nominal", [["Nome", "Categoria", "Rede"], ...ativos.map((e) => [e.nome, e.categoria ?? "", um(e.encontrista_espiritual)?.rede ?? ""])]);
     }
@@ -162,34 +167,14 @@ export default function Relatorio() {
         }
       }
     }
-    // ---- pessoas
+    // ---- pessoas, perfil espiritual, redes e inscrições (peças compartilhadas em slidesVida)
     if (sec.pessoas && admin) {
-      const sl = base(String(n++).padStart(2, "0"), "Pessoas", "Quem esteve conosco", "Encontristas e equipe");
-      [[principais.length, "encontristas"], [equipe, "equipe"], [batizados, "batizados"], [saude, "com necessidade de saúde"]].forEach(([v, rot], i) => dado(sl, v as number, rot as string, 0.9 + i * 3.0, 2.1, 3.0, 44));
-      const redes = conta(principais, (e) => um(e.encontrista_espiritual)?.rede ?? "").map(([a, b]) => [a || "Sem rede", b] as [string, number]);
-      const sexos = conta(principais, (e) => e.sexo ?? "").filter(([a]) => a);
-      const totS = sexos.reduce((a, x) => a + x[1], 0) || 1;
-      if (redes.length) { sl.addText("POR REDE", { x: 0.9, y: 4.0, w: 4, h: 0.3, fontFace: COR_TXT, fontSize: 11, bold: true, color: COR.det, charSpacing: 5 }); barras(sl, redes.sort((a, b) => b[1] - a[1]), 0.9, 4.35, 7.4, 2.6); }
-      if (sexos.length) {
-        sl.addText("POR SEXO", { x: 9.1, y: 4.0, w: 4, h: 0.3, fontFace: COR_TXT, fontSize: 11, bold: true, color: COR.det, charSpacing: 5 });
-        sexos.slice(0, 2).forEach(([nome, v], i) => dado(sl, `${Math.round((v / totS) * 100)}%`, nome, 9.1 + i * 2.0, 4.4, 2.0, 40, i ? COR.det : COR.marca));
-      }
-    }
-    // ---- redes (pizza) e inscrições (linha)
-    if (sec.pessoas && admin && (redes2.length || insc.comData)) {
-      const sl = base(String(n++).padStart(2, "0"), "Perfil", "Redes e inscrições", "De onde vêm os encontristas e quando se inscreveram");
-      if (redes2.length) {
-        sl.addText("REDES", { x: 0.9, y: 2.0, w: 4, h: 0.3, fontFace: COR_TXT, fontSize: 11, bold: true, color: COR.det, charSpacing: 5 });
-        sl.addChart("doughnut" as never, [{ name: "Redes", labels: redes2.map((x) => x[0]), values: redes2.map((x) => x[1]) }],
-          { x: 0.7, y: 2.3, w: 5.4, h: 4.6, holeSize: 55, chartColors: redes2.map((x) => corDaRede(x[0]).replace("#", "")), showLegend: true, legendPos: "r", legendFontSize: 12, legendFontFace: COR_TXT, showPercent: true, showValue: false, dataLabelColor: "FFFFFF", dataLabelFontSize: 11, dataBorder: { pt: 1.5, color: "FFFFFF" } } as never);
-      }
-      if (insc.comData) {
-        sl.addText(`INSCRIÇÕES DESTA EDIÇÃO  ·  ${insc.ini ? fmtDiaAno(insc.ini) : ""} A ${insc.fim ? fmtDiaAno(insc.fim) : ""}`, { x: 6.6, y: 2.0, w: 6.4, h: 0.3, fontFace: COR_TXT, fontSize: 11, bold: true, color: COR.det, charSpacing: 5 });
-        let ac = 0;
-        sl.addChart("line" as never, [{ name: "Inscrições", labels: insc.dias.map((d) => fmtDia(d.data)), values: insc.dias.map((d) => (ac += d.n)) }],
-          { x: 6.5, y: 2.3, w: 6.3, h: 3.6, chartColors: [COR.marca], lineSize: 3, lineDataSymbolSize: 6, catAxisLabelFontSize: 10, valAxisLabelFontSize: 10, catAxisLabelColor: COR.suave, valAxisLabelColor: COR.suave, valGridLine: { color: COR.linha, size: 0.5 }, showLegend: false } as never);
-        sl.addText(`Mês com mais inscrições: ${insc.mesTopNome} (${insc.mesTop?.n})   ·   Dia de pico: ${insc.pico ? fmtDia(insc.pico.data) : "–"} (${insc.pico?.n})`, { x: 6.6, y: 6.05, w: 6.2, h: 0.7, fontFace: COR_TXT, fontSize: 13, color: COR.esc, valign: "top" });
-      }
+      const d: Deck = { pp, COR, TIT, TXT: COR_TXT, base };
+      const sexos = conta(principais, (e) => e.sexo ?? "").filter(([a]) => a) as [string, number][];
+      slidePessoas(d, String(n++).padStart(2, "0"), { cards: [[principais.length, "encontristas"], [equipe, "pessoas na equipe"], [batizados, "encontristas batizados"], [saude, "com necessidade de saúde"]], sexos, sub: "Encontristas e equipe" });
+      if (principais.length) slidePerfil(d, String(n++).padStart(2, "0"), perfil, `${principais.length} encontristas · ${ed!.nome}`);
+      if (redes2.length) slideRedes(d, String(n++).padStart(2, "0"), redes2.sort((a, b) => b[1] - a[1]), "A rede de cada encontrista, na própria cor");
+      if (insc.comData) slideInscricoes(d, String(n++).padStart(2, "0"), insc, `${ed!.nome} · do primeiro ao último dia de inscrição`, fmtDia);
     }
     // ---- decisões
     if (sec.decisoes) {
@@ -290,6 +275,12 @@ export default function Relatorio() {
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <div><h3 className="mb-2 text-base font-extrabold">Por rede</h3><Tab cab={["Rede", "Encontristas"]} linhas={conta(principais, (e) => um(e.encontrista_espiritual)?.rede ?? "")} /></div>
             <div><h3 className="mb-2 text-base font-extrabold">Por sexo</h3><Tab cab={["Sexo", "Encontristas"]} linhas={conta(principais, (e) => e.sexo ?? "")} /></div>
+          </div>
+          <h3 className="mb-2 mt-5 text-base font-extrabold">Perfil espiritual dos encontristas</h3>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 print:break-inside-avoid">
+            {[["Batizados", perfil.bat], ["Não batizados", perfil.nbat], ["Em célula", perfil.cel], ["Sem célula", perfil.scel], ["Com igreja", perfil.igr], ["Sem igreja", perfil.sigr], ["Com rede", perfil.comRede], ["Sem rede", perfil.srede]].map(([t, v]) => (
+              <div key={t as string} className="rounded-2xl border border-borda bg-white p-3"><div className="text-2xl font-extrabold leading-none">{v as number}<span className="ml-1.5 text-sm font-bold text-suave">{pc(v as number, perfil.total)}%</span></div><div className="mt-1 text-sm text-suave">{t as string}</div></div>
+            ))}
           </div>
           <div className="mt-4 flex flex-col gap-4 rounded-2xl border border-borda bg-white p-4 print:break-inside-avoid md:flex-row md:items-center">
             <div className="flex flex-col items-center gap-2 md:w-1/2">

@@ -67,6 +67,16 @@ function Detalhe({ l, onFechar, onSalvo }: { l: Linha; onFechar: () => void; onS
   const edita = acesso?.perfil !== "secretaria1"; // Secretaria 1 só lê a saúde
   const [obs, setObs] = useState(l.observacao ?? "");
   const [salvando, setSalvando] = useState(false);
+  const [confirma, setConfirma] = useState(false);
+  const [excluindo, setExcluindo] = useState(false);
+  async function excluir() {
+    if (!confirma) { setConfirma(true); return; }
+    setExcluindo(true);
+    const { error } = await supabase.rpc("excluir_da_saude", { p_id: l.id });
+    setExcluindo(false);
+    if (error) { aviso(msgErro(error)); return; }
+    aviso("Pessoa retirada da lista de saúde."); onSalvo();
+  }
   async function salvar() {
     setSalvando(true);
     const { error } = await supabase.rpc("salvar_obs_saude", { p_id: l.id, p_obs: obs });
@@ -83,7 +93,11 @@ function Detalhe({ l, onFechar, onSalvo }: { l: Linha; onFechar: () => void; onS
         <label className="flex flex-col gap-1.5 text-sm font-bold">Observação da equipe de saúde
           <textarea value={obs} onChange={(e) => setObs(e.target.value)} rows={3} className="rounded-2xl border border-borda bg-white p-3 text-base font-normal outline-none focus:border-marca" placeholder="Ex.: medicação guardada com a enfermeira" />
         </label>
-        <Botao onClick={salvar} disabled={salvando || obs === (l.observacao ?? "")} bloco>Salvar observação</Botao></>}
+        <div className="flex gap-2">
+          <Botao onClick={salvar} disabled={salvando || excluindo || obs === (l.observacao ?? "")} className="flex-1">Salvar observação</Botao>
+          <Botao v="sec" onClick={excluir} disabled={salvando || excluindo} className={`!min-h-12 ${confirma ? "!border-alerta !bg-alerta !text-white" : "!text-alerta"}`}>{confirma ? "Confirmar" : "Excluir"}</Botao>
+        </div>
+        {confirma && <p className="m-0 text-sm text-suave">Toque em “Confirmar” para tirar {l.nome.split(" ")[0]} da lista de saúde. A ficha e o quarto não mudam.</p>}</>}
       </div>
     </Janela>
   );
