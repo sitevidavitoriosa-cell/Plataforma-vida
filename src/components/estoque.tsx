@@ -151,9 +151,9 @@ function Geral({ itens, envios, onAbrir }: { itens: Item[]; envios: Envio[]; onA
             </button>
             {aberto && ([["Consumíveis", "acabam com o uso", cons], ["Não consumíveis", "voltam depois", ncons]] as const).map(([t, d, l]) => l.length > 0 && (
               <div key={t}>
-                <div className="flex items-center justify-between gap-2 border-t border-borda bg-fundo px-4 py-2">
-                  <span className="text-[13px] font-extrabold uppercase tracking-wide text-marca">{t} · {l.length}</span>
-                  <span className="text-xs text-suave">{d}{l.filter(emFalta).length > 0 ? ` · ${l.filter(emFalta).length} ${t === "Consumíveis" ? "p/ comprar" : "em falta"}` : ""}</span>
+                <div className={cx("flex items-center justify-between gap-2 border-l-[6px] px-4 py-3", t === "Consumíveis" ? "border-l-[#d97706] bg-[#fff4e0]" : "border-l-marca bg-marca-clara")}>
+                  <span className={cx("text-[17px] font-extrabold uppercase tracking-wide", t === "Consumíveis" ? "text-[#9a4f00]" : "text-marca-esc")}>{t} · {l.length}</span>
+                  <span className="text-right text-xs font-bold text-suave">{d}{l.filter(emFalta).length > 0 ? ` · ${l.filter(emFalta).length} ${t === "Consumíveis" ? "p/ comprar" : "em falta"}` : ""}</span>
                 </div>
                 {l.map(linha)}
               </div>
