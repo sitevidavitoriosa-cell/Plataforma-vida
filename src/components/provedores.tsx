@@ -5,6 +5,8 @@ import { supabase } from "@/lib/supabase";
 import type { Acesso } from "@/lib/perm";
 import type { Edicao } from "@/lib/tipos";
 import { temaDe } from "@/lib/cores";
+import { apagarTudoOffline, guardar, ler, semRede } from "@/lib/offline";
+import { AvisoSemInternet, RegistrarSW } from "@/components/offline";
 
 type Ctx = { carregando: boolean; sessao: Session | null; acesso: Acesso | null; sair: () => Promise<void>; recarregar: () => Promise<void> };
 const AuthCtx = createContext<Ctx>({ carregando: true, sessao: null, acesso: null, sair: async () => {}, recarregar: async () => {} });
@@ -24,8 +26,9 @@ function EdicaoProvider({ children }: { children: React.ReactNode }) {
   const [carregou, setCarregou] = useState(false);
 
   const recarregar = useCallback(async () => {
-    const { data } = await supabase.from("edicoes").select("*").order("data_ini", { ascending: false });
-    setEds((data as Edicao[] | null) ?? []);
+    const { data, error } = await supabase.from("edicoes").select("*").order("data_ini", { ascending: false });
+    if (error && semRede(error.message)) { setEds(ler<Edicao[]>("vv-off-eds")?.dados ?? []); }
+    else { setEds((data as Edicao[] | null) ?? []); if (!error) guardar("vv-off-eds", (data as Edicao[] | null) ?? []); }
     setCarregou(true);
   }, []);
   useEffect(() => { if (acesso) recarregar(); }, [acesso, recarregar]);
@@ -58,14 +61,19 @@ export function Provedores({ children }: { children: React.ReactNode }) {
 
   const carregarAcesso = useCallback(async (s: Session | null) => {
     if (!s) { setAcesso(null); return; }
-    const { data } = await supabase.rpc("meu_acesso");
+    const { data, error } = await supabase.rpc("meu_acesso");
+    if (error && semRede(error.message)) { setAcesso(ler<Acesso>("vv-off-acesso")?.dados ?? null); return; }
     setAcesso((data as Acesso | null) ?? null);
+    if (data) guardar("vv-off-acesso", data);
   }, []);
 
   const recarregar = useCallback(async () => {
     const { data } = await supabase.auth.getSession();
-    setSessao(data.session);
-    await carregarAcesso(data.session);
+    let sess = data.session;
+    // sem internet e sem conseguir renovar o login: usa o último acesso guardado para abrir o app
+    if (!sess && semRede()) { const off = ler<Acesso>("vv-off-acesso"); if (off) sess = { user: { email: off.dados.email } } as unknown as Session; }
+    setSessao(sess);
+    await carregarAcesso(sess);
   }, [carregarAcesso]);
 
   useEffect(() => {
@@ -79,11 +87,13 @@ export function Provedores({ children }: { children: React.ReactNode }) {
     return () => { vivo = false; sub.subscription.unsubscribe(); };
   }, [recarregar, carregarAcesso]);
 
-  const sair = useCallback(async () => { await supabase.auth.signOut(); setAcesso(null); setSessao(null); }, []);
+  const sair = useCallback(async () => { apagarTudoOffline(); await supabase.auth.signOut(); setAcesso(null); setSessao(null); }, []);
 
   return (
     <AuthCtx.Provider value={{ carregando, sessao, acesso, sair, recarregar }}>
       <ToastCtx.Provider value={aviso}>
+        <RegistrarSW />
+        <AvisoSemInternet />
         <EdicaoProvider>{children}</EdicaoProvider>
         {msg && (
           <div role="status" className="fixed left-1/2 z-[100] max-w-[92vw] -translate-x-1/2 rounded-2xl bg-texto px-4 py-3 text-[15px] font-semibold text-white shadow-lg" style={{ bottom: "calc(env(safe-area-inset-bottom) + 92px)" }}>

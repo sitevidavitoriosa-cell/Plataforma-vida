@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { msgErro, useLista } from "@/lib/dados";
 import type { Equipe, Item, Pessoa } from "@/lib/tipos";
 import { PERFIS, podeVer, type Perfil } from "@/lib/perm";
+import { RegistroAtividades } from "@/components/auditoria";
 import { useAuth, useAviso, useEdicao } from "@/components/provedores";
 import { Botao, Campo, Carregando, Cartao, Chip, Icone, Janela, Selo, Seletor, Titulo, Vazio, cx } from "@/components/ui";
 
@@ -14,6 +15,7 @@ export default function Pessoas() {
   const equipes = useLista<Equipe>("equipes", "*", "nome");
   const itens = useLista<Item>("itens", "setor");
   const [aba, setAba] = useState<"pessoas" | "equipes">("pessoas");
+  const [registro, setRegistro] = useState(false);
   const [edit, setEdit] = useState<Pessoa | "nova" | null>(null);
   const [eq, setEq] = useState<Equipe | "nova" | null>(null);
   useEffect(() => { const q = new URLSearchParams(window.location.search); if (q.get("aba") === "equipes") { setAba("equipes"); if (q.get("nova")) setEq("nova"); } }, []);
@@ -33,7 +35,8 @@ export default function Pessoas() {
 
   return (
     <div>
-      <Titulo direita={<Botao className="!min-h-11" onClick={() => (aba === "pessoas" ? setEdit("nova") : setEq("nova"))}><Icone n="mais1" tam={18} />{aba === "pessoas" ? "Convidar" : "Nova equipe"}</Botao>}>Pessoas</Titulo>
+      <Titulo direita={<div className="flex gap-2"><Botao v="sec" className="!min-h-11" onClick={() => setRegistro(true)}>Registro de atividades</Botao><Botao className="!min-h-11" onClick={() => (aba === "pessoas" ? setEdit("nova") : setEq("nova"))}><Icone n="mais1" tam={18} />{aba === "pessoas" ? "Convidar" : "Nova equipe"}</Botao></div>}>Pessoas</Titulo>
+      {registro && <RegistroAtividades onFechar={() => setRegistro(false)} />}
       <div className="flex gap-2 pb-3">
         <Chip ativo={aba === "pessoas"} onClick={() => setAba("pessoas")}>Pessoas</Chip>
         <Chip ativo={aba === "equipes"} onClick={() => setAba("equipes")}>Equipes</Chip>

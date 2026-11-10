@@ -13,6 +13,8 @@ export default {
     ];
     return [
       { source: "/:path*", headers: base },
+      // o service worker precisa ser sempre a versão mais nova
+      { source: "/sw.js", headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }] },
       // páginas dos links secretos (decisões e anjo do quarto): nunca guardar em cache
       { source: "/q/:token", headers: [{ key: "Cache-Control", value: "no-store" }] },
       { source: "/r/:token", headers: [{ key: "Cache-Control", value: "no-store" }] },

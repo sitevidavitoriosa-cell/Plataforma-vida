@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { guardar, ler, quandoTxt, semRede } from "@/lib/offline";
 import { ContatoLinha } from "@/components/contato";
 
 type P = {
@@ -21,9 +22,16 @@ export default function Quarto() {
   const [falhou, setFalhou] = useState(false);
   const [aberto, setAberto] = useState<{ p: P; quarto: string } | null>(null);
   const [busca, setBusca] = useState("");
+  const [copiaDe, setCopiaDe] = useState<number | null>(null);
 
   useEffect(() => {
-    supabase.rpc("quartos_edicao_info", { p_token: token }).then(({ data, error }) => { if (error) setFalhou(true); else setInfo(data as Info); });
+    const chave = "vv-q-" + token;
+    supabase.rpc("quartos_edicao_info", { p_token: token }).then(({ data, error }) => {
+      if (error) {
+        const c = semRede(error.message) ? ler<Info>(chave) : null;
+        if (c) { setInfo(c.dados); setCopiaDe(c.quando); } else setFalhou(true);
+      } else { setInfo(data as Info); if ((data as Info)?.ok) guardar(chave, data); }
+    });
   }, [token]);
 
   const casca = (c: React.ReactNode) => (
@@ -83,6 +91,7 @@ export default function Quarto() {
     .filter((x) => !nq || x.pessoas.length > 0 || limpa(x.q.nome).includes(nq));
   return casca(
     <>
+      {copiaDe && <div role="status" className="mb-3 rounded-2xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-bold text-amber-900">Sem internet: mostrando a cópia de {quandoTxt(copiaDe)}. Pode estar desatualizada.</div>}
       <p className="mb-3 mt-0 text-sm text-suave">{quartos.length} quarto{quartos.length === 1 ? "" : "s"}. Procure um nome para saber em que quarto a pessoa está e toque nele para ver o perfil. Informação reservada: não compartilhe este link.</p>
       <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar nome ou quarto" aria-label="Buscar" className="mb-4 min-h-12 w-full rounded-2xl border border-borda bg-white px-4 outline-none focus:border-marca" />
       {quartos.length === 0 && <p className="text-suave">Ainda não há quartos criados.</p>}

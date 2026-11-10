@@ -45,3 +45,9 @@ O site antigo (arquivo único, Firebase) está em `legado/index.html` e serve s�
 ## Decisões e Financeiro
 - Decisões (`/decisoes`): botões por edição (`decisoes_cfg`), lista por `decisoes_lista`, link de registro em `registro_links`. Página pública sem login em `/r/[token]` (só `link_info` e `registrar_decisao`; nomes dos encontristas, sem telefone/endereço). Gerar novo link desliga o anterior.
 - Financeiro (`/financeiro`): lançamentos por edição (entrada/saída), categoria, setor e comprovante no bucket privado `comprovantes`; exportação em Excel. Acesso: admin, coordenação, financeiro.
+
+## Segurança, LGPD e uso offline
+- **Auditoria** (migração 0030): tabela `auditoria` alimentada por gatilhos (`auditar_linha`, `auditar_lote_*`); só admin lê, em Pessoas › "Registro de atividades" (`src/components/auditoria.tsx`). Funções de gatilho não são executáveis por anon/authenticated (0031).
+- **LGPD**: em Edições, "Limpeza de dados" apaga/anonimiza saúde e dados pessoais de uma edição encerrada (`dados_limpos_em`; passa pelo bloqueio da edição fechada com `vv.lgpd`).
+- **Autenticação em dois passos dos admins**: decidido NÃO ativar por enquanto. Repositório GitHub deve ser privado e "Leaked password protection" ligada no Supabase (ações manuais).
+- **PWA/offline**: `public/manifest.webmanifest`, `public/sw.js` (estáticos em cache; páginas rede-primeiro), `src/components/offline.tsx` (registro do SW, aviso sem internet), `src/lib/offline.ts` (cache em localStorage com validade de 5 dias, apagado ao sair). Saúde: opção "Guardar esta lista neste aparelho" (`vv-saude-off`, `vv-saude-<ed>`); `/q/[token]` guarda `vv-q-<token>`; Provedores guarda `acesso`/edições para abrir sem rede.

@@ -5,6 +5,7 @@ import { msgErro } from "@/lib/dados";
 import { norm } from "@/lib/tipos";
 import { ContatoLinha } from "@/components/contato";
 import { useAuth, useAviso, useEdicao } from "@/components/provedores";
+import { apagar, guardar, ler, quandoTxt, semRede } from "@/lib/offline";
 import { LinkQuartosBotao } from "@/components/linkQuartos";
 import { excelSaude, pdfSaude, tagsDe, TAGS, type LinhaSaude } from "@/lib/saudePdf";
 import { Botao, Carregando, Cartao, Chip, Icone, Janela, Selo, Vazio } from "@/components/ui";
@@ -19,11 +20,27 @@ export function Saude() {
   const [tag, setTag] = useState("");
   const [aberta, setAberta] = useState<Linha | null>(null);
 
+  const [guardaOff, setGuardaOff] = useState(false);
+  const [copiaDe, setCopiaDe] = useState<number | null>(null); // dados vindos da cópia do aparelho (sem internet)
+  useEffect(() => { try { setGuardaOff(localStorage.getItem("vv-saude-off") === "1"); } catch {} }, []);
+  function alternarOff() {
+    const novo = !guardaOff; setGuardaOff(novo);
+    try { if (novo) localStorage.setItem("vv-saude-off", "1"); else { localStorage.removeItem("vv-saude-off"); if (ed) apagar("vv-saude-" + ed.id); } } catch {}
+    if (novo && ed && dados) guardar("vv-saude-" + ed.id, dados);
+    aviso(novo ? "Lista de saúde guardada neste aparelho por 5 dias." : "Cópia apagada deste aparelho.");
+  }
+
   const carregar = useCallback(async () => {
     if (!ed) return;
     const { data, error } = await supabase.rpc("saude_lista", { p_edicao: ed.id });
-    if (error) { aviso(msgErro(error)); setDados([]); return; }
+    if (error) {
+      const c = semRede(error.message) ? ler<Linha[]>("vv-saude-" + ed.id) : null;
+      if (c) { setDados(c.dados); setCopiaDe(c.quando); return; }
+      aviso(semRede(error.message) ? "Sem internet e sem cópia guardada neste aparelho." : msgErro(error)); setDados([]); return;
+    }
+    setCopiaDe(null);
     setDados((data as Linha[]) ?? []);
+    try { if (localStorage.getItem("vv-saude-off") === "1") guardar("vv-saude-" + ed.id, data ?? []); } catch {}
   }, [ed, aviso]);
   useEffect(() => { setDados(null); carregar(); }, [carregar]);
 
@@ -51,6 +68,8 @@ export function Saude() {
         <Botao v="sec" onClick={() => exportar("xlsx")} disabled={!!gerando} className="!min-h-11">{gerando === "xlsx" ? "Gerando…" : "Planilha (Excel)"}</Botao>
         <LinkQuartosBotao edicaoId={ed.id} edicaoNome={ed.nome} />
       </div>
+      {copiaDe && <div role="status" className="rounded-2xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-bold text-amber-900">Sem internet: mostrando a cópia guardada em {quandoTxt(copiaDe)}. Pode estar desatualizada.</div>}
+      <label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={guardaOff} onChange={alternarOff} className="h-5 w-5" /> Guardar esta lista neste aparelho para usar sem internet (apaga sozinha em 5 dias ou ao sair da conta)</label>
       <p className="m-0 text-sm text-suave">{dados.length} {dados.length === 1 ? "pessoa com necessidade" : "pessoas com necessidade"} em {ed.nome}. O PDF sai pronto para imprimir, com quarto, necessidade e contatos de emergência.</p>
       <label className="flex min-h-12 items-center gap-2 rounded-2xl border border-borda bg-white px-3">
         <Icone n="busca" tam={20} />

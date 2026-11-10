@@ -5,8 +5,11 @@ import { Provedores } from "@/components/provedores";
 export const metadata: Metadata = {
   title: "Vida Vitoriosa · Plataforma de Gestão",
   description: "Estoque, edições, financeiro e decisões do Vida Vitoriosa.",
+  manifest: "/manifest.webmanifest",
+  icons: { icon: "/icons/icon-192.png", apple: "/icons/apple-touch-icon.png" },
+  appleWebApp: { capable: true, title: "Vida Vitoriosa", statusBarStyle: "default" },
 };
-export const viewport: Viewport = { width: "device-width", initialScale: 1, maximumScale: 1, themeColor: "#1f6f5c" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, maximumScale: 1, themeColor: "#16294d" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

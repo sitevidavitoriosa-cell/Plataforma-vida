@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { msgErro, useLista } from "@/lib/dados";
 import { dmy, fmtN, num, type Edicao, type Envio } from "@/lib/tipos";
 import { podeEscrever } from "@/lib/perm";
-import { CORES, ESCOLHAS, NOMES_COR, TIPOS, bolinha, descricaoEd, escolhaDe, nomeAuto } from "@/lib/cores";
+import { CORES, CORES_TIPO, ESCOLHAS, NOMES_COR, TIPOS, bolinha, descricaoEd, escolhaDe, nomeAuto } from "@/lib/cores";
 import { useAuth, useAviso, useEdicao } from "@/components/provedores";
 import { Botao, Campo, Carregando, Cartao, Icone, Janela, Selo, Titulo, Vazio } from "@/components/ui";
 
@@ -56,11 +56,37 @@ export default function Edicoes() {
                   <Botao v="sec" className="!min-h-11" onClick={() => setForm(e)}><Icone n="lapis" tam={16} />Editar</Botao>
                 </div>
               )}
+              {e.status === "fechada" && <LimpezaLgpd ed={e} admin={acesso?.perfil === "admin"} onFeito={eds.recarregar} />}
             </Cartao>
           );
         })}
       </div>
       {form && <FormEdicao ed={form === "nova" ? null : form} onFechar={() => setForm(null)} onSalvo={() => { eds.recarregar(); setForm(null); }} />}
+    </div>
+  );
+}
+
+/** LGPD: depois do retiro, o administrador apaga os dados sensíveis da edição (saúde, telefone, e-mail, endereço, CEP). Nome, rede e perfil espiritual ficam para os relatórios. */
+function LimpezaLgpd({ ed, admin, onFeito }: { ed: Edicao; admin: boolean; onFeito: () => void }) {
+  const aviso = useAviso();
+  const [confirma, setConfirma] = useState(false);
+  const [ocupado, setOcupado] = useState(false);
+  if (ed.dados_limpos_em) return <p className="m-0 rounded-2xl bg-fundo px-3 py-2 text-sm text-suave">Dados sensíveis apagados em {new Date(ed.dados_limpos_em).toLocaleDateString("pt-BR")}.</p>;
+  if (!admin) return null;
+  const velha = !!ed.data_fim && (Date.now() - new Date(ed.data_fim + "T12:00:00").getTime()) / 86400000 > 90;
+  async function limpar() {
+    if (!confirma) { setConfirma(true); return; }
+    setOcupado(true);
+    const { error } = await supabase.rpc("limpar_dados_sensiveis", { p_edicao: ed.id });
+    setOcupado(false); setConfirma(false);
+    if (error) { aviso(msgErro(error)); return; }
+    aviso("Dados sensíveis apagados. Os links dos quartos e das decisões foram desligados."); onFeito();
+  }
+  return (
+    <div className="flex flex-col gap-2 rounded-2xl border border-borda p-3">
+      {velha && <p className="m-0 text-sm font-bold text-alerta">Esta edição terminou há mais de 90 dias. Apague os dados sensíveis.</p>}
+      <p className="m-0 text-sm text-suave">Apaga saúde, contatos de emergência, telefone, e-mail, endereço e CEP dos encontristas desta edição. Nomes, rede e perfil espiritual ficam para os relatórios. Não dá para desfazer.</p>
+      <Botao v="sec" onClick={limpar} disabled={ocupado} className={`!min-h-11 ${confirma ? "!border-alerta !bg-alerta !text-white" : "!text-alerta"}`}>{ocupado ? "Apagando…" : confirma ? "Confirmar: apagar para sempre" : "Apagar dados sensíveis (LGPD)"}</Botao>
     </div>
   );
 }
@@ -98,7 +124,7 @@ function FormEdicao({ ed, onFechar, onSalvo }: { ed: Edicao | null; onFechar: ()
       <form onSubmit={salvar} className="flex flex-col gap-3.5">
         <Campo rotulo="Nome (preenchido sozinho)" value={f.nome} onChange={(e) => { setNomeManual(true); setF({ ...f, nome: e.target.value }); }} placeholder="Vida Roxa" />
         <div><div className="mb-1.5 text-sm font-bold">Edição</div><div className="flex flex-wrap gap-2">
-          {ESCOLHAS.map((k) => <button key={k} type="button" onClick={() => mudar({ esc: k, rede2: k === f.rede2 ? "" : f.rede2 })} className={`flex min-h-11 items-center gap-2 rounded-full border px-3.5 text-sm font-bold ${f.esc === k ? "border-texto bg-marca-clara" : "border-borda bg-white"}`}>{CORES[k] && <span className="h-4 w-4 rounded-full border border-borda" style={{ background: CORES[k].hex }} />}Vida {TIPOS[k] ?? k}</button>)}
+          {ESCOLHAS.map((k) => <button key={k} type="button" onClick={() => mudar({ esc: k, rede2: k === f.rede2 ? "" : f.rede2 })} className={`flex min-h-11 items-center gap-2 rounded-full border px-3.5 text-sm font-bold ${f.esc === k ? "border-texto bg-marca-clara" : "border-borda bg-white"}`}>{(CORES[k] ?? CORES_TIPO[k]) && <span className="h-4 w-4 rounded-full border border-borda" style={{ background: (CORES[k] ?? CORES_TIPO[k]).hex }} />}Vida {TIPOS[k] ?? k}</button>)}
         </div></div>
         {NOMES_COR.includes(f.esc) && (
           <div className="flex flex-col gap-2">
