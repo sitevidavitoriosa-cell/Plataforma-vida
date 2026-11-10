@@ -23,6 +23,10 @@ export function Icone({ n, tam = 22 }: { n: string; tam?: number }) {
     pasta: <path d="M3 6a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />,
     arquivo: <path d="M6 3h8l5 5v13H6zM14 3v5h5" />,
     baixar: <path d="M12 4v11M7 11l5 5 5-5M5 20h14" />,
+    imprimir: <path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2M7 14h10v7H7z" />,
+    compartilhar: <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />,
+    mover: <path d="M3 6a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 14h7M13 11l3 3-3 3" />,
+    estrela: <path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" />,
     alerta: <path d="M12 3l10 18H2zM12 10v5M12 18h.01" />,
   };
   return (

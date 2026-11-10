@@ -43,7 +43,7 @@ self.addEventListener("fetch", (e) => {
 
   // páginas: rede primeiro (sempre a versão nova); se a internet estiver ruim ou cair, a guardada
   if (req.mode === "navigate") {
-    if (url.pathname.startsWith("/r/")) return; // link público de decisões: nunca guardar
+    if (url.pathname.startsWith("/r/") || url.pathname.startsWith("/c/")) return; // links públicos (decisões, arquivos compartilhados): nunca guardar
     e.respondWith((async () => {
       const c = await caches.open(PAGINAS);
       try {
