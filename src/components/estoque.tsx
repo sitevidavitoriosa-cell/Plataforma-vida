@@ -18,9 +18,11 @@ export function Estoque({ setor }: { setor?: string }) {
   const todos = useLista<Item>("itens", "*", "nome");
   const envios = useLista<Envio>("envios");
   const equipes = useLista<Equipe>("equipes", "*", "nome");
-  const { eds: listaEd, ed } = useEdicao();
+  const { eds: listaEd, ed, todas } = useEdicao();
   const equipe = !!setor; // dentro de Equipes: só vê o que recebeu e informa o balanço; o estoque geral fica em /estoque
-  const [aba, setAba] = useState<Aba>(equipe ? "enviado" : "geral");
+  const [abaSalva, setAba] = useState<Aba>(equipe ? "enviado" : "geral");
+  // "Todas as edições" = lista mãe (geral). Dentro de uma edição: retirada da lista mãe e balanço na volta.
+  const aba: Aba = equipe ? (abaSalva === "geral" ? "enviado" : abaSalva) : todas ? "geral" : abaSalva === "geral" ? "enviado" : abaSalva;
   const [aberto, setAberto] = useState<Item | "novo" | null>(null);
   const [importando, setImportando] = useState(false);
 
@@ -42,13 +44,17 @@ export function Estoque({ setor }: { setor?: string }) {
 
   return (
     <div>
-      <div className="flex gap-2 overflow-x-auto pb-3">
-        {!equipe && <Chip ativo={aba === "geral"} onClick={() => trocaAba("geral")}>Geral</Chip>}
-        <Chip ativo={aba === "enviado"} onClick={() => trocaAba("enviado")}>{equipe ? "Material recebido" : "Enviado"}</Chip>
-        <Chip ativo={aba === "balanco"} onClick={() => trocaAba("balanco")}>Balanço</Chip>
-      </div>
+      {!equipe && todas && (
+        <p className="m-0 pb-3 text-sm text-suave"><b className="text-texto">Lista mãe</b> · é a base do retiro: compras e saldo de todas as edições. Cada edição retira daqui o que vai levar e, na volta, o que sobrou retorna para cá. Para retirar ou conferir, escolha uma edição no topo.</p>
+      )}
+      {(!todas || equipe) && (
+        <div className="flex gap-2 overflow-x-auto pb-3">
+          <Chip ativo={aba === "enviado"} onClick={() => trocaAba("enviado")}>{equipe ? "Material recebido" : "Retirada da lista mãe"}</Chip>
+          <Chip ativo={aba === "balanco"} onClick={() => trocaAba("balanco")}>Balanço (volta)</Chip>
+        </div>
+      )}
 
-      {aba !== "geral" && !ed && <Vazio>Crie uma edição em “Edições” para usar o enviado e o balanço.</Vazio>}
+      {aba !== "geral" && !ed && <Vazio>Crie uma edição em “Edições” para usar a retirada e o balanço.</Vazio>}
 
       {aba === "geral" && !setor && podeEscrever(acesso, "estoque") && (
         <div className="pb-3"><Botao v="sec" onClick={() => setImportando(true)} className="!min-h-11">Importar itens da planilha (Excel)</Botao></div>
@@ -75,33 +81,54 @@ export function Estoque({ setor }: { setor?: string }) {
   );
 }
 
-/* ---------------- Geral ---------------- */
+/* ---------------- Geral (lista mãe) ---------------- */
 function Geral({ itens, envios, onAbrir }: { itens: Item[]; envios: Envio[]; onAbrir: (i: Item) => void }) {
+  const aviso = useAviso();
   const fora = (id: string) => envios.filter((x) => x.item_id === id && x.aplicado == null).reduce((s, x) => s + Number(x.env), 0);
   const [q, setQ] = useState("");
+  const [tipo, setTipo] = useState<"cons" | "ncons">("cons");
   const [soFalta, setSoFalta] = useState(false);
   const [abertos, setAbertos] = useState<Record<string, boolean>>({});
   const nq = norm(q);
-  const filtrados = itens.filter((i) => (!soFalta || emFalta(i)) && (!nq || norm(i.nome + " " + i.setor).includes(nq)));
+  const doTipo = itens.filter((i) => (tipo === "cons" ? i.cons : !i.cons));
+  const filtrados = doTipo.filter((i) => (!soFalta || emFalta(i)) && (!nq || norm(i.nome + " " + i.setor).includes(nq)));
   const grupos = useMemo(() => {
     const m = new Map<string, Item[]>();
     filtrados.forEach((i) => { if (!m.has(i.setor)) m.set(i.setor, []); m.get(i.setor)!.push(i); });
     return Array.from(m.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   }, [filtrados]);
-  const nFalta = itens.filter(emFalta).length;
+  const nFalta = doTipo.filter(emFalta).length;
+  const faltaCons = itens.filter((i) => i.cons && emFalta(i)).length;
+  const faltaNao = itens.filter((i) => !i.cons && emFalta(i)).length;
   const forcarAberto = !!nq || soFalta;
+
+  async function copiarCompras() {
+    const lista = itens.filter((i) => i.cons && emFalta(i)).sort((a, b) => a.setor.localeCompare(b.setor) || a.nome.localeCompare(b.nome));
+    const linhas = lista.map((i) => `• ${i.nome} (${i.setor}): comprar ${fmtN(Math.max(0, i.min - i.qtd))} ${i.un} — tem ${fmtN(i.qtd)}, mínimo ${fmtN(i.min)}`);
+    try { await navigator.clipboard.writeText("Lista de compras (consumíveis abaixo do mínimo)\n" + linhas.join("\n")); aviso(`Lista de compras copiada (${lista.length} itens).`); }
+    catch { aviso("Não consegui copiar. Tente de novo."); }
+  }
 
   return (
     <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-2 gap-2">
+        {([["cons", "Consumíveis", "acabam com o uso", faltaCons], ["ncons", "Não consumíveis", "voltam depois do retiro", faltaNao]] as const).map(([k, t, d, f]) => (
+          <button key={k} type="button" onClick={() => { setTipo(k); setSoFalta(false); }} className={cx("flex min-h-16 flex-col items-start justify-center rounded-2xl border-2 px-4 text-left", tipo === k ? "border-marca bg-marca-clara" : "border-borda bg-white")}>
+            <span className="flex items-center gap-2"><b className="text-[16px]">{t}</b>{f > 0 && <Selo tom="alerta">{f}</Selo>}</span>
+            <span className="text-xs text-suave">{d} · {itens.filter((i) => (k === "cons" ? i.cons : !i.cons)).length} itens</span>
+          </button>
+        ))}
+      </div>
       <div className="flex items-center gap-2 rounded-2xl border border-borda bg-white px-3">
         <Icone n="busca" tam={20} />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar item pelo nome (ex.: tesoura)" aria-label="Buscar item" className="min-h-12 flex-1 bg-transparent outline-none" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar item pelo nome (ex.: álcool)" aria-label="Buscar item" className="min-h-12 flex-1 bg-transparent outline-none" />
       </div>
       {nFalta > 0 && (
         <button type="button" onClick={() => setSoFalta((v) => !v)} className={cx("flex min-h-12 items-center justify-between rounded-2xl px-4 text-[15px] font-extrabold", soFalta ? "bg-alerta text-white" : "bg-alerta-clara text-[#8e2e18]")}>
-          <span>{nFalta} {nFalta === 1 ? "item em falta" : "itens em falta"}</span><span>{soFalta ? "Ver todos" : "Ver só eles"}</span>
+          <span>{tipo === "cons" ? `${nFalta} ${nFalta === 1 ? "consumível para comprar" : "consumíveis para comprar"}` : `${nFalta} ${nFalta === 1 ? "item abaixo do necessário" : "itens abaixo do necessário"}`}</span><span>{soFalta ? "Ver todos" : "Ver só eles"}</span>
         </button>
       )}
+      {tipo === "cons" && faltaCons > 0 && <Botao v="sec" onClick={copiarCompras} className="!min-h-11">Copiar lista de compras ({faltaCons})</Botao>}
       {grupos.length === 0 && <Vazio>Nenhum item encontrado.</Vazio>}
       {grupos.map(([setor, lista]) => {
         const aberto = forcarAberto || abertos[setor] || grupos.length === 1;
@@ -110,7 +137,7 @@ function Geral({ itens, envios, onAbrir }: { itens: Item[]; envios: Envio[]; onA
           <Cartao key={setor} className="overflow-hidden">
             <button type="button" onClick={() => setAbertos((a) => ({ ...a, [setor]: !a[setor] }))} className="flex min-h-[60px] w-full items-center gap-2.5 px-4 text-left">
               <b className="flex-1 text-[17px]">{setor}</b>
-              {faltas > 0 && <Selo tom="alerta">{faltas} em falta</Selo>}
+              {faltas > 0 && <Selo tom="alerta">{faltas} {tipo === "cons" ? "p/ comprar" : "em falta"}</Selo>}
               <span className="text-sm text-suave">{lista.length} {lista.length === 1 ? "item" : "itens"}</span>
               <span className={cx("text-suave transition", aberto && "rotate-180")}><Icone n="seta" tam={18} /></span>
             </button>
@@ -124,7 +151,7 @@ function Geral({ itens, envios, onAbrir }: { itens: Item[]; envios: Envio[]; onA
                   </div>
                   <div className="text-right leading-tight">
                     <b className={cx("text-[22px]", low && "text-alerta")}>{fmtN(i.qtd)}</b>
-                    <div className="text-xs text-suave">{i.un}{i.min > 0 ? ` · mín. ${fmtN(i.min)}` : ""}{fora(i.id) > 0 ? ` · ${fmtN(fora(i.id))} fora` : ""}</div>
+                    <div className="text-xs text-suave">{i.un}{i.min > 0 ? ` · mín. ${fmtN(i.min)}` : ""}{fora(i.id) > 0 ? ` · ${fmtN(fora(i.id))} em edição` : ""}</div>
                   </div>
                 </button>
               );
@@ -161,7 +188,7 @@ function Enviado({ equipe, itens, envios, edicoes, ed, recarregar, setItens, set
     if (v === atual) return;
     if (v - atual > i.qtd) {
       const o = foraOutras(i.id);
-      aviso(`Só há ${fmtN(i.qtd)} ${i.un} disponíveis no estoque${o > 0 ? ` (${fmtN(o)} estão em outras edições)` : ""}.`);
+      aviso(`Só há ${fmtN(i.qtd)} ${i.un} disponíveis na lista mãe${o > 0 ? ` (${fmtN(o)} estão em outras edições)` : ""}.`);
       recarregar();
       return;
     }
@@ -190,7 +217,7 @@ function Enviado({ equipe, itens, envios, edicoes, ed, recarregar, setItens, set
       <div key={i.id} className={cx("flex min-h-16 items-center gap-2.5 rounded-2xl border px-3 py-2", v > 0 ? "border-[#a9d3c2] bg-marca-clara" : "border-borda bg-white")}>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <b className="text-[15px]">{i.nome}</b>
-          {equipe ? <span className="text-xs text-suave">{i.un}</span> : <span className="text-xs text-suave">{i.setor} · disponível {v > 0 && !fechado ? `${fmtN(i.qtd + v)} → ${fmtN(i.qtd)}` : fmtN(i.qtd)}{foraOutras(i.id) > 0 ? ` · ${fmtN(foraOutras(i.id))} em outras edições` : ""}</span>}
+          {equipe ? <span className="text-xs text-suave">{i.un}</span> : <span className="text-xs text-suave">{i.setor} · {i.cons ? "consumível" : "não consumível"} · na lista mãe {v > 0 && !fechado ? `${fmtN(i.qtd + v)} → ${fmtN(i.qtd)}` : fmtN(i.qtd)}{foraOutras(i.id) > 0 ? ` · ${fmtN(foraOutras(i.id))} em outras edições` : ""}</span>}
         </div>
         {pode && !fechado ? <Passo valor={v} onMudar={(n) => definir(i, n)} /> : <div className="text-right"><b>{fmtN(v)} {i.un}</b>{fechado && !equipe && <div className="text-xs text-suave">{doEd(i.id)?.aplicado != null ? "balanço conferido" : "balanço informado"}</div>}</div>}
       </div>
@@ -209,13 +236,13 @@ function Enviado({ equipe, itens, envios, edicoes, ed, recarregar, setItens, set
       </div>
       {enviados.length > 0 && <div className="px-1 pt-1 text-[13px] font-extrabold uppercase tracking-wide text-marca">Enviados · {enviados.length}</div>}
       {enviados.map(linha)}
-      {resto.length > 0 && <div className="px-1 pt-3 text-[13px] font-extrabold uppercase tracking-wide text-suave">{enviados.length ? "Todo o estoque" : "Itens do estoque"}</div>}
+      {resto.length > 0 && <div className="px-1 pt-3 text-[13px] font-extrabold uppercase tracking-wide text-suave">{enviados.length ? "Resto da lista mãe" : "Itens da lista mãe"}</div>}
       {resto.map(linha)}
       {lista.length === 0 && <Vazio>Nenhum item com esse nome.</Vazio>}
 
       {!equipe && (
         <div className="fixed inset-x-0 z-30 flex items-center justify-between gap-3 border-t border-borda bg-white px-4 py-3 md:left-64" style={{ bottom: "calc(env(safe-area-inset-bottom) + 66px)" }}>
-          <div className="leading-tight"><b>{totalItens} itens · {fmtN(totalUn)} un.</b><div className="text-xs text-suave">O estoque geral já desconta</div></div>
+          <div className="leading-tight"><b>{totalItens} itens · {fmtN(totalUn)} un.</b><div className="text-xs text-suave">A lista mãe já desconta</div></div>
           <Selo tom="ok">Segue para o Balanço</Selo>
         </div>
       )}
@@ -321,18 +348,18 @@ function BalancoPaiol({ itens, envios, ed, recarregar }: { itens: Item[]; envios
       ok++;
     }
     setLote(false);
-    if (ok) aviso(`${ok} itens confirmados e somados ao estoque.`);
+    if (ok) aviso(`${ok} itens confirmados e devolvidos à lista mãe.`);
     setConta({});
     recarregar();
   }
 
-  if (lista.length === 0) return <Vazio>Nada foi enviado para esta edição ainda. Marque o que foi em “Enviado”.</Vazio>;
+  if (lista.length === 0) return <Vazio>Nada foi enviado para esta edição ainda. Marque o que foi em “Retirada da lista mãe”.</Vazio>;
 
   let ultimo = "";
   return (
     <div className="flex flex-col gap-2.5">
       <div className="flex items-center justify-between rounded-2xl bg-marca-clara px-4 py-3 text-sm"><b>{conferidos} de {lista.length} itens conferidos</b><span className="text-suave">todo o material enviado</span></div>
-      <p className="m-0 px-1 text-sm text-suave">Aqui você diz quanto voltou de cada item desta edição. Cada equipe informa o que voltou; você confere a contagem no paiol e confirma, e só então o estoque único é atualizado (as outras edições enxergam a nova quantidade).{aguardando ? ` ${aguardando} item(ns) ainda sem balanço do setor.` : ""}</p>
+      <p className="m-0 px-1 text-sm text-suave">Aqui você diz quanto voltou de cada item desta edição. Cada equipe informa o que voltou; você confere a contagem no paiol e confirma, e só então o que voltou retorna para a lista mãe (as outras edições enxergam a nova quantidade).{aguardando ? ` ${aguardando} item(ns) ainda sem balanço do setor.` : ""}</p>
       {lista.map((r) => {
         const levou = Number(r.x.env) + Number(r.x.comp), v = contada(r.x), inf = r.x.informado, conf = r.x.aplicado != null;
         const dif = inf && !conf && v !== informada(r.x);
@@ -361,7 +388,7 @@ function BalancoPaiol({ itens, envios, ed, recarregar }: { itens: Item[]; envios
               {pode && !conf && (
                 <div className="flex gap-2">
                   {inf && <Botao v="sec" onClick={() => devolver(r)} className="!min-h-11 flex-1">Devolver ao setor</Botao>}
-                  <Botao onClick={() => conferir(r)} className="!min-h-11 flex-1">Confirmar e dar baixa</Botao>
+                  <Botao onClick={() => conferir(r)} className="!min-h-11 flex-1">Confirmar e devolver à lista mãe</Botao>
                 </div>
               )}
               {pode && conf && v !== Number(r.x.aplicado) && <Botao onClick={() => conferir(r)} className="!min-h-11">Corrigir contagem</Botao>}
@@ -399,13 +426,21 @@ function ItemJanela({ item, setores, setorPadrao, onFechar, onMudou, aviso }: { 
     supabase.from("movimentos").select("id,tipo,qtd,delta,obs,criado_em").eq("item_id", item.id).order("criado_em", { ascending: false }).limit(8).then(({ data }) => setMovs((data as Mov[]) ?? []));
   }, [item]);
 
-  async function mudarQtd(v: number) {
+  async function mudarQtd(v: number, motivo?: string) {
     if (!item) return;
-    const { error } = await supabase.rpc("definir_estoque", { p_item: item.id, p_qtd: v, p_obs: obs.trim() || null });
+    const { error } = await supabase.rpc("definir_estoque", { p_item: item.id, p_qtd: v, p_obs: motivo ?? (obs.trim() || null) });
     if (error) { aviso(msgErro(error)); return; }
     setQtd(v); setObs(""); onMudou(); aviso("Quantidade atualizada.");
     const { data } = await supabase.from("movimentos").select("id,tipo,qtd,delta,obs,criado_em").eq("item_id", item.id).order("criado_em", { ascending: false }).limit(8);
     setMovs((data as Mov[]) ?? []);
+  }
+
+  const [compra, setCompra] = useState("");
+  async function registrarCompra() {
+    const n = num(compra || "0");
+    if (!item || !isFinite(n) || n <= 0) { aviso("Digite quanto chegou (maior que zero)."); return; }
+    await mudarQtd(qtd + n, "Compra / entrada de " + fmtN(n));
+    setCompra("");
   }
 
   async function salvar(e: React.FormEvent) {
@@ -432,12 +467,20 @@ function ItemJanela({ item, setores, setorPadrao, onFechar, onMudou, aviso }: { 
     return (
       <Janela titulo={item.nome} onFechar={onFechar}>
         <div className="flex flex-col gap-4">
-          <div className="text-sm text-suave">{item.setor}{item.cons ? " · consumível" : ""}{item.min > 0 ? ` · mínimo ${fmtN(item.min)}` : ""}</div>
+          <div className="text-sm text-suave">{item.setor} · {item.cons ? "consumível" : "não consumível"}{item.min > 0 ? ` · mínimo ${fmtN(item.min)}` : ""}</div>
           <Cartao className="flex flex-col items-center gap-3 p-4">
             <span className="text-xs font-bold uppercase text-suave">No estoque ({item.un})</span>
             {pode ? <Passo grande valor={qtd} onMudar={mudarQtd} /> : <b className="text-4xl">{fmtN(qtd)}</b>}
             {pode && <input value={obs} onChange={(e) => setObs(e.target.value)} placeholder="Motivo (opcional), ex.: achei mais 3 na caixa" className="min-h-11 w-full rounded-xl border border-borda bg-white px-3 text-[15px]" />}
           </Cartao>
+          {pode && (
+            <div className="flex items-center gap-2 rounded-2xl border border-borda p-3">
+              <label className="flex min-w-0 flex-1 flex-col gap-1 text-[13px] font-bold text-suave">Chegou mais (compra / doação)
+                <input inputMode="decimal" value={compra} onChange={(e) => setCompra(e.target.value)} placeholder={`Quantos ${item.un}?`} className="min-h-11 rounded-xl border border-borda bg-white px-3 text-[15px] font-normal text-texto" />
+              </label>
+              <Botao onClick={registrarCompra} className="!min-h-11 self-end">Somar</Botao>
+            </div>
+          )}
           {movs.length > 0 && (
             <div>
               <div className="pb-1.5 text-[13px] font-extrabold uppercase tracking-wide text-suave">Últimos movimentos</div>
@@ -472,10 +515,16 @@ function ItemJanela({ item, setores, setorPadrao, onFechar, onMudou, aviso }: { 
           <Campo rotulo="Estoque mínimo" inputMode="decimal" value={f.min} onChange={(e) => setF({ ...f, min: e.target.value })} />
           <Campo rotulo="Valor unitário (R$)" inputMode="decimal" value={f.preco} onChange={(e) => setF({ ...f, preco: e.target.value })} />
         </div>
-        <label className="flex min-h-12 items-center gap-3 rounded-2xl border border-borda bg-white px-4">
-          <input type="checkbox" checked={f.cons} onChange={(e) => setF({ ...f, cons: e.target.checked })} className="h-5 w-5 accent-[#1f6f5c]" />
-          <span className="text-[15px] font-bold">Item consumível <span className="font-normal text-suave">(acaba com o uso)</span></span>
-        </label>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[13px] font-bold text-suave">Tipo do item</span>
+          <div className="grid grid-cols-2 gap-2">
+            {([[true, "Consumível", "acaba com o uso (álcool, fósforo, cloro…)"], [false, "Não consumível", "volta depois (balde, vassoura, cesto…)"]] as const).map(([v, t, d]) => (
+              <button key={t} type="button" onClick={() => setF({ ...f, cons: v })} className={cx("flex min-h-16 flex-col items-start justify-center rounded-2xl border-2 px-3 text-left", f.cons === v ? "border-marca bg-marca-clara" : "border-borda bg-white")}>
+                <b className="text-[15px]">{t}</b><span className="text-xs text-suave">{d}</span>
+              </button>
+            ))}
+          </div>
+        </div>
         <Botao type="submit" bloco>Salvar</Botao>
         {item && !confirmaDel && <Botao v="sec" bloco onClick={() => setConfirmaDel(true)} className="!text-alerta"><Icone n="lixo" tam={18} />Excluir item</Botao>}
         {item && confirmaDel && <Botao v="perigo" bloco onClick={excluir}>Confirmar: excluir “{item.nome}”</Botao>}

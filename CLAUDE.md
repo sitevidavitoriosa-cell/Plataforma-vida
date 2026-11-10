@@ -18,13 +18,17 @@ O site antigo (arquivo único, Firebase) está em `legado/index.html` e serve s�
 
 ## Edições (temporadas)
 - Tipos: Vida Base, Vida Kids, Vida BeOne. Uma edição é uma rede (Vida Roxa, Azul, Amarela, Laranja, Vermelha, Verde, Branca), ou Vida Base, Vida Kids, Vida BeOne; pode ser junto com outra rede (`rede2`, ex.: Vida Branca e Roxa). Visual: redes na própria cor (Branca = cinza), Base azul+amarelo, Kids azul+roxo, BeOne preto e branco (`EdicaoProvider`, `src/lib/cores.ts`).
-- A edição escolhida no topo vale para estoque, saúde, encontristas e secretaria.
+- A edição escolhida no topo vale para estoque, saúde, encontristas e secretaria. A opção **"Todas as edições"** (só admin e estoque; `todas` em `useEdicao`, `ed = null`) vale para: Painel (visão geral), Estoque (**lista mãe**) e Relatório (**relatório anual**, só admin). As demais páginas pedem para escolher uma edição (`EscolhaEdicao` no shell).
 
-## Estoque (`/estoque`) e Equipes (`/setores`, aba "Equipes")
-- **Estoque** (`src/components/estoque.tsx`) é só do paiol (admin e perfil estoque; admin de edição nas edições dele; coordenação, financeiro, decisões e visitante não acessam): Geral (itens por setor), Enviado (registra o envio por edição) e Balanço (confere). O material que as equipes usam fica no estoque geral e quem administra é o paiol.
-- **Equipes** (Saúde, Secretaria 1 e demais setores): o servo vê só o que o paiol enviou para a equipe dele (`Estoque setor=...`, modo equipe). No Balanço informa o que voltou (nunca mais que o levado) e envia ao paiol (`salvar_volta`, `enviar_balanco`). O paiol confere e confirma (`conferir_balanco`, `reabrir_balanco`, `fechar_balanco`); só aí o estoque geral muda. Servo de setor não vê itens/envios de outros setores (RLS `ve_todo_estoque()`), nem envia material (`definir_envio` só `eh_paiol`).
-- Saúde: só `saude_lista` e `salvar_obs_saude` (admin e perfil saúde). Não lê a ficha.
-- Secretaria 1 (`pode_secretaria()`): Crachás (modelo PNG por rede/edição para encontristas e outro para servos com foto; fotos em `crachas_fotos`), Quartos (a planilha só é importada em Encontristas; aqui cria-se o quarto: número, sexo, vagas, anjos [servos em `quarto_anjos`: o 1º e, marcando "Existe outro servo nesse quarto?", os demais; um servo só em um quarto] e busca/marca dos encontristas; ao salvar o link secreto `/q/[token]` já fica ativo, com perfil dos encontristas, função `quarto_info`) e Material (equipe). Nomes vêm de `nomes_edicao` (sem saúde/telefone).
+## Estoque (`/estoque`) e Equipes (`/setores`)
+- **Lista mãe** = tabela `itens` (um saldo único, base do retiro). Em **Todas as edições**: itens divididos em **Consumíveis** (`cons = true`; comprar quando abaixo do mínimo, com "Copiar lista de compras") e **Não consumíveis** (voltam depois), compras/entradas (`definir_estoque`) e importação do inventário (`src/lib/inventario.ts`). Dentro de uma **edição**: aba "Retirada da lista mãe" (`definir_envio` tira da lista mãe, `copiar_envio` copia da última edição) e "Balanço (volta)" (o que sobrou volta para a lista mãe só após `conferir_balanco`/`fechar_balanco`). Estoque é só do paiol (admin e estoque; admin de edição nas edições dele).
+- **Equipes** são só **Saúde** e **Secretaria 1** (`entradasSetores`). O material da Secretaria 1 fica em Secretaria 1 › Material (modo equipe: `salvar_volta`, `enviar_balanco`; RLS `ve_todo_estoque()`).
+- Saúde (`src/components/saude.tsx`): consulta rápida de emergência (nome, quarto, necessidade e contatos direto no card, com WhatsApp). `saude_lista` (admin, saúde, secretaria1, admin de edição) já devolve o `quarto`. Exporta PDF para imprimir (A4 paisagem, `src/lib/saudePdf.ts`) e Excel. `salvar_obs_saude` e `excluir_da_saude`. Não lê a ficha.
+- Secretaria 1 (`pode_secretaria()`): Crachás (modelo PNG por rede/edição para encontristas e outro para servos com foto; fotos em `crachas_fotos`), Quartos (a planilha só é importada em Encontristas; aqui cria-se o quarto: número, sexo, vagas, anjos [`quarto_anjos`], busca/marca dos encontristas) e Material. Nomes vêm de `nomes_edicao`.
+- **Link único dos quartos**: um por edição (`quartos_link_edicao`, funções `link_quartos`, `renovar_link_quartos`, `desligar_link_quartos`; botão "Link dos quartos" em Quartos e na Saúde). Página pública `/q/[token]` (função anon `quartos_edicao_info`, noindex): card de cada quarto com anjos e encontristas, busca por nome, perfil e saúde. Os links antigos por quarto (`quarto_links`) foram desligados.
+
+## Painel (`/`)
+- Enxuto: edição (ou visão geral em Todas as edições) e atalhos por permissão. Os números dos encontristas (totais, perfil espiritual, redes) ficam em **Encontristas** (`DashboardEncontristas`). Os gráficos de pizza e de linha de inscrições existem só nos relatórios.
 
 ## Encontristas (ficha) – só administrador
 - Importação da planilha (.xlsx/.csv) em `/encontristas`, pela função `importar_encontristas` (chave: código da inscrição; reimportar atualiza). Só admin importa e vê.
@@ -32,7 +36,7 @@ O site antigo (arquivo único, Firebase) está em `legado/index.html` e serve s�
 - Não guardar CPF nem dados de pagamento da planilha.
 
 ## Relatório geral (`/relatorio`, cartão no Painel)
-- Materiais por setor, pessoas e decisões da edição escolhida. Saídas: imprimir/PDF, Excel (`xlsx`) e apresentação PowerPoint (`pptxgenjs`, tema da edição). Pessoas só para quem vê a ficha.
+- Materiais por setor, pessoas e decisões da edição escolhida; em "Todas as edições" vira o relatório anual (`src/components/relatorioAnual.tsx`, só admin; `/relatorio-anual` apenas redireciona). Saídas: imprimir/PDF, Excel (`xlsx`) e apresentação PowerPoint (`pptxgenjs`, tema da edição). Pessoas só para quem vê a ficha.
 - Estoque: importação do inventário (.xls/.xlsx) em `src/lib/inventario.ts`.
 
 ## Decisões e Financeiro

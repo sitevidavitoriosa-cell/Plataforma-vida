@@ -6,6 +6,7 @@ import { norm } from "@/lib/tipos";
 import { TIPOS } from "@/lib/cores";
 import { useAviso, useEdicao } from "@/components/provedores";
 import { Estoque } from "@/components/estoque";
+import { LinkQuartosBotao } from "@/components/linkQuartos";
 import { acharPessoa, baixarModeloQuarto, lerNomesQuarto } from "@/lib/quartosPlanilha";
 import { Botao, Campo, Carregando, Cartao, Chip, Janela, Selo, Seletor, Vazio } from "@/components/ui";
 
@@ -389,7 +390,6 @@ function Quartos() {
   const { nomes } = useNomes();
   const [quartos, setQuartos] = useState<Quarto[] | null>(null);
   const [ocup, setOcup] = useState<Ocup[]>([]);
-  const [comLink, setComLink] = useState<Set<string>>(new Set());
   const [anjosLig, setAnjosLig] = useState<AnjoLig[]>([]);
   const [novo, setNovo] = useState(false);
   const [aberto, setAberto] = useState<Quarto | null>(null);
@@ -400,10 +400,10 @@ function Quartos() {
     setQuartos((q.data as Quarto[]) ?? []);
     const ids = ((q.data as Quarto[]) ?? []).map((x) => x.id);
     if (ids.length) {
-      const [o, l, an] = await Promise.all([supabase.from("quarto_ocupantes").select("*").in("quarto_id", ids), supabase.from("quarto_links").select("quarto_id").eq("ativo", true).in("quarto_id", ids), supabase.from("quarto_anjos").select("quarto_id,encontrista_id").in("quarto_id", ids)]);
+      const [o, an] = await Promise.all([supabase.from("quarto_ocupantes").select("*").in("quarto_id", ids), supabase.from("quarto_anjos").select("quarto_id,encontrista_id").in("quarto_id", ids)]);
       setAnjosLig((an.data as AnjoLig[]) ?? []);
-      setOcup((o.data as Ocup[]) ?? []); setComLink(new Set(((l.data as { quarto_id: string }[]) ?? []).map((x) => x.quarto_id)));
-    } else { setOcup([]); setComLink(new Set()); setAnjosLig([]); }
+      setOcup((o.data as Ocup[]) ?? []);
+    } else { setOcup([]); setAnjosLig([]); }
   }, [ed]);
   useEffect(() => { setQuartos(null); carregar(); }, [carregar]);
 
@@ -417,24 +417,6 @@ function Quartos() {
   const semQuarto = enc.filter((n) => !alocados.has(n.id));
   const doQuarto = (id: string) => ocup.filter((o) => o.quarto_id === id).map((o) => mapa.get(o.encontrista_id)).filter(Boolean) as Nome[];
 
-  /** Gera o link de cada quarto que ainda não tem e baixa uma planilha Quarto | Link para enviar aos anjos. */
-  async function linksTodos() {
-    if (!ed || !quartos?.length) return;
-    const faltam = quartos.filter((q) => !comLink.has(q.id));
-    if (faltam.length) {
-      const { error } = await supabase.from("quarto_links").insert(faltam.map((q) => ({ quarto_id: q.id })));
-      if (error) { aviso(msgErro(error)); return; }
-    }
-    const { data, error } = await supabase.from("quarto_links").select("quarto_id,token").eq("ativo", true).in("quarto_id", quartos.map((q) => q.id));
-    if (error) { aviso(msgErro(error)); return; }
-    const tok = new Map((data as { quarto_id: string; token: string }[]).map((x) => [x.quarto_id, x.token]));
-    const XLSX = await import("xlsx");
-    const ws = XLSX.utils.aoa_to_sheet([["Quarto", "Encontristas", "Anjo", "Link"], ...quartos.map((q) => [q.nome, doQuarto(q.id).length, "", `${window.location.origin}/q/${tok.get(q.id) ?? ""}`])]);
-    ws["!cols"] = [{ wch: 14 }, { wch: 13 }, { wch: 24 }, { wch: 70 }];
-    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Links");
-    XLSX.writeFile(wb, `Links_quartos_${slug(ed.nome)}.xlsx`);
-    aviso(`${faltam.length} link(s) novo(s). Planilha baixada.`); carregar();
-  }
   async function pdf() {
     if (!ed || !quartos) return;
     const { jsPDF } = await import("jspdf");
@@ -456,10 +438,10 @@ function Quartos() {
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
         <Botao onClick={() => setNovo(true)} className="!min-h-11">Novo quarto</Botao>
-        <Botao v="sec" onClick={linksTodos} className="!min-h-11" disabled={!quartos.length}>Links de todos</Botao>
+        <LinkQuartosBotao edicaoId={ed.id} edicaoNome={ed.nome} />
         <Botao v="sec" onClick={pdf} className="!min-h-11" disabled={!quartos.length}>Gerar lista (PDF)</Botao>
       </div>
-      <p className="m-0 text-sm text-suave">{semQuarto.length} encontristas sem quarto · {quartos.reduce((s, q) => s + q.capacidade, 0)} vagas. Crie o quarto, marque o anjo e os encontristas. Ao salvar, o link do anjo já fica ativo.</p>
+      <p className="m-0 text-sm text-suave">{semQuarto.length} encontristas sem quarto · {quartos.reduce((s, q) => s + q.capacidade, 0)} vagas. Crie o quarto, marque o anjo e os encontristas. Todos os quartos aparecem no mesmo link (botão “Link dos quartos”), que a equipe de Saúde também usa.</p>
       {quartos.length === 0 && <Vazio>Toque em “Novo quarto” para começar.</Vazio>}
       {quartos.map((q) => {
         const o = doQuarto(q.id);
@@ -467,7 +449,7 @@ function Quartos() {
           <button key={q.id} type="button" onClick={() => setAberto(q)} className="text-left">
             <Cartao className="flex items-center justify-between gap-3 p-4">
               <div><b>{q.nome}</b><div className="text-sm text-suave">{q.sexo}{anjosDe(q.id).length ? ` · ${anjosDe(q.id).length > 1 ? "Anjos" : "Anjo"}: ${anjosDe(q.id).join(", ")}` : ""}</div></div>
-              <span className="flex items-center gap-2">{comLink.has(q.id) && <Selo tom="ok">link ativo</Selo>}<Selo tom={o.length >= q.capacidade ? "ok" : "neutro"}>{o.length}/{q.capacidade}</Selo></span>
+              <span className="flex items-center gap-2"><Selo tom={o.length >= q.capacidade ? "ok" : "neutro"}>{o.length}/{q.capacidade}</Selo></span>
             </Cartao>
           </button>
         );
@@ -572,8 +554,7 @@ function FormQuarto({ edicaoId, servos, anjosUsados, enc, candidatos, onFechar, 
       if (marcados.length) { const r = await supabase.from("quarto_ocupantes").insert(marcados.map((n) => ({ encontrista_id: n.id, quarto_id: data.id }))); if (r.error) throw r.error; }
       const ids = Array.from(new Set(anjos.filter(Boolean)));
       if (ids.length) { const a = await supabase.from("quarto_anjos").insert(ids.map((id) => ({ encontrista_id: id, quarto_id: data.id }))); if (a.error) throw a.error; }
-      const l = await supabase.from("quarto_links").insert({ quarto_id: data.id }); if (l.error) throw l.error;
-      aviso("Quarto salvo. O link do anjo já está ativo.");
+      aviso("Quarto salvo. Ele já aparece no link dos quartos.");
       onSalvo();
     } catch (er) { aviso(msgErro(er as Error)); }
     setSalvando(false);
@@ -629,17 +610,6 @@ function QuartoJanela({ q, servos, anjosUsados, anjosAtuais, ocupantes, candidat
     if (ids.length) { const r = await supabase.from("quarto_anjos").insert(ids.map((id) => ({ encontrista_id: id, quarto_id: q.id }))); if (r.error) { aviso(msgErro(r.error)); return; } }
     onMudou();
   }
-  const [token, setToken] = useState<string | null | undefined>(undefined);
-  useEffect(() => { supabase.from("quarto_links").select("token").eq("quarto_id", q.id).eq("ativo", true).order("criado_em", { ascending: false }).limit(1).then(({ data }) => setToken(data?.[0]?.token ?? null)); }, [q.id]);
-  const url = token ? `${typeof window !== "undefined" ? window.location.origin : ""}/q/${token}` : "";
-  async function gerarLink() {
-    await supabase.from("quarto_links").update({ ativo: false }).eq("quarto_id", q.id);
-    const { data, error } = await supabase.from("quarto_links").insert({ quarto_id: q.id }).select("token").single();
-    if (error) { aviso(msgErro(error)); return; }
-    setToken(data.token); onMudou();
-  }
-  async function desligarLink() { await supabase.from("quarto_links").update({ ativo: false }).eq("quarto_id", q.id); setToken(null); aviso("Link desligado."); onMudou(); }
-  async function copiar() { try { await navigator.clipboard.writeText(url); aviso("Link copiado."); } catch { aviso("Copie o link na tela."); } }
   async function add(n: Nome) { const { error } = await supabase.from("quarto_ocupantes").insert({ encontrista_id: n.id, quarto_id: q.id }); if (error) aviso(msgErro(error)); onMudou(); }
   async function tirar(n: Nome) { const { error } = await supabase.from("quarto_ocupantes").delete().eq("encontrista_id", n.id); if (error) aviso(msgErro(error)); onMudou(); }
   async function excluir() { const { error } = await supabase.from("quartos").delete().eq("id", q.id); if (error) { aviso(msgErro(error)); return; } onMudou(); onFechar(); }
@@ -647,20 +617,6 @@ function QuartoJanela({ q, servos, anjosUsados, anjosAtuais, ocupantes, candidat
   return (
     <Janela titulo={`${q.nome} · ${ocupantes.length}/${q.capacidade}`} onFechar={onFechar}>
       <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-2 rounded-2xl border border-borda p-3">
-          <b className="text-sm">Link do anjo (perfil dos encontristas do quarto)</b>
-          {token === undefined ? null : token ? (
-            <>
-              <input readOnly value={url} onFocus={(e) => e.currentTarget.select()} className="min-h-11 rounded-xl border border-borda px-3 text-sm" />
-              <div className="flex flex-wrap gap-2">
-                <Botao v="sec" onClick={copiar} className="!min-h-11">Copiar</Botao>
-                <a className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-marca px-5 text-[15px] font-extrabold text-white" target="_blank" rel="noopener noreferrer" href={`https://wa.me/?text=${encodeURIComponent(`${q.nome}: perfil dos encontristas do seu quarto (reservado, não repasse): ${url}`)}`}>WhatsApp</a>
-                <Botao v="sec" onClick={gerarLink} className="!min-h-11">Gerar novo</Botao>
-                <Botao v="sec" onClick={desligarLink} className="!min-h-11 !text-alerta">Desligar</Botao>
-              </div>
-            </>
-          ) : <Botao v="suave" onClick={gerarLink} className="!min-h-11">Gerar link do quarto</Botao>}
-        </div>
         <AnjosCampo valores={anjosSel} onChange={trocarAnjos} servos={servos} usadosFora={new Set(Array.from(anjosUsados).filter((id) => !anjosAtuais.includes(id)))} sexo={q.sexo} />
         {ocupantes.length === 0 && <Vazio>Ninguém neste quarto.</Vazio>}
         {ocupantes.map((n) => (

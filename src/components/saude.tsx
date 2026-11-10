@@ -5,15 +5,11 @@ import { msgErro } from "@/lib/dados";
 import { norm } from "@/lib/tipos";
 import { ContatoLinha } from "@/components/contato";
 import { useAuth, useAviso, useEdicao } from "@/components/provedores";
+import { LinkQuartosBotao } from "@/components/linkQuartos";
+import { excelSaude, pdfSaude, tagsDe, TAGS, type LinhaSaude } from "@/lib/saudePdf";
 import { Botao, Carregando, Cartao, Chip, Icone, Janela, Selo, Vazio } from "@/components/ui";
 
-type Linha = { id: string; nome: string; idade: number | null; categoria: string | null; necessidade: string | null; contatos: string[] | null; observacao: string | null };
-const TAGS: Record<string, RegExp> = {
-  Medicação: /medic|rem[eé]dio|insulin|press[aã]o|diabet|asma|epilep|convuls|hormon|tarja|comprimid|uso cont/i,
-  Alimentar: /alerg|alimen|intoler|lactose|gl[uú]ten|vegetar|dieta|cel[ií]ac|amendoim|camar/i,
-  Locomoção: /cadeira|locomo|mobilid|muleta|bengala|andar|joelho|cirurg|fratura|coluna/i,
-};
-const tagsDe = (t: string | null) => Object.entries(TAGS).filter(([, r]) => r.test(t ?? "")).map(([k]) => k);
+type Linha = LinhaSaude;
 
 export function Saude() {
   const { ed } = useEdicao();
@@ -31,16 +27,34 @@ export function Saude() {
   }, [ed, aviso]);
   useEffect(() => { setDados(null); carregar(); }, [carregar]);
 
-  const vis = useMemo(() => (dados ?? []).filter((l) => (!tag || tagsDe(l.necessidade).includes(tag)) && (!q || norm(l.nome + " " + (l.necessidade ?? "")).includes(norm(q)))), [dados, q, tag]);
+  const [gerando, setGerando] = useState("");
+  async function exportar(tipo: "pdf" | "xlsx") {
+    if (!ed || !dados) return;
+    setGerando(tipo);
+    try {
+      const blob = tipo === "pdf" ? await pdfSaude(ed, dados) : await excelSaude(ed, dados);
+      const nome = `Saude_${ed.nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "_")}.${tipo}`;
+      if (tipo === "pdf") { window.open(URL.createObjectURL(blob), "_blank"); }
+      else { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nome; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
+    } catch { aviso("Não consegui gerar o arquivo. Tente de novo."); }
+    setGerando("");
+  }
+
+  const vis = useMemo(() => (dados ?? []).filter((l) => (!tag || tagsDe(l.necessidade).includes(tag)) && (!q || norm(l.nome + " " + (l.necessidade ?? "") + " " + (l.quarto ?? "")).includes(norm(q)))), [dados, q, tag]);
   if (!ed) return <Vazio>Crie uma edição primeiro.</Vazio>;
   if (!dados) return <Carregando />;
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="m-0 text-sm text-suave">{dados.length} {dados.length === 1 ? "pessoa com necessidade" : "pessoas com necessidade"} em {ed.nome}. Aqui aparece só o que é de saúde.</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <Botao onClick={() => exportar("pdf")} disabled={!!gerando} className="!min-h-11">{gerando === "pdf" ? "Gerando…" : "Imprimir (PDF)"}</Botao>
+        <Botao v="sec" onClick={() => exportar("xlsx")} disabled={!!gerando} className="!min-h-11">{gerando === "xlsx" ? "Gerando…" : "Planilha (Excel)"}</Botao>
+        <LinkQuartosBotao edicaoId={ed.id} edicaoNome={ed.nome} />
+      </div>
+      <p className="m-0 text-sm text-suave">{dados.length} {dados.length === 1 ? "pessoa com necessidade" : "pessoas com necessidade"} em {ed.nome}. O PDF sai pronto para imprimir, com quarto, necessidade e contatos de emergência.</p>
       <label className="flex min-h-12 items-center gap-2 rounded-2xl border border-borda bg-white px-3">
         <Icone n="busca" tam={20} />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar nome ou remédio" aria-label="Buscar" className="min-w-0 flex-1 bg-transparent outline-none" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar nome, remédio ou quarto" aria-label="Buscar" className="min-w-0 flex-1 bg-transparent outline-none" />
       </label>
       <div className="flex gap-2 overflow-x-auto">
         <Chip ativo={!tag} onClick={() => setTag("")}>Todos</Chip>
@@ -48,13 +62,22 @@ export function Saude() {
       </div>
       {vis.length === 0 && <Vazio>Ninguém encontrado.</Vazio>}
       {vis.map((l) => (
-        <button key={l.id} type="button" onClick={() => setAberta(l)} className="text-left">
-          <Cartao className="flex flex-col gap-1.5 p-4">
-            <div className="flex items-center justify-between gap-2"><b className="text-base">{l.nome}</b><span className="text-sm text-suave">{l.idade ? `${l.idade} anos` : ""}</span></div>
-            <p className="m-0 text-sm">{l.necessidade}</p>
+        <Cartao key={l.id} className="flex flex-col gap-2 p-4">
+          <button type="button" onClick={() => setAberta(l)} className="flex flex-col gap-1.5 text-left">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0"><b className="block text-lg leading-tight">{l.nome}</b><span className="text-sm text-suave">{l.idade ? `${l.idade} anos` : ""}</span></div>
+              {l.quarto ? <span className="shrink-0 rounded-xl bg-marca px-3 py-1.5 text-sm font-extrabold text-white">{l.quarto}</span> : <span className="shrink-0 text-xs text-suave">sem quarto</span>}
+            </div>
+            <p className="m-0 text-[15px]">{l.necessidade}</p>
             <div className="flex flex-wrap gap-1.5">{tagsDe(l.necessidade).map((t) => <Selo key={t} tom="aviso">{t}</Selo>)}{l.observacao && <Selo tom="ok">com observação</Selo>}</div>
-          </Cartao>
-        </button>
+          </button>
+          {l.contatos && l.contatos.length > 0 && (
+            <div className="flex flex-col border-t border-borda pt-1">
+              <span className="text-[11px] font-bold uppercase text-suave">Contato de emergência</span>
+              {l.contatos.map((c, i) => <ContatoLinha key={i} texto={c} />)}
+            </div>
+          )}
+        </Cartao>
       ))}
       {aberta && <Detalhe l={aberta} onFechar={() => setAberta(null)} onSalvo={() => { setAberta(null); carregar(); }} />}
     </div>

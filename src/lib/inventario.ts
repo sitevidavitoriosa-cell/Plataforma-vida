@@ -8,7 +8,7 @@ const SETORES: Record<string, string> = {
 };
 const SETORES_BONITOS: Record<string, string> = { Recepcao: "Recepção" };
 const MINUSCULAS = new Set(["de", "da", "do", "das", "dos", "e", "com", "para", "p/", "c/", "sem", "a", "o", "na", "no", "em"]);
-const CONS = /bom-bom|bala menta|balões|balao|bola nº|fogos|álcool|alcool|pilhas|papel vegetal|tinta|folha a4|plástico a4|plástico rolo|plástico do crach|etiqueta|fita adesiva|grapos|sacos para celular|veste do filho|anel filho|caneta|bloco|lenço|chinelos|copos personalizados|crach|jacaré|sacola do correio|gás hélio|toalhinhas|cachepô|fantasminha/i;
+const CONS = /bom-bom|bala menta|balões|balao|bola nº|fogos|álcool|alcool|pilhas|papel vegetal|tinta|folha a4|plástico a4|plástico rolo|plástico do crach|etiqueta|fita adesiva|grapos|sacos para celular|veste do filho|anel filho|caneta|bloco|lenço|chinelos|copos personalizados|crach|jacaré|sacola do correio|gás hélio|toalhinhas|cachepô|fantasminha|cloro|f[óo]sforo|detergente|sab[ãa]o|esponja|papel higi|sacos? de lixo|velas?\b|carv[ãa]o|desinfetante|[áa]gua sanit[áa]ria/i;
 
 const titulo = (t: string) =>
   t.replace(/\s+/g, " ").replace(/ -(?=\S)/g, "-").trim().toLowerCase().split(" ").map((p, i) => {

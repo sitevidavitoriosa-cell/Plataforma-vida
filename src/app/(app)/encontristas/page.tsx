@@ -6,6 +6,7 @@ import { norm, type Edicao } from "@/lib/tipos";
 import { podeVerFicha } from "@/lib/perm";
 import { lerArquivo, type ItemImport } from "@/lib/importar";
 import { ContatoLinha } from "@/components/contato";
+import { DashboardEncontristas } from "@/components/dashboardEnc";
 import { useAuth, useAviso, useEdicao } from "@/components/provedores";
 import { Botao, Campo, Carregando, Cartao, Chip, Icone, Janela, Selo, Seletor, Titulo, Vazio } from "@/components/ui";
 
@@ -56,6 +57,7 @@ export default function Encontristas() {
   return (
     <div>
       <Titulo direita={podeVerFicha(acesso) ? <Botao onClick={() => setImportando(true)} className="!min-h-11">Importar planilha</Botao> : undefined}>Encontristas</Titulo>
+      {verEsp && <DashboardEncontristas base={base} />}
       <div className="flex flex-col gap-3 pb-4">
         <label className="flex min-h-12 items-center gap-2 rounded-2xl border border-borda bg-white px-3">
           <Icone n="busca" tam={20} />

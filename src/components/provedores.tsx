@@ -10,10 +10,12 @@ type Ctx = { carregando: boolean; sessao: Session | null; acesso: Acesso | null;
 const AuthCtx = createContext<Ctx>({ carregando: true, sessao: null, acesso: null, sair: async () => {}, recarregar: async () => {} });
 export const useAuth = () => useContext(AuthCtx);
 
-type EdCtx = { eds: Edicao[]; ed: Edicao | null; carregou: boolean; trocar: (id: string) => void; recarregar: () => Promise<void> };
-const EdicaoCtx = createContext<EdCtx>({ eds: [], ed: null, carregou: false, trocar: () => {}, recarregar: async () => {} });
-/** Edição escolhida no topo: tudo no site (estoque, encontristas, painel) é dela. */
+type EdCtx = { eds: Edicao[]; ed: Edicao | null; todas: boolean; podeTodas: boolean; carregou: boolean; trocar: (id: string) => void; recarregar: () => Promise<void> };
+const EdicaoCtx = createContext<EdCtx>({ eds: [], ed: null, todas: false, podeTodas: false, carregou: false, trocar: () => {}, recarregar: async () => {} });
+/** Edição escolhida no topo: tudo no site (estoque, encontristas, painel) é dela. "Todas as edições" (todas=true, ed=null) vale para a lista mãe do estoque e o relatório anual. */
 export const useEdicao = () => useContext(EdicaoCtx);
+
+export const TODAS = "todas";
 
 function EdicaoProvider({ children }: { children: React.ReactNode }) {
   const { acesso } = useAuth();
@@ -29,16 +31,18 @@ function EdicaoProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => { if (acesso) recarregar(); }, [acesso, recarregar]);
   useEffect(() => { try { setId(localStorage.getItem("vv-edicao") ?? ""); } catch {} }, []);
 
-  const ed = eds.find((e) => e.id === id) ?? eds.find((e) => e.status === "aberta") ?? eds[0] ?? null;
+  const podeTodas = !!acesso && ["admin", "estoque"].includes(acesso.perfil);
+  const todas = podeTodas && id === TODAS;
+  const ed = todas ? null : eds.find((e) => e.id === id) ?? eds.find((e) => e.status === "aberta") ?? eds[0] ?? null;
   const trocar = useCallback((novo: string) => { setId(novo); try { localStorage.setItem("vv-edicao", novo); } catch {} }, []);
 
   useEffect(() => {
     const t = temaDe(ed), r = document.documentElement.style;
     r.setProperty("--color-marca", t.marca); r.setProperty("--color-marca-esc", t.esc); r.setProperty("--color-marca-clara", t.clara);
     r.setProperty("--color-detalhe", t.detalhe); r.setProperty("--color-fundo", t.fundo);
-  }, [ed?.tipo, ed?.cor, ed?.rede2]);
+  }, [ed?.tipo, ed?.cor, ed?.rede2, todas]);
 
-  return <EdicaoCtx.Provider value={{ eds, ed, carregou, trocar, recarregar }}>{children}</EdicaoCtx.Provider>;
+  return <EdicaoCtx.Provider value={{ eds, ed, todas, podeTodas, carregou, trocar, recarregar }}>{children}</EdicaoCtx.Provider>;
 }
 
 const ToastCtx = createContext<(m: string) => void>(() => {});

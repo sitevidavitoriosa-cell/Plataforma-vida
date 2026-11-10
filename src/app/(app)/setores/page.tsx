@@ -1,10 +1,8 @@
 "use client";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { supabase } from "@/lib/supabase";
 import { entradasSetores } from "@/lib/setores";
 import { useAuth } from "@/components/provedores";
-import { Estoque } from "@/components/estoque";
 import { Saude } from "@/components/saude";
 import { Secretaria } from "@/components/secretaria";
 import { Titulo, Vazio } from "@/components/ui";
@@ -16,13 +14,7 @@ export default function Setores() {
 function Conteudo() {
   const { acesso } = useAuth();
   const params = useSearchParams();
-  const [setoresItens, setSetoresItens] = useState<string[]>([]);
-  useEffect(() => { supabase.from("itens").select("setor").then(async ({ data }) => {
-      const eq = await supabase.from("equipes").select("setores");
-      const ss = [...((data as { setor: string }[] | null) ?? []).map((x) => x.setor), ...(((eq.data as { setores: string[] }[] | null) ?? []).flatMap((e) => e.setores))];
-      setSetoresItens(Array.from(new Set(ss)));
-    }); }, []);
-  const abas = useMemo(() => entradasSetores(acesso, setoresItens), [acesso, setoresItens]);
+  const abas = useMemo(() => entradasSetores(acesso), [acesso]);
   const pedido = params.get("aba");
   const atual = abas.find((a) => a.id === pedido) ?? abas[0];
 
@@ -32,7 +24,6 @@ function Conteudo() {
       <Titulo>{atual.nome}</Titulo>
       {atual.id === "saude" && <Saude />}
       {atual.id === "secretaria" && <Secretaria />}
-      {atual.id.startsWith("setor:") && <Estoque key={atual.id} setor={atual.id.slice(6)} />}
     </div>
   );
 }

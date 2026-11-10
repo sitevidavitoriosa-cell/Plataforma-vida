@@ -2,11 +2,10 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { useAuth, useEdicao } from "./provedores";
+import { TODAS, useAuth, useEdicao } from "./provedores";
 import { temaDe, bolinha, descricaoEd } from "@/lib/cores";
 import { Carregando, Icone, Janela, Botao, cx } from "./ui";
 import { PERFIS, podeVer } from "@/lib/perm";
-import { supabase } from "@/lib/supabase";
 import { entradasSetores, hrefSetor, type EntradaSetor } from "@/lib/setores";
 
 const ITENS = [
@@ -22,13 +21,7 @@ const ITENS = [
 
 function useEntradasSetores(): EntradaSetor[] {
   const { acesso } = useAuth();
-  const [setores, setSetores] = useState<string[]>([]);
-  useEffect(() => { if (acesso) supabase.from("itens").select("setor").then(async ({ data }) => {
-      const eq = await supabase.from("equipes").select("setores");
-      const ss = [...((data as { setor: string }[] | null) ?? []).map((x) => x.setor), ...(((eq.data as { setores: string[] }[] | null) ?? []).flatMap((e) => e.setores))];
-      setSetores(Array.from(new Set(ss)));
-    }); }, [acesso]);
-  return entradasSetores(acesso, setores);
+  return entradasSetores(acesso);
 }
 
 function ListaSetores(p: { entradas: EntradaSetor[]; onEscolher?: () => void }) {
@@ -39,9 +32,8 @@ function ListaSetoresInterna({ entradas, onEscolher }: { entradas: EntradaSetor[
   const params = aba ?? (caminho === "/setores" ? entradas[0]?.id : null);
   return (
     <div className="flex flex-col">
-      {entradas.map((e, i) => (
+      {entradas.map((e) => (
         <div key={e.id}>
-          {e.grupo === "setor" && entradas[i - 1]?.grupo !== "setor" && <div className="px-3 pb-1 pt-3 text-[11px] font-extrabold uppercase tracking-wide text-suave">Outras equipes</div>}
           <Link href={hrefSetor(e.id)} onClick={onEscolher} className={cx("flex min-h-10 items-center rounded-xl px-3 text-[14px] font-bold", params === e.id ? "bg-marca-clara text-marca-esc" : "text-suave hover:bg-fundo")}>{e.nome}</Link>
         </div>
       ))}
@@ -50,21 +42,29 @@ function ListaSetoresInterna({ entradas, onEscolher }: { entradas: EntradaSetor[
 }
 
 function SeletorEdicao() {
-  const { eds, ed, trocar } = useEdicao();
+  const { eds, ed, todas, podeTodas, trocar } = useEdicao();
   const [aberto, setAberto] = useState(false);
-  if (!ed) return null;
+  if (!ed && !todas) return null;
   const c = { hex: temaDe(ed).detalhe };
   return (
     <>
       <button type="button" onClick={() => setAberto(true)} className="flex min-h-10 items-center gap-2 rounded-full border border-borda bg-white px-3.5 text-sm font-bold">
-        <span className="h-3 w-3 rounded-full" style={{ background: c.hex }} />{ed.nome}<span className="text-suave">▾</span>
+        {todas ? <span className="h-3 w-3 rounded-full bg-[conic-gradient(#7c4dcc,#1f6feb,#f2b705,#e8590c,#d62828,#2f9e44,#7c4dcc)]" /> : <span className="h-3 w-3 rounded-full" style={{ background: c.hex }} />}
+        {todas ? "Todas as edições" : ed!.nome}<span className="text-suave">▾</span>
       </button>
       {aberto && (
         <Janela titulo="Trocar de edição" onFechar={() => setAberto(false)}>
           <div className="flex flex-col gap-2">
+            {podeTodas && (
+              <button type="button" onClick={() => { trocar(TODAS); setAberto(false); }}
+                className={cx("flex min-h-14 items-center gap-3 rounded-2xl border px-4 text-left", todas ? "border-marca bg-marca-clara" : "border-borda bg-white")}>
+                <span className="h-4 w-4 rounded-full border border-borda bg-[conic-gradient(#7c4dcc,#1f6feb,#f2b705,#e8590c,#d62828,#2f9e44,#7c4dcc)]" />
+                <span className="flex-1"><b className="block">Todas as edições</b><span className="text-xs text-suave">Lista mãe do estoque e relatório anual</span></span>
+              </button>
+            )}
             {eds.map((e) => (
               <button key={e.id} type="button" onClick={() => { trocar(e.id); setAberto(false); }}
-                className={cx("flex min-h-14 items-center gap-3 rounded-2xl border px-4 text-left", e.id === ed.id ? "border-marca bg-marca-clara" : "border-borda bg-white")}>
+                className={cx("flex min-h-14 items-center gap-3 rounded-2xl border px-4 text-left", !todas && ed && e.id === ed.id ? "border-marca bg-marca-clara" : "border-borda bg-white")}>
                 <span className="h-4 w-4 rounded-full border border-borda" style={{ background: bolinha(e) }} />
                 <span className="flex-1"><b className="block">{e.nome}</b><span className="text-xs text-suave">{descricaoEd(e)}</span></span>
               </button>
@@ -76,6 +76,24 @@ function SeletorEdicao() {
   );
 }
 
+/** Páginas que entendem "Todas as edições"; nas demais, pede para escolher uma edição. */
+const PAGINAS_TODAS = ["/", "/estoque", "/relatorio", "/relatorio-anual", "/edicoes", "/pessoas"];
+function EscolhaEdicao() {
+  const { eds, trocar } = useEdicao();
+  return (
+    <div className="flex flex-col gap-3 pt-6">
+      <h1 className="m-0 text-2xl font-extrabold">Escolha uma edição</h1>
+      <p className="m-0 text-suave">Esta página mostra os dados de uma edição por vez. “Todas as edições” serve para o estoque (lista mãe), o relatório anual e o painel.</p>
+      {eds.map((e) => (
+        <button key={e.id} type="button" onClick={() => trocar(e.id)} className="flex min-h-14 items-center gap-3 rounded-2xl border border-borda bg-white px-4 text-left">
+          <span className="h-4 w-4 rounded-full border border-borda" style={{ background: bolinha(e) }} />
+          <span className="flex-1"><b className="block">{e.nome}</b><span className="text-xs text-suave">{descricaoEd(e)}</span></span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function Protegido({ children }: { children: React.ReactNode }) {
   const { carregando, sessao, acesso, sair } = useAuth();
   const router = useRouter();
@@ -84,6 +102,7 @@ export function Protegido({ children }: { children: React.ReactNode }) {
   const [setoresAbertos, setSetoresAbertos] = useState(false);
   const [folhaSetores, setFolhaSetores] = useState(false);
   const entradas = useEntradasSetores();
+  const { todas } = useEdicao();
 
   useEffect(() => { if (!carregando && !sessao) router.replace("/entrar"); }, [carregando, sessao, router]);
 
@@ -140,7 +159,7 @@ export function Protegido({ children }: { children: React.ReactNode }) {
         </button>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl print:max-w-none px-4 pb-32 md:px-8 md:pb-12">{children}</main>
+      <main className="mx-auto w-full max-w-5xl print:max-w-none px-4 pb-32 md:px-8 md:pb-12">{todas && !PAGINAS_TODAS.includes(path) ? <EscolhaEdicao /> : children}</main>
 
       {/* menu de baixo, fixo (celular) */}
       <nav className="fixed inset-x-0 bottom-0 z-40 print:hidden flex border-t border-borda bg-white px-1.5 pt-1.5 md:hidden" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 6px)" }}>

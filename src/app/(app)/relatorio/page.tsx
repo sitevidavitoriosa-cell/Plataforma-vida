@@ -1,11 +1,11 @@
 "use client";
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useLista } from "@/lib/dados";
 import { dmy, fmtN, type Envio, type Item } from "@/lib/tipos";
 import { podeVerFicha } from "@/lib/perm";
 import { descricaoEd, temaDe } from "@/lib/cores";
-import { useAuth, useAviso, useEdicao } from "@/components/provedores";
+import { RelatorioAnual } from "@/components/relatorioAnual";
+import { TODAS, useAuth, useAviso, useEdicao } from "@/components/provedores";
 import { LinhaTempo, Pizza, corDaRede } from "@/components/graficos";
 import { perfilDe, pc } from "@/lib/perfil";
 import { slideInscricoes, slidePerfil, slidePessoas, slideRedes, type Deck } from "@/lib/slidesVida";
@@ -21,8 +21,13 @@ const um = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? 
 const conta = <T,>(l: T[], f: (x: T) => string) => { const m = new Map<string, number>(); l.forEach((x) => { const k = f(x) || "Não informado"; m.set(k, (m.get(k) ?? 0) + 1); }); return Array.from(m.entries()).sort((a, b) => b[1] - a[1]); };
 
 export default function Relatorio() {
+  const { todas } = useEdicao();
+  return todas ? <RelatorioAnual /> : <RelatorioEdicao />;
+}
+
+function RelatorioEdicao() {
   const { acesso } = useAuth();
-  const { ed } = useEdicao();
+  const { ed, trocar } = useEdicao();
   const aviso = useAviso();
   const itens = useLista<Item>("itens", "*", "nome");
   const envios = useLista<Envio>("envios");
@@ -231,7 +236,7 @@ export default function Relatorio() {
           <Botao onClick={() => window.print()} className="!min-h-11">Imprimir / salvar PDF</Botao>
           <Botao v="sec" onClick={excel} className="!min-h-11">Baixar Excel</Botao>
           <Botao v="sec" onClick={slides} className="!min-h-11">Baixar apresentação (slides)</Botao>
-          {acesso?.perfil === "admin" && <Link href="/relatorio-anual" className="inline-flex min-h-11 items-center rounded-2xl border border-borda bg-white px-4 text-sm font-bold text-marca">Relatório anual →</Link>}
+          {acesso?.perfil === "admin" && <button type="button" onClick={() => trocar(TODAS)} className="inline-flex min-h-11 items-center rounded-2xl border border-borda bg-white px-4 text-sm font-bold text-marca">Relatório anual (todas as edições) →</button>}
         </div>
       </div>
 
