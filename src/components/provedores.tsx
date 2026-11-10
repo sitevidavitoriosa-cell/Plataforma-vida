@@ -34,7 +34,7 @@ function EdicaoProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => { if (acesso) recarregar(); }, [acesso, recarregar]);
   useEffect(() => { try { setId(localStorage.getItem("vv-edicao") ?? ""); } catch {} }, []);
 
-  const podeTodas = !!acesso && ["admin", "estoque"].includes(acesso.perfil);
+  const podeTodas = !!acesso && ["admin", "estoque", "coordenacao", "financeiro"].includes(acesso.perfil);
   const todas = podeTodas && id === TODAS;
   const ed = todas ? null : eds.find((e) => e.id === id) ?? eds.find((e) => e.status === "aberta") ?? eds[0] ?? null;
   const trocar = useCallback((novo: string) => { setId(novo); try { localStorage.setItem("vv-edicao", novo); } catch {} }, []);

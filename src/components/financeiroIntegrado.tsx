@@ -2,7 +2,7 @@
 import { useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { msgErro } from "@/lib/dados";
-import { brl, fmtN, norm, num, type Item } from "@/lib/tipos";
+import { brl, fmtN, norm, num, type Edicao, type Item } from "@/lib/tipos";
 import { useAviso } from "@/components/provedores";
 import { Botao, Campo, Cartao, Icone, Janela, Selo, Seletor, Vazio, cx } from "@/components/ui";
 
@@ -10,6 +10,11 @@ export type Rep = { item_id: string; nome: string; setor: string; un: string; qt
 export type Alug = { id: string; edicao_id: string; item_id: string; qtd: number; valor: number; fornecedor: string | null; obs: string | null; lancamento_id: string | null };
 const dec = (n: number) => String(n).replace(".", ",");
 const hoje = () => new Date().toISOString().slice(0, 10);
+/** Edição sugerida para lançar gastos quando o filtro está em "Todas as edições": a aberta, senão a próxima planejada. */
+export const edicaoPadrao = (eds: Edicao[]) => (eds.find((e) => e.status === "aberta") ?? eds.find((e) => e.status === "planejada") ?? eds[0])?.id ?? "";
+function EscolhaEd({ eds, valor, onChange }: { eds: Edicao[]; valor: string; onChange: (v: string) => void }) {
+  return <Seletor rotulo="Edição que vai pagar" value={valor} onChange={(e) => onChange(e.target.value)}>{eds.map((e) => <option key={e.id} value={e.id}>{e.nome}{e.status === "planejada" ? " (planejada)" : ""}</option>)}</Seletor>;
+}
 
 /* ---------------- barras: pago x previsto ---------------- */
 export function Barras({ titulo, linhas }: { titulo: string; linhas: { nome: string; pago: number; previsto: number }[] }) {
@@ -21,7 +26,7 @@ export function Barras({ titulo, linhas }: { titulo: string; linhas: { nome: str
       {linhas.length === 0 && <span className="text-sm text-suave">Nada por aqui ainda.</span>}
       {linhas.map((l) => (
         <div key={l.nome} className="flex items-center gap-3 text-sm">
-          <span className="w-28 shrink-0 truncate font-bold md:w-36" title={l.nome}>{l.nome}</span>
+          <span className="w-32 shrink-0 truncate font-bold md:w-44" title={l.nome}>{l.nome}</span>
           <div className="flex h-3 flex-1 overflow-hidden rounded-full bg-fundo">
             <div className="h-full bg-marca" style={{ width: `${(l.pago / max) * 100}%` }} />
             <div className="h-full" style={{ width: `${(l.previsto / max) * 100}%`, background: "#e8a400" }} />
@@ -34,7 +39,7 @@ export function Barras({ titulo, linhas }: { titulo: string; linhas: { nome: str
 }
 
 /* ---------------- A comprar (reposição do estoque) ---------------- */
-export function ComprarTab({ rep, pode, edicaoId, onMudou }: { rep: Rep[]; pode: boolean; edicaoId: string; onMudou: () => void }) {
+export function ComprarTab({ rep, pode, edicaoId, edicoes, onMudou }: { rep: Rep[]; pode: boolean; edicaoId: string | null; edicoes: Edicao[]; onMudou: () => void }) {
   const aviso = useAviso();
   const [q, setQ] = useState("");
   const [compra, setCompra] = useState<Rep | null>(null);
@@ -57,7 +62,7 @@ export function ComprarTab({ rep, pode, edicaoId, onMudou }: { rep: Rep[]; pode:
         <div className="rounded-3xl border border-borda bg-white p-3"><div className="text-xs text-suave">Custo previsto</div><b className="text-lg">{brl(total)}</b></div>
         <div className="rounded-3xl border border-borda bg-white p-3"><div className="text-xs text-suave">Sem preço</div><b className={cx("text-lg", semPreco > 0 && "text-alerta")}>{semPreco}</b></div>
       </div>
-      <p className="m-0 text-sm text-suave">Todo item que fica abaixo do mínimo no estoque entra aqui sozinho (itens alugados não entram). Quando você compra, toque em <b>Comprei</b>: o gasto vai para a edição escolhida no topo e a quantidade entra no estoque.{semPreco > 0 ? " Itens sem preço aparecem com custo zero: toque em Preço para informar o valor unitário." : ""}</p>
+      <p className="m-0 text-sm text-suave">Todo item que fica abaixo do mínimo no estoque entra aqui sozinho (itens alugados não entram). Quando você compra, toque em <b>Comprei</b>: o gasto vai para a edição escolhida (a do topo, ou você escolhe na hora quando está em “Todas as edições”) e a quantidade entra no estoque.{semPreco > 0 ? " Itens sem preço aparecem com custo zero: toque em Preço para informar o valor unitário." : ""}</p>
       <div className="flex flex-wrap gap-2">
         <label className="flex min-h-12 min-w-0 flex-1 items-center gap-2 rounded-2xl border border-borda bg-white px-3"><Icone n="busca" tam={20} /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar item ou setor" aria-label="Buscar item" className="min-w-0 flex-1 bg-transparent outline-none" /></label>
         <Botao v="sec" onClick={copiar} disabled={rep.length === 0} className="!min-h-12">Copiar lista</Botao>
@@ -80,23 +85,25 @@ export function ComprarTab({ rep, pode, edicaoId, onMudou }: { rep: Rep[]; pode:
           ))}
         </Cartao>
       ))}
-      {compra && <ModalCompra r={compra} edicaoId={edicaoId} onFechar={() => setCompra(null)} onFeito={() => { setCompra(null); onMudou(); }} />}
+      {compra && <ModalCompra r={compra} edicaoId={edicaoId} edicoes={edicoes.filter((e) => e.status !== "fechada")} onFechar={() => setCompra(null)} onFeito={() => { setCompra(null); onMudou(); }} />}
       {preco && <ModalPreco r={preco} onFechar={() => setPreco(null)} onFeito={() => { setPreco(null); onMudou(); }} />}
     </div>
   );
 }
 
-function ModalCompra({ r, edicaoId, onFechar, onFeito }: { r: Rep; edicaoId: string; onFechar: () => void; onFeito: () => void }) {
+function ModalCompra({ r, edicaoId, edicoes, onFechar, onFeito }: { r: Rep; edicaoId: string | null; edicoes: Edicao[]; onFechar: () => void; onFeito: () => void }) {
   const aviso = useAviso();
   const [f, setF] = useState({ qtd: dec(Number(r.falta)), valor: Number(r.preco) > 0 ? dec(Math.round(Number(r.falta) * Number(r.preco) * 100) / 100) : "", data: hoje(), obs: "", guardar: true });
+  const [edSel, setEdSel] = useState(edicaoId ?? edicaoPadrao(edicoes));
   const [salvando, setSalvando] = useState(false);
   async function confirmar(e: React.FormEvent) {
     e.preventDefault();
     const q = num(f.qtd), v = num(f.valor);
     if (!isFinite(q) || q <= 0) { aviso("Informe a quantidade comprada."); return; }
     if (!isFinite(v) || v < 0) { aviso("Informe o valor total pago."); return; }
+    if (!edSel) { aviso("Escolha a edição que vai pagar."); return; }
     setSalvando(true);
-    const { error } = await supabase.rpc("confirmar_compra", { p_edicao: edicaoId, p_item: r.item_id, p_qtd: q, p_valor: v, p_data: f.data, p_obs: f.obs.trim() || null });
+    const { error } = await supabase.rpc("confirmar_compra", { p_edicao: edSel, p_item: r.item_id, p_qtd: q, p_valor: v, p_data: f.data, p_obs: f.obs.trim() || null });
     if (error) { setSalvando(false); aviso(msgErro(error)); return; }
     if (f.guardar && v > 0) await supabase.rpc("definir_preco", { p_item: r.item_id, p_preco: Math.round((v / q) * 100) / 100 });
     setSalvando(false); aviso("Compra lançada no financeiro e somada ao estoque."); onFeito();
@@ -105,6 +112,7 @@ function ModalCompra({ r, edicaoId, onFechar, onFeito }: { r: Rep; edicaoId: str
     <Janela titulo={`Comprei: ${r.nome}`} onFechar={onFechar}>
       <form onSubmit={confirmar} className="flex flex-col gap-3.5 overflow-y-auto pb-2">
         <p className="m-0 text-sm text-suave">Faltavam {fmtN(r.falta)} {r.un}. Informe o que foi realmente comprado e pago.</p>
+        {!edicaoId && <EscolhaEd eds={edicoes} valor={edSel} onChange={setEdSel} />}
         <div className="grid grid-cols-2 gap-3">
           <Campo rotulo={`Quantidade (${r.un})`} inputMode="decimal" value={f.qtd} onChange={(e) => setF({ ...f, qtd: e.target.value })} />
           <Campo rotulo="Valor total pago (R$)" inputMode="decimal" value={f.valor} onChange={(e) => setF({ ...f, valor: e.target.value })} placeholder="0,00" autoFocus />
@@ -137,12 +145,13 @@ function ModalPreco({ r, onFechar, onFeito }: { r: Rep; onFechar: () => void; on
 }
 
 /* ---------------- Alugados (terceirizados) ---------------- */
-export function AlugadosTab({ alug, itens, pode, edicaoId, onMudou }: { alug: Alug[]; itens: Item[]; pode: boolean; edicaoId: string; onMudou: () => void }) {
+export function AlugadosTab({ alug, itens, pode, edicaoId, edicoes, onMudou }: { alug: Alug[]; itens: Item[]; pode: boolean; edicaoId: string | null; edicoes: Edicao[]; onMudou: () => void }) {
   const aviso = useAviso();
   const [form, setForm] = useState<Alug | "novo" | null>(null);
   const [pagando, setPagando] = useState<string | null>(null);
   const mapa = useMemo(() => new Map(itens.map((i) => [i.id, i])), [itens]);
-  const lista = alug.filter((a) => a.edicao_id === edicaoId).sort((a, b) => (mapa.get(a.item_id)?.nome ?? "").localeCompare(mapa.get(b.item_id)?.nome ?? ""));
+  const nomeEd = useMemo(() => new Map(edicoes.map((e) => [e.id, e.nome])), [edicoes]);
+  const lista = alug.filter((a) => !edicaoId || a.edicao_id === edicaoId).sort((a, b) => (mapa.get(a.item_id)?.nome ?? "").localeCompare(mapa.get(b.item_id)?.nome ?? ""));
   const previsto = lista.filter((a) => !a.lancamento_id).reduce((s, a) => s + Number(a.valor), 0);
   const pago = lista.filter((a) => a.lancamento_id).reduce((s, a) => s + Number(a.valor), 0);
   const alugaveis = itens.filter((i) => i.alugado);
@@ -161,15 +170,15 @@ export function AlugadosTab({ alug, itens, pode, edicaoId, onMudou }: { alug: Al
         <div className="rounded-3xl border border-borda bg-white p-3"><div className="text-xs text-suave">A pagar</div><b className="text-lg">{brl(previsto)}</b></div>
         <div className="rounded-3xl border border-borda bg-white p-3"><div className="text-xs text-suave">Já pago</div><b className="text-lg text-alerta">{brl(pago)}</b></div>
       </div>
-      <p className="m-0 text-sm text-suave">Itens terceirizados (gás hélio, cadeira, fantasminha…) não têm saldo no paiol, mas custam dinheiro. Registre aqui o que foi alugado nesta edição e o valor; ao pagar, vira despesa do financeiro. Para um item aparecer na lista, marque-o como “Alugado” no Estoque.</p>
+      <p className="m-0 text-sm text-suave">Itens terceirizados (gás hélio, cadeira, fantasminha…) não têm saldo no paiol, mas custam dinheiro. Registre aqui o que foi alugado em cada edição e o valor; ao pagar, vira despesa do financeiro. Para um item aparecer na lista, marque-o como “Alugado” no Estoque.</p>
       {pode && <div><Botao onClick={() => setForm("novo")} className="!min-h-11"><Icone n="mais1" tam={18} />Registrar aluguel</Botao></div>}
-      {lista.length === 0 && <Vazio>Nenhum aluguel registrado nesta edição.{alugaveis.length === 0 ? " Marque itens como “Alugado” no Estoque para poder registrá-los aqui." : ""}</Vazio>}
+      {lista.length === 0 && <Vazio>Nenhum aluguel registrado.{alugaveis.length === 0 ? " Marque itens como “Alugado” no Estoque para poder registrá-los aqui." : ""}</Vazio>}
       <Cartao className="overflow-hidden">
         {lista.map((a, n) => {
           const it = mapa.get(a.item_id), paga = !!a.lancamento_id;
           return (
             <div key={a.id} className={cx("flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3", n > 0 && "border-t border-borda")}>
-              <div className="min-w-[180px] flex-1"><b className="block text-[15px]">{it?.nome ?? "Item"}</b><span className="text-xs text-suave">{it?.setor} · {fmtN(Number(a.qtd))} {it?.un}{a.fornecedor ? ` · ${a.fornecedor}` : ""}</span></div>
+              <div className="min-w-[180px] flex-1"><b className="block text-[15px]">{it?.nome ?? "Item"}</b><span className="text-xs text-suave">{!edicaoId && nomeEd.get(a.edicao_id) ? `${nomeEd.get(a.edicao_id)} · ` : ""}{it?.setor} · {fmtN(Number(a.qtd))} {it?.un}{a.fornecedor ? ` · ${a.fornecedor}` : ""}</span></div>
               <b>{brl(Number(a.valor))}</b>
               <Selo tom={paga ? "ok" : "aviso"}>{paga ? "Pago" : "A pagar"}</Selo>
               {pode && !paga && <div className="flex gap-2"><Botao v="sec" onClick={() => setForm(a)} className="!min-h-10 !px-3 !text-sm">Editar</Botao><Botao onClick={() => pagar(a)} className="!min-h-10 !px-3 !text-sm">{pagando === a.id ? "Confirmar pagamento" : "Marcar pago"}</Botao></div>}
@@ -177,22 +186,24 @@ export function AlugadosTab({ alug, itens, pode, edicaoId, onMudou }: { alug: Al
           );
         })}
       </Cartao>
-      {form && <FormAluguel a={form === "novo" ? null : form} alugaveis={alugaveis} edicaoId={edicaoId} onFechar={() => setForm(null)} onSalvo={() => { setForm(null); onMudou(); }} />}
+      {form && <FormAluguel a={form === "novo" ? null : form} alugaveis={alugaveis} edicaoId={edicaoId} edicoes={edicoes.filter((e) => e.status !== "fechada")} onFechar={() => setForm(null)} onSalvo={() => { setForm(null); onMudou(); }} />}
     </div>
   );
 }
 
-function FormAluguel({ a, alugaveis, edicaoId, onFechar, onSalvo }: { a: Alug | null; alugaveis: Item[]; edicaoId: string; onFechar: () => void; onSalvo: () => void }) {
+function FormAluguel({ a, alugaveis, edicaoId, edicoes, onFechar, onSalvo }: { a: Alug | null; alugaveis: Item[]; edicaoId: string | null; edicoes: Edicao[]; onFechar: () => void; onSalvo: () => void }) {
   const aviso = useAviso();
   const [f, setF] = useState({ item: a?.item_id ?? alugaveis[0]?.id ?? "", qtd: a ? dec(Number(a.qtd)) : "1", valor: a ? dec(Number(a.valor)) : "", fornecedor: a?.fornecedor ?? "", obs: a?.obs ?? "" });
   const [del, setDel] = useState(false);
+  const [edSel, setEdSel] = useState(a?.edicao_id ?? edicaoId ?? edicaoPadrao(edicoes));
   async function salvar(e: React.FormEvent) {
     e.preventDefault();
     const q = num(f.qtd), v = num(f.valor || "0");
+    if (!edSel) { aviso("Escolha a edição."); return; }
     if (!f.item) { aviso("Escolha o item alugado."); return; }
     if (!isFinite(q) || q <= 0) { aviso("Informe a quantidade."); return; }
     if (!isFinite(v) || v < 0) { aviso("Informe o valor total."); return; }
-    const d = { edicao_id: edicaoId, item_id: f.item, qtd: q, valor: v, fornecedor: f.fornecedor.trim() || null, obs: f.obs.trim() || null, atualizado_em: new Date().toISOString() };
+    const d = { edicao_id: edSel, item_id: f.item, qtd: q, valor: v, fornecedor: f.fornecedor.trim() || null, obs: f.obs.trim() || null, atualizado_em: new Date().toISOString() };
     const r = a ? await supabase.from("alugueis").update(d).eq("id", a.id) : await supabase.from("alugueis").insert(d);
     if (r.error) { aviso(msgErro(r.error)); return; }
     aviso("Aluguel salvo."); onSalvo();
@@ -206,6 +217,7 @@ function FormAluguel({ a, alugaveis, edicaoId, onFechar, onSalvo }: { a: Alug | 
   return (
     <Janela titulo={a ? "Editar aluguel" : "Registrar aluguel"} onFechar={onFechar}>
       <form onSubmit={salvar} className="flex flex-col gap-3.5 overflow-y-auto pb-2">
+        {!edicaoId && !a && <EscolhaEd eds={edicoes} valor={edSel} onChange={setEdSel} />}
         <Seletor rotulo="Item alugado" value={f.item} onChange={(e) => setF({ ...f, item: e.target.value })}>
           {alugaveis.length === 0 && <option value="">Nenhum item marcado como alugado</option>}
           {alugaveis.map((i) => <option key={i.id} value={i.id}>{i.nome} ({i.setor})</option>)}

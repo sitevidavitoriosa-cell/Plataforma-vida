@@ -6,6 +6,7 @@ import { fmtN, norm, num, type Edicao, type Envio, type Equipe, type Item } from
 import { ehPaiol, podeEscrever, setoresDaEquipe } from "@/lib/perm";
 import { useAuth, useAviso, useEdicao } from "@/components/provedores";
 import { lerInventario, type ItemInv } from "@/lib/inventario";
+import { baixarBlob, nomeArq, pdfLista, type GrupoPdf, type ListaPdf } from "@/lib/estoquePdf";
 import { Botao, Campo, Carregando, Chip, Cartao, Icone, Janela, Passo, Selo, Seletor, Titulo, Vazio, cx } from "@/components/ui";
 
 type Aba = "geral" | "enviado" | "balanco";
@@ -43,6 +44,50 @@ export function Estoque({ setor }: { setor?: string }) {
   const dados = setor ? todos.dados.filter((i) => i.setor === setor) : todos.dados;
   const itens = { ...todos, dados };
 
+  /** Exporta em PDF a lista que está na tela: lista mãe, retirada da edição ou balanço. */
+  async function exportarPdf() {
+    const ord = (a: Item, b: Item) => a.setor.localeCompare(b.setor, "pt-BR") || a.nome.localeCompare(b.nome, "pt-BR");
+    const agrupa = <T,>(l: { it: Item; v: T }[], f: (v: T, it: Item) => { cel: string[]; alerta?: boolean }): GrupoPdf[] => {
+      const m = new Map<string, GrupoPdf>();
+      l.forEach(({ it, v }) => { const g = m.get(it.setor) ?? { nome: it.setor, linhas: [] }; g.linhas.push(f(v, it)); m.set(it.setor, g); });
+      return Array.from(m.values()).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+    };
+    const escopo = setor ? ` · ${setor}` : "";
+    let lista: ListaPdf; let arq: string;
+    if (aba === "geral") {
+      const fora = (id: string) => (envios.dados ?? []).filter((x) => x.item_id === id && x.aplicado == null).reduce((s, x) => s + Number(x.env), 0);
+      const ls = dados.slice().sort(ord);
+      lista = {
+        ed: null, titulo: `Lista mãe do estoque${escopo}`, subtitulo: "Saldo atual do paiol",
+        resumo: [{ rotulo: "Itens", valor: String(ls.length) }, { rotulo: "Consumíveis", valor: String(ls.filter((i) => i.cons).length) }, { rotulo: "Abaixo do mínimo", valor: String(ls.filter(emFalta).length), alerta: ls.some(emFalta) }, { rotulo: "Alugados", valor: String(ls.filter((i) => i.alugado).length) }],
+        colunas: [{ t: "Item", w: 70 }, { t: "Tipo", w: 28 }, { t: "Unidade", w: 20 }, { t: "Estoque", w: 22, dir: true }, { t: "Mínimo", w: 22, dir: true }, { t: "Situação", w: 24 }],
+        grupos: agrupa(ls.map((it) => ({ it, v: it })), (i) => ({ cel: [i.nome, i.alugado ? "Alugado" : i.cons ? "Consumível" : "Não consumível", i.un, i.alugado ? "—" : fmtN(i.qtd) + (fora(i.id) > 0 ? ` (+${fmtN(fora(i.id))} fora)` : ""), i.min > 0 && !i.alugado ? fmtN(i.min) : "—", i.alugado ? "Alugado" : emFalta(i) ? "Em falta" : "OK"], alerta: emFalta(i) })),
+      };
+      arq = `Estoque_lista_mae${setor ? "_" + nomeArq(setor) : ""}`;
+    } else if (ed) {
+      const doEd = (envios.dados ?? []).filter((x) => x.edicao_id === ed.id).map((x) => ({ x, it: dados.find((i) => i.id === x.item_id)! })).filter((r) => r.it).sort((a, b) => ord(a.it, b.it));
+      if (aba === "enviado") {
+        lista = {
+          ed, titulo: `Retirada do estoque${escopo}`, subtitulo: "Lista para separar e conferir",
+          resumo: [{ rotulo: "Itens", valor: String(doEd.length) }, { rotulo: "Unidades", valor: fmtN(doEd.reduce((s, r) => s + Number(r.x.env) + Number(r.x.comp), 0)) }],
+          colunas: [{ t: "Item", w: 78 }, { t: "Unidade", w: 22 }, { t: "Retirou", w: 24, dir: true }, { t: "Compra", w: 24, dir: true }, { t: "Total", w: 22, dir: true }, { t: "Conferido", w: 16, caixa: true }],
+          grupos: agrupa(doEd.map((r) => ({ it: r.it, v: r.x })), (x, i) => ({ cel: [i.nome, i.un, fmtN(x.env), Number(x.comp) > 0 ? fmtN(x.comp) : "—", fmtN(Number(x.env) + Number(x.comp)), ""] })),
+        };
+        arq = `Estoque_retirada_${nomeArq(ed.nome)}${setor ? "_" + nomeArq(setor) : ""}`;
+      } else {
+        const volta = (x: Envio) => (x.volta == null ? Number(x.env) + Number(x.comp) : Number(x.volta));
+        lista = {
+          ed, titulo: `Balanço de volta${escopo}`, subtitulo: "O que levou, o que voltou e o que foi usado",
+          resumo: [{ rotulo: "Itens", valor: String(doEd.length) }, { rotulo: "Conferidos", valor: `${doEd.filter((r) => r.x.aplicado != null).length}/${doEd.length}` }],
+          colunas: [{ t: "Item", w: 68 }, { t: "Unidade", w: 20 }, { t: "Levou", w: 22, dir: true }, { t: "Voltou", w: 22, dir: true }, { t: "Usou", w: 22, dir: true }, { t: "Situação", w: 32 }],
+          grupos: agrupa(doEd.map((r) => ({ it: r.it, v: r.x })), (x, i) => { const lev = Number(x.env) + Number(x.comp); const inf = x.informado || x.aplicado != null || x.volta != null; return { cel: [i.nome, i.un, fmtN(lev), inf ? fmtN(volta(x)) : "—", inf ? fmtN(lev - volta(x)) : "—", x.aplicado != null ? "Conferido" : inf ? "Informado" : "Aguardando"] }; }),
+        };
+        arq = `Estoque_balanco_${nomeArq(ed.nome)}${setor ? "_" + nomeArq(setor) : ""}`;
+      }
+    } else return;
+    try { baixarBlob(await pdfLista(lista), `${arq}.pdf`); aviso("PDF gerado."); } catch { aviso("Não consegui gerar o PDF agora."); }
+  }
+
   return (
     <div>
       {!equipe && todas && (
@@ -55,6 +100,9 @@ export function Estoque({ setor }: { setor?: string }) {
         </div>
       )}
 
+      {(aba === "geral" || ed) && (
+        <div className="flex justify-end pb-3"><Botao v="sec" onClick={exportarPdf} className="!min-h-11"><Icone n="baixar" tam={18} />Exportar lista em PDF</Botao></div>
+      )}
       {travada && <div className="mb-3 rounded-2xl bg-fundo px-4 py-3 text-sm font-bold text-suave">Edição fechada: só consulta. Para mexer nas quantidades, reabra a edição em Edições.</div>}
       {aba !== "geral" && !ed && <Vazio>Crie uma edição em “Edições” para usar a retirada e o balanço.</Vazio>}
 
