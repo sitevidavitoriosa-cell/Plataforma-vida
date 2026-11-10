@@ -10,6 +10,12 @@ export const CORES: Record<string, { hex: string; esc: string; clara: string }> 
 };
 export const NOMES_COR = Object.keys(CORES);
 export const TIPOS: Record<string, string> = { base: "Base", kids: "Kids", beone: "BeOne" };
+/** Cores próprias das edições que não são rede (nenhuma repete a cor de uma rede): Base rosa pink, Kids turquesa, BeOne preto e branco. */
+export const CORES_TIPO: Record<string, { hex: string; esc: string; clara: string }> = {
+  base: { hex: "#c2255c", esc: "#8f1a43", clara: "#fce8ef" },
+  kids: { hex: "#0e9aa7", esc: "#0a6f79", clara: "#def4f6" },
+  beone: { hex: "#111111", esc: "#000000", clara: "#efefef" },
+};
 export const corDe = (nome?: string | null) => CORES[nome ?? ""] ?? CORES.Roxa;
 
 export type Tema = { marca: string; esc: string; clara: string; detalhe: string; fundo: string };
@@ -17,12 +23,11 @@ type EdLike = { tipo?: string | null; cor?: string | null; rede2?: string | null
 const AZUL = { marca: "#16294d", esc: "#0e1c38", clara: "#e8edf7", fundo: "#fafaf9" };
 const CINZA: Tema = { marca: "#5a5a56", esc: "#3a3a37", clara: "#efefed", detalhe: "#9a9a95", fundo: "#f4f4f3" };
 
-/** Visual do site: Base azul/amarelo, Kids azul/roxo, BeOne preto e branco, redes na cor delas (Branca = cinza). */
+/** Visual do site: redes na cor delas (Branca = cinza); Base rosa pink, Kids turquesa, BeOne preto e branco (`CORES_TIPO`). */
 export function temaDe(e?: EdLike | null): Tema {
   if (!e) return { ...AZUL, detalhe: "#f2b705" };
-  if (e.tipo === "beone") return { marca: "#111111", esc: "#000000", clara: "#efefef", detalhe: "#111111", fundo: "#ffffff" };
-  if (e.tipo === "kids") return { ...AZUL, detalhe: "#7c4dcc" };
-  if (e.tipo === "base") return { ...AZUL, detalhe: "#f2b705" };
+  if (e.tipo === "beone") { const c = CORES_TIPO.beone; return { marca: c.hex, esc: c.esc, clara: c.clara, detalhe: c.hex, fundo: "#ffffff" }; }
+  if (e.tipo === "kids" || e.tipo === "base") { const c = CORES_TIPO[e.tipo]; return { marca: c.hex, esc: c.esc, clara: c.clara, detalhe: c.hex, fundo: "#fafaf9" }; }
   if (e.cor === "Branca") return CINZA;
   const c = corDe(e.cor);
   return { marca: c.hex, esc: c.esc, clara: c.clara, detalhe: c.hex, fundo: "#fafaf9" };

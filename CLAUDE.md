@@ -17,7 +17,7 @@ O site antigo (arquivo único, Firebase) está em `legado/index.html` e serve s�
 - Só a chave publicável do Supabase vai no código (`.env.production`). Nunca chaves secretas.
 
 ## Edições (temporadas)
-- Tipos: Vida Base, Vida Kids, Vida BeOne. Uma edição é uma rede (Vida Roxa, Azul, Amarela, Laranja, Vermelha, Verde, Branca), ou Vida Base, Vida Kids, Vida BeOne; pode ser junto com outra rede (`rede2`, ex.: Vida Branca e Roxa). Visual: redes na própria cor (Branca = cinza), Base azul+amarelo, Kids azul+roxo, BeOne preto e branco (`EdicaoProvider`, `src/lib/cores.ts`).
+- Tipos: Vida Base, Vida Kids, Vida BeOne. Uma edição é uma rede (Vida Roxa, Azul, Amarela, Laranja, Vermelha, Verde, Branca), ou Vida Base, Vida Kids, Vida BeOne; pode ser junto com outra rede (`rede2`, ex.: Vida Branca e Roxa). Visual: redes na própria cor (Branca = cinza) e as demais com cor própria que não repete nenhuma rede: **Base rosa pink (#c2255c), Kids turquesa (#0e9aa7), BeOne preto e branco** (`EdicaoProvider`, `src/lib/cores.ts`, `CORES_TIPO`).
 - A edição escolhida no topo vale para estoque, saúde, encontristas e secretaria. A opção **"Todas as edições"** (só admin e estoque; `todas` em `useEdicao`, `ed = null`) vale para: Painel (visão geral), Estoque (**lista mãe**) e Relatório (**relatório anual**, só admin). As demais páginas pedem para escolher uma edição (`EscolhaEdicao` no shell).
 
 ## Estoque (`/estoque`) e Equipes (`/setores`)
