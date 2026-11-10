@@ -37,6 +37,7 @@ export function useLista<T>(tabela: string, select = "*", ordem?: string) {
 const MSG: Record<string, string> = {
   sem_permissao: "Você não tem permissão para isso.",
   sem_estoque: "Não há essa quantidade no estoque.",
+  edicao_fechada: "Esta edição está fechada: só dá para consultar. Para mexer, reabra em Edições.",
   balanco_fechado: "O balanço deste item já foi fechado.",
   balanco_informado: "O setor já entregou o balanço deste item. Devolva ao setor antes de mudar o envio.",
   acima_do_enviado: "Não pode ser mais do que foi levado.",

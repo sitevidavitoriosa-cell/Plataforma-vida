@@ -56,7 +56,7 @@ export default function Encontristas() {
 
   return (
     <div>
-      <Titulo direita={podeVerFicha(acesso) ? <Botao onClick={() => setImportando(true)} className="!min-h-11">Importar planilha</Botao> : undefined}>Encontristas</Titulo>
+      <Titulo direita={podeVerFicha(acesso) && ed?.status !== "fechada" ? <Botao onClick={() => setImportando(true)} className="!min-h-11">Importar planilha</Botao> : undefined}>Encontristas</Titulo>
       {verEsp && <DashboardEncontristas base={base} />}
       <div className="flex flex-col gap-3 pb-4">
         <label className="flex min-h-12 items-center gap-2 rounded-2xl border border-borda bg-white px-3">

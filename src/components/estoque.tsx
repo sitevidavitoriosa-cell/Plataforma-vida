@@ -36,6 +36,7 @@ export function Estoque({ setor }: { setor?: string }) {
     return Array.from(s).sort((a, b) => a.localeCompare(b));
   }, [todos.dados, equipes.dados]);
 
+  const travada = !todas && ed?.status === "fechada"; // edição fechada: só consulta
   const podeAlgum = setor ? podeEscrever(acesso, "estoque", setor) : podeEscrever(acesso, "estoque") || setoresDaEquipe(acesso).length > 0;
 
   if (!todos.dados || !envios.dados) return <Carregando />;
@@ -54,16 +55,17 @@ export function Estoque({ setor }: { setor?: string }) {
         </div>
       )}
 
+      {travada && <div className="mb-3 rounded-2xl bg-fundo px-4 py-3 text-sm font-bold text-suave">Edição fechada: só consulta. Para mexer nas quantidades, reabra a edição em Edições.</div>}
       {aba !== "geral" && !ed && <Vazio>Crie uma edição em “Edições” para usar a retirada e o balanço.</Vazio>}
 
       {aba === "geral" && !setor && podeEscrever(acesso, "estoque") && (
         <div className="pb-3"><Botao v="sec" onClick={() => setImportando(true)} className="!min-h-11">Importar itens da planilha (Excel)</Botao></div>
       )}
       {!equipe && aba === "geral" && <Geral itens={itens.dados} envios={envios.dados} onAbrir={setAberto} />}
-      {aba === "enviado" && ed && <Enviado equipe={equipe} itens={itens.dados} envios={envios.dados} edicoes={listaEd} ed={ed} recarregar={() => { todos.recarregar(); envios.recarregar(); }} setItens={todos.setDados} setEnvios={envios.setDados} />}
+      {aba === "enviado" && ed && <Enviado travada={travada} equipe={equipe} itens={itens.dados} envios={envios.dados} edicoes={listaEd} ed={ed} recarregar={() => { todos.recarregar(); envios.recarregar(); }} setItens={todos.setDados} setEnvios={envios.setDados} />}
       {aba === "balanco" && ed && (equipe
-        ? <BalancoEquipe setor={setor!} itens={itens.dados} envios={envios.dados} ed={ed} recarregar={() => { todos.recarregar(); envios.recarregar(); }} />
-        : <BalancoPaiol itens={itens.dados} envios={envios.dados} ed={ed} recarregar={() => { todos.recarregar(); envios.recarregar(); }} />)}
+        ? <BalancoEquipe travada={travada} setor={setor!} itens={itens.dados} envios={envios.dados} ed={ed} recarregar={() => { todos.recarregar(); envios.recarregar(); }} />
+        : <BalancoPaiol travada={travada} itens={itens.dados} envios={envios.dados} ed={ed} recarregar={() => { todos.recarregar(); envios.recarregar(); }} />)}
 
       {!equipe && aba === "geral" && podeAlgum && (
         <button type="button" onClick={() => setAberto("novo")} className="fixed right-4 z-30 flex min-h-14 items-center gap-2 rounded-full bg-marca px-5 text-base font-extrabold text-white shadow-lg md:bottom-8 md:right-8" style={{ bottom: "calc(env(safe-area-inset-bottom) + 84px)" }}>
@@ -164,8 +166,8 @@ function Geral({ itens, envios, onAbrir }: { itens: Item[]; envios: Envio[]; onA
 }
 
 /* ---------------- Enviado ---------------- */
-function Enviado({ equipe, itens, envios, edicoes, ed, recarregar, setItens, setEnvios }: {
-  equipe: boolean; itens: Item[]; envios: Envio[]; edicoes: Edicao[]; ed: Edicao; recarregar: () => void;
+function Enviado({ travada, equipe, itens, envios, edicoes, ed, recarregar, setItens, setEnvios }: {
+  travada: boolean; equipe: boolean; itens: Item[]; envios: Envio[]; edicoes: Edicao[]; ed: Edicao; recarregar: () => void;
   setItens: React.Dispatch<React.SetStateAction<Item[] | null>>; setEnvios: React.Dispatch<React.SetStateAction<Envio[] | null>>;
 }) {
   const { acesso } = useAuth();
@@ -212,7 +214,7 @@ function Enviado({ equipe, itens, envios, edicoes, ed, recarregar, setItens, set
 
   const linha = (i: Item) => {
     const x = doEd(i.id), v = x ? Number(x.env) : 0, fechado = !!x && (x.aplicado != null || !!x.informado);
-    const pode = !equipe && ehPaiol(acesso);
+    const pode = !equipe && ehPaiol(acesso) && !travada;
     return (
       <div key={i.id} className={cx("flex min-h-16 items-center gap-2.5 rounded-2xl border px-3 py-2", v > 0 ? "border-[#a9d3c2] bg-marca-clara" : "border-borda bg-white")}>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -232,7 +234,7 @@ function Enviado({ equipe, itens, envios, edicoes, ed, recarregar, setItens, set
           <Icone n="busca" tam={20} />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar item pelo nome" aria-label="Buscar item" className="min-h-12 min-w-0 flex-1 bg-transparent outline-none" />
         </div>
-        {!equipe && anterior && ehPaiol(acesso) && <Botao v="suave" onClick={copiar} className="!px-3 !text-sm">Copiar da última</Botao>}
+        {!equipe && !travada && anterior && ehPaiol(acesso) && <Botao v="suave" onClick={copiar} className="!px-3 !text-sm">Copiar da última</Botao>}
       </div>
       {enviados.length > 0 && <div className="px-1 pt-1 text-[13px] font-extrabold uppercase tracking-wide text-marca">Enviados · {enviados.length}</div>}
       {enviados.map(linha)}
@@ -240,7 +242,7 @@ function Enviado({ equipe, itens, envios, edicoes, ed, recarregar, setItens, set
       {resto.map(linha)}
       {lista.length === 0 && <Vazio>Nenhum item com esse nome.</Vazio>}
 
-      {!equipe && (
+      {!equipe && !travada && (
         <div className="fixed inset-x-0 z-30 flex items-center justify-between gap-3 border-t border-borda bg-white px-4 py-3 md:left-64" style={{ bottom: "calc(env(safe-area-inset-bottom) + 66px)" }}>
           <div className="leading-tight"><b>{totalItens} itens · {fmtN(totalUn)} un.</b><div className="text-xs text-suave">A lista mãe já desconta</div></div>
           <Selo tom="ok">Segue para o Balanço</Selo>
@@ -252,12 +254,12 @@ function Enviado({ equipe, itens, envios, edicoes, ed, recarregar, setItens, set
 }
 
 /* ---------------- Balanço da equipe (servo do setor) ---------------- */
-function BalancoEquipe({ setor, itens, envios, ed, recarregar }: { setor: string; itens: Item[]; envios: Envio[]; ed: Edicao; recarregar: () => void }) {
+function BalancoEquipe({ travada, setor, itens, envios, ed, recarregar }: { travada: boolean; setor: string; itens: Item[]; envios: Envio[]; ed: Edicao; recarregar: () => void }) {
   const aviso = useAviso();
   const [enviando, setEnviando] = useState(false);
   const lista = envios.filter((x) => x.edicao_id === ed.id).map((x) => ({ x, it: itens.find((i) => i.id === x.item_id)! })).filter((r) => r.it).sort((a, b) => a.it.nome.localeCompare(b.it.nome));
   const volta = (x: Envio) => (x.volta == null ? Number(x.env) + Number(x.comp) : Number(x.volta));
-  const editaveis = lista.filter((r) => r.x.aplicado == null && !r.x.informado);
+  const editaveis = travada ? [] : lista.filter((r) => r.x.aplicado == null && !r.x.informado);
 
   async function salvar(r: { x: Envio; it: Item }, campo: "volta" | "comp", v: number) {
     const limite = campo === "volta" ? Number(r.x.env) + Number(r.x.comp) : Infinity;
@@ -280,7 +282,7 @@ function BalancoEquipe({ setor, itens, envios, ed, recarregar }: { setor: string
       <p className="m-0 px-1 text-sm text-suave">Para cada item, diga quanto <b>voltou</b>. O que não voltou conta como usado. Não dá para passar do que você levou.</p>
       {lista.map((r) => {
         const v = volta(r.x), levou = Number(r.x.env) + Number(r.x.comp), usou = levou - v;
-        const conferido = r.x.aplicado != null, enviado = !!r.x.informado && !conferido, livre = !conferido && !enviado;
+        const conferido = r.x.aplicado != null, enviado = !!r.x.informado && !conferido, livre = !conferido && !enviado && !travada;
         return (
           <div key={r.x.item_id} className={cx("flex flex-col gap-2.5 rounded-3xl border-2 bg-white p-3.5", conferido ? "border-[#a9d3c2]" : "border-borda")}>
             <div className="flex items-center justify-between gap-2">
@@ -314,10 +316,10 @@ function BalancoEquipe({ setor, itens, envios, ed, recarregar }: { setor: string
 }
 
 /* ---------------- Balanço do paiol (confere o que o setor informou) ---------------- */
-function BalancoPaiol({ itens, envios, ed, recarregar }: { itens: Item[]; envios: Envio[]; ed: Edicao; recarregar: () => void }) {
+function BalancoPaiol({ travada, itens, envios, ed, recarregar }: { travada: boolean; itens: Item[]; envios: Envio[]; ed: Edicao; recarregar: () => void }) {
   const { acesso } = useAuth();
   const aviso = useAviso();
-  const pode = ehPaiol(acesso);
+  const pode = ehPaiol(acesso) && !travada;
   const [conta, setConta] = useState<Record<string, number>>({});
   const [lote, setLote] = useState(false);
   const lista = envios.filter((x) => x.edicao_id === ed.id).map((x) => ({ x, it: itens.find((i) => i.id === x.item_id)! })).filter((r) => r.it)

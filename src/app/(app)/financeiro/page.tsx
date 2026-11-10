@@ -20,7 +20,7 @@ export default function Financeiro() {
   const [setor, setSetor] = useState("");
   const [form, setForm] = useState<Lanc | "novo" | null>(null);
   const [lim, setLim] = useState(50);
-  const pode = podeEscrever(acesso, "financeiro");
+  const pode = podeEscrever(acesso, "financeiro") && ed?.status !== "fechada";
 
   const todos = useMemo(() => (lanc.dados ?? []).filter((l) => l.edicao_id === ed?.id), [lanc.dados, ed]);
   const setores = useMemo(() => Array.from(new Set([...(itens.dados ?? []).map((i) => i.setor), ...todos.map((l) => l.setor ?? "")].filter(Boolean))).sort((a, b) => a.localeCompare(b)), [itens.dados, todos]);

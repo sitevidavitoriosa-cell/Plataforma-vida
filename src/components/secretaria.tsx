@@ -437,7 +437,7 @@ function Quartos() {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
-        <Botao onClick={() => setNovo(true)} className="!min-h-11">Novo quarto</Botao>
+        {ed.status !== "fechada" && <Botao onClick={() => setNovo(true)} className="!min-h-11">Novo quarto</Botao>}
         <LinkQuartosBotao edicaoId={ed.id} edicaoNome={ed.nome} />
         <Botao v="sec" onClick={pdf} className="!min-h-11" disabled={!quartos.length}>Gerar lista (PDF)</Botao>
       </div>
