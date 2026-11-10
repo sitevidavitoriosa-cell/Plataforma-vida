@@ -346,9 +346,9 @@ export default function Organizacional() {
 
   /* ----- peças ----- */
   const iconeItem = (i: Item, g = false) => {
-    if (i.pasta) return <span className="text-[#5f6368]"><Icone n="pasta" tam={g ? 22 : 24} /></span>;
+    if (i.pasta) return <span className="text-[#5f6368]"><Icone n="pasta" tam={g ? 28 : 30} /></span>;
     const t = tipoDe(i.arq!);
-    return <span className="grid shrink-0 place-items-center rounded text-[9px] font-extrabold leading-none text-white" style={{ background: COR_TIPO[t], width: g ? 22 : 24, height: g ? 22 : 24 }}>{(extDe(i.nome) || "arq").toUpperCase().slice(0, 3)}</span>;
+    return <span className="grid shrink-0 place-items-center rounded text-[11px] font-extrabold leading-none text-white" style={{ background: COR_TIPO[t], width: g ? 28 : 30, height: g ? 28 : 30 }}>{(extDe(i.nome) || "arq").toUpperCase().slice(0, 3)}</span>;
   };
   const propsLinha = (i: Item) => {
     const c = chave(i), marcado = sel.has(c);
@@ -366,22 +366,21 @@ export default function Organizacional() {
       },
     };
   };
-  const botaoMais = (i: Item) => <button type="button" onClick={(e) => { e.stopPropagation(); abrirPopover(i, e.currentTarget); }} aria-label={`Mais ações de ${i.nome}`} className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-[#5f6368] hover:bg-black/5"><Icone n="mais_v" tam={20} /></button>;
+  const botaoMais = (i: Item) => <button type="button" onClick={(e) => { e.stopPropagation(); abrirPopover(i, e.currentTarget); }} aria-label={`Mais ações de ${i.nome}`} className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-[#5f6368] hover:bg-black/5"><Icone n="mais_v" tam={22} /></button>;
 
   const linhaLista = (i: Item) => {
     const { marcado, props } = propsLinha(i);
     return (
-      <div key={chave(i)} {...props} className={`grid cursor-pointer select-none items-center gap-3 border-b border-borda px-3 py-1.5 outline-none last:border-b-0 focus-visible:bg-marca-clara md:grid-cols-[minmax(0,1fr)_110px_120px_90px_40px] grid-cols-[minmax(0,1fr)_40px] ${marcado ? "bg-marca-clara" : "hover:bg-[#f1f3f4]"}`}>
+      <div key={chave(i)} {...props} className={`grid cursor-pointer select-none items-center gap-3 border-b border-borda px-3 py-3 outline-none last:border-b-0 focus-visible:bg-marca-clara md:grid-cols-[minmax(0,1fr)_110px_90px_44px] grid-cols-[minmax(0,1fr)_44px] ${marcado ? "bg-marca-clara" : "hover:bg-[#f1f3f4]"}`}>
         <div className="flex min-w-0 items-center gap-3">
-          <input type="checkbox" checked={marcado} onChange={() => alternarSel(i)} onClick={(e) => e.stopPropagation()} aria-label={`Selecionar ${i.nome}`} className="h-4 w-4 shrink-0 accent-[#16294d]" />
+          <input type="checkbox" checked={marcado} onChange={() => alternarSel(i)} onClick={(e) => e.stopPropagation()} aria-label={`Selecionar ${i.nome}`} className="h-5 w-5 shrink-0 accent-[#16294d]" />
           {iconeItem(i)}
-          <div className="min-w-0 leading-tight"><b className="block truncate text-sm font-medium">{i.nome}{fav(i) && <span className="ml-1.5 text-amber-500">★</span>}</b>
-            <span className="block truncate text-xs text-suave md:hidden">{dataBr(i.data)}{i.arq ? ` · ${tam(i.tam)}` : ""}</span>
-            {(vista !== "drive" || nq) && <span className="block truncate text-xs text-suave">{caminhoTxt(i.pasta ? i.pasta.pai_id : i.arq!.area_id)}</span>}</div>
+          <div className="min-w-0 leading-tight"><b className="block truncate text-[16px] font-medium">{i.nome}{fav(i) && <span className="ml-1.5 text-amber-500">★</span>}</b>
+            <span className="block truncate text-[14px] text-suave md:hidden">{dataBr(i.data)}{i.arq ? ` · ${tam(i.tam)}` : ""}</span>
+            {(vista !== "drive" || nq) && <span className="block truncate text-[14px] text-suave">{caminhoTxt(i.pasta ? i.pasta.pai_id : i.arq!.area_id)}</span>}</div>
         </div>
-        <span className="hidden text-sm text-suave md:block">{aoVivo(i)}</span>
-        <span className="hidden text-sm text-suave md:block">{dataBr(i.data)}</span>
-        <span className="hidden text-sm text-suave md:block">{i.arq ? tam(i.tam) : "—"}</span>
+        <span className="hidden text-[16px] text-suave md:block">{dataBr(i.data)}</span>
+        <span className="hidden text-[16px] text-suave md:block">{i.arq ? tam(i.tam) : "—"}</span>
         {botaoMais(i)}
       </div>
     );
@@ -389,15 +388,15 @@ export default function Organizacional() {
   const cartaoGrade = (i: Item) => {
     const { marcado, props } = propsLinha(i);
     if (i.pasta) return (
-      <div key={chave(i)} {...props} className={`flex min-h-12 cursor-pointer select-none items-center gap-3 rounded-xl border px-3 outline-none ${marcado ? "border-marca bg-marca-clara" : "border-borda bg-[#f9fafb] hover:bg-[#f1f3f4]"}`}>
-        {iconeItem(i, true)}<b className="min-w-0 flex-1 truncate text-sm font-medium">{i.nome}</b>{fav(i) && <span className="text-amber-500">★</span>}{botaoMais(i)}
+      <div key={chave(i)} {...props} className={`flex min-h-14 cursor-pointer select-none items-center gap-3 rounded-xl border px-4 outline-none ${marcado ? "border-marca bg-marca-clara" : "border-borda bg-[#f9fafb] hover:bg-[#f1f3f4]"}`}>
+        {iconeItem(i, true)}<b className="min-w-0 flex-1 truncate text-[16px] font-medium">{i.nome}</b>{fav(i) && <span className="text-amber-500">★</span>}{botaoMais(i)}
       </div>
     );
     const t = tipoDe(i.arq!), th = thumbs.get(i.id);
     return (
       <div key={chave(i)} {...props} className={`flex cursor-pointer select-none flex-col overflow-hidden rounded-xl border outline-none ${marcado ? "border-marca bg-marca-clara" : "border-borda bg-[#f9fafb] hover:bg-[#f1f3f4]"}`}>
-        <div className="flex items-center gap-2 px-3 py-2">{iconeItem(i, true)}<b className="min-w-0 flex-1 truncate text-sm font-medium">{i.nome}</b>{fav(i) && <span className="text-amber-500">★</span>}{botaoMais(i)}</div>
-        <div className="mx-2 mb-2 grid h-32 place-items-center overflow-hidden rounded-lg bg-white">
+        <div className="flex items-center gap-2 px-3 py-2">{iconeItem(i, true)}<b className="min-w-0 flex-1 truncate text-[16px] font-medium">{i.nome}</b>{fav(i) && <span className="text-amber-500">★</span>}{botaoMais(i)}</div>
+        <div className="mx-2 mb-2 grid h-40 place-items-center overflow-hidden rounded-lg bg-white">
           {th /* eslint-disable-next-line @next/next/no-img-element */ ? <img src={th} alt="" loading="lazy" className="h-full w-full object-cover" /> : <span className="grid h-16 w-16 place-items-center rounded-xl text-lg font-extrabold text-white" style={{ background: COR_TIPO[t] }}>{(extDe(i.nome) || "arq").toUpperCase().slice(0, 4)}</span>}
         </div>
       </div>
@@ -423,7 +422,7 @@ export default function Organizacional() {
 
   const itemMenu = (a: Acao, n: number) => (
     <li key={n} className={a.sep ? "mt-1 border-t border-borda pt-1" : ""}>
-      <button type="button" onClick={a.onClick} className={`flex min-h-11 w-full items-center gap-3 px-4 text-left text-sm font-medium hover:bg-[#f1f3f4] ${a.perigo ? "text-alerta" : ""}`}><Icone n={a.icone} tam={18} />{a.rotulo}</button>
+      <button type="button" onClick={a.onClick} className={`flex min-h-12 w-full items-center gap-4 px-5 text-left text-[16px] font-medium hover:bg-[#f1f3f4] ${a.perigo ? "text-alerta" : ""}`}><Icone n={a.icone} tam={22} />{a.rotulo}</button>
     </li>
   );
   const Chapeu = ({ onClose }: { onClose: () => void }) => <div className="fixed inset-0 z-[60]" onMouseDown={onClose} onContextMenu={(e) => { e.preventDefault(); onClose(); }} />;
@@ -440,24 +439,24 @@ export default function Organizacional() {
       <input ref={pastaRef} type="file" hidden {...({ webkitdirectory: "", directory: "" } as Record<string, string>)} multiple onChange={(e) => { subir(Array.from(e.target.files ?? []).map((f) => ({ f, rel: (f as File & { webkitRelativePath?: string }).webkitRelativePath || f.name }))); e.target.value = ""; }} />
       <h1 className="sr-only">Organizacional</h1>
 
-      <div className="md:grid md:grid-cols-[210px_minmax(0,1fr)] md:gap-6">
+      <div className="md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6">
         {/* ---- lateral (computador) ---- */}
         <aside className="hidden md:block">
-          {pode && <button type="button" onClick={(e) => abrirNovo(e.currentTarget)} className="mb-4 flex min-h-14 items-center gap-3 rounded-2xl bg-white px-5 text-[15px] font-bold shadow-[0_1px_3px_rgba(60,64,67,.3),0_4px_8px_3px_rgba(60,64,67,.15)] hover:bg-[#f8f9fa]"><span className="text-marca"><Icone n="mais_grande" tam={26} /></span>Novo</button>}
+          {pode && <button type="button" onClick={(e) => abrirNovo(e.currentTarget)} className="mb-5 flex min-h-16 items-center gap-3 rounded-2xl bg-white px-6 text-[17px] font-bold shadow-[0_1px_3px_rgba(60,64,67,.3),0_4px_8px_3px_rgba(60,64,67,.15)] hover:bg-[#f8f9fa]"><span className="text-marca"><Icone n="mais_grande" tam={30} /></span>Novo</button>}
           <nav className="flex flex-col gap-0.5" aria-label="Seções do drive">
-            {navVisivel.map((n) => <button key={n.v} type="button" onClick={() => irPara(n.v)} aria-current={vista === n.v} className={`flex min-h-10 items-center gap-4 rounded-full px-4 text-sm ${vista === n.v ? "bg-marca-clara font-bold text-marca" : "font-medium hover:bg-[#f1f3f4]"}`}><Icone n={n.ic} tam={20} />{n.t}</button>)}
+            {navVisivel.map((n) => <button key={n.v} type="button" onClick={() => irPara(n.v)} aria-current={vista === n.v} className={`flex min-h-12 items-center gap-4 rounded-full px-5 text-[16px] text-[16px] ${vista === n.v ? "bg-marca-clara font-bold text-marca" : "font-medium hover:bg-[#f1f3f4]"}`}><Icone n={n.ic} tam={20} />{n.t}</button>)}
           </nav>
-          <div className="mt-6 border-t border-borda px-4 pt-4 text-xs text-suave"><b className="block text-sm text-texto">Armazenamento</b>{tam(usado)} em uso<br />{arqsAtivos.length} arquivo{arqsAtivos.length === 1 ? "" : "s"}</div>
+          <div className="mt-6 border-t border-borda px-4 pt-4 text-[14px] text-suave"><b className="block text-[16px] text-texto">Armazenamento</b>{tam(usado)} em uso<br />{arqsAtivos.length} arquivo{arqsAtivos.length === 1 ? "" : "s"}</div>
         </aside>
 
         <section className="min-w-0 pb-4">
           {/* ---- seções (celular) ---- */}
           <div className="mb-3 flex gap-2 overflow-x-auto md:hidden">
-            {navVisivel.map((n) => <button key={n.v} type="button" onClick={() => irPara(n.v)} className={`inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full px-4 text-sm font-bold ${vista === n.v ? "bg-marca-clara text-marca" : "border border-borda bg-white text-suave"}`}><Icone n={n.ic} tam={16} />{n.t}</button>)}
+            {navVisivel.map((n) => <button key={n.v} type="button" onClick={() => irPara(n.v)} className={`inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full px-4 text-[16px] font-bold ${vista === n.v ? "bg-marca-clara text-marca" : "border border-borda bg-white text-suave"}`}><Icone n={n.ic} tam={16} />{n.t}</button>)}
           </div>
 
-          <label className="flex min-h-12 items-center gap-3 rounded-full bg-[#edf2fa] px-5 focus-within:bg-white focus-within:shadow-[0_1px_3px_rgba(60,64,67,.3)]">
-            <Icone n="busca" tam={20} />
+          <label className="flex min-h-14 items-center gap-3 rounded-full bg-[#edf2fa] px-6 text-[17px] focus-within:bg-white focus-within:shadow-[0_1px_3px_rgba(60,64,67,.3)]">
+            <Icone n="busca" tam={24} />
             <input value={q} onChange={(e) => { setQ(e.target.value); limparSel(); }} placeholder="Pesquisar no Drive" aria-label="Pesquisar no Drive" className="min-w-0 flex-1 bg-transparent outline-none" />
             {q && <button type="button" onClick={() => setQ("")} aria-label="Limpar pesquisa" className="h-9 w-9 text-xl font-bold text-suave">×</button>}
           </label>
@@ -467,8 +466,8 @@ export default function Organizacional() {
           <div className="mt-3 flex min-h-12 flex-wrap items-center gap-2">
             {nSel > 0 && vista !== "compartilhados" ? (
               <div className="flex max-w-full flex-wrap items-center gap-0.5 rounded-full bg-marca-clara px-2 py-1">
-                <button type="button" onClick={limparSel} title="Limpar seleção" aria-label="Limpar seleção" className="grid h-10 w-10 place-items-center rounded-full text-lg font-bold hover:bg-black/5">×</button>
-                <b className="px-2 text-sm font-medium">{nSel} selecionado{nSel > 1 ? "s" : ""}</b>
+                <button type="button" onClick={limparSel} title="Limpar seleção" aria-label="Limpar seleção" className="grid h-12 w-12 place-items-center rounded-full text-xl font-bold hover:bg-black/5">×</button>
+                <b className="px-2 text-[16px] font-medium">{nSel} selecionado{nSel > 1 ? "s" : ""}</b>
                 <span className="mx-1 h-6 w-px bg-black/15" />
                 {emLixeira ? (
                   <>
@@ -489,21 +488,21 @@ export default function Organizacional() {
             ) : (
               <>
                 {vista === "drive" && !nq ? (
-                  <nav aria-label="Caminho" className="flex min-w-0 basis-full flex-wrap items-center text-[19px] md:flex-1 md:basis-0">
-                    <button type="button" onClick={() => irPara("drive", null)} {...alvoPasta(null)} className={`min-h-10 whitespace-nowrap rounded-full px-3 ${cur === null ? "font-medium" : "text-suave hover:bg-[#f1f3f4]"}`}>Meu Drive</button>
+                  <nav aria-label="Caminho" className="flex min-w-0 basis-full flex-wrap items-center text-[24px] md:flex-1 md:basis-0">
+                    <button type="button" onClick={() => irPara("drive", null)} {...alvoPasta(null)} className={`min-h-12 whitespace-nowrap rounded-full px-4 ${cur === null ? "font-medium" : "text-suave hover:bg-[#f1f3f4]"}`}>Meu Drive</button>
                     {trilhaAtual.map((p, n) => (
                       <span key={p.id} className="flex items-center"><span className="text-suave">›</span>
-                        <button type="button" onClick={() => irPara("drive", p.id)} {...alvoPasta(p.id)} className={`min-h-10 rounded-full px-3 ${n === trilhaAtual.length - 1 ? "font-medium" : "text-suave hover:bg-[#f1f3f4]"}`}>{p.nome}</button></span>
+                        <button type="button" onClick={() => irPara("drive", p.id)} {...alvoPasta(p.id)} className={`min-h-12 rounded-full px-4 ${n === trilhaAtual.length - 1 ? "font-medium" : "text-suave hover:bg-[#f1f3f4]"}`}>{p.nome}</button></span>
                     ))}
                   </nav>
-                ) : <h2 className="m-0 min-w-0 basis-full text-[19px] font-medium md:flex-1 md:basis-0">{nq ? `Resultados para “${q}”` : NAV.find((n) => n.v === vista)?.t}</h2>}
+                ) : <h2 className="m-0 min-w-0 basis-full text-[24px] font-medium md:flex-1 md:basis-0">{nq ? `Resultados para “${q}”` : NAV.find((n) => n.v === vista)?.t}</h2>}
                 {emLixeira && itens.length > 0 && <Botao v="sec" onClick={() => setConfirma({ itens, todos: true })} className="!min-h-10 !rounded-full !text-alerta">Esvaziar lixeira</Botao>}
                 {vista !== "compartilhados" && (
                   <>
-                    <select value={`${ordem.c}:${ordem.dir}`} onChange={(e) => { const [c, d] = e.target.value.split(":"); setOrdem({ c: c as "nome" | "data" | "tam", dir: Number(d) as 1 | -1 }); }} aria-label="Ordenar" className="ml-auto min-h-10 rounded-full border border-borda bg-white px-3 text-sm md:hidden"><option value="nome:1">Nome A–Z</option><option value="nome:-1">Nome Z–A</option><option value="data:-1">Mais recentes</option><option value="data:1">Mais antigos</option><option value="tam:-1">Maiores</option></select>
+                    <select value={`${ordem.c}:${ordem.dir}`} onChange={(e) => { const [c, d] = e.target.value.split(":"); setOrdem({ c: c as "nome" | "data" | "tam", dir: Number(d) as 1 | -1 }); }} aria-label="Ordenar" className="ml-auto min-h-12 rounded-full border border-borda bg-white px-3 text-[16px] md:hidden"><option value="nome:1">Nome A–Z</option><option value="nome:-1">Nome Z–A</option><option value="data:-1">Mais recentes</option><option value="data:1">Mais antigos</option><option value="tam:-1">Maiores</option></select>
                     <div className="flex overflow-hidden rounded-full border border-borda" role="group" aria-label="Modo de exibição">
-                      <button type="button" onClick={() => trocarModo("lista")} aria-pressed={modo === "lista"} title="Lista" aria-label="Exibir em lista" className={`grid h-10 w-12 place-items-center ${modo === "lista" ? "bg-marca-clara text-marca" : "bg-white text-suave"}`}><Icone n="lista" tam={20} /></button>
-                      <button type="button" onClick={() => trocarModo("grade")} aria-pressed={modo === "grade"} title="Grade" aria-label="Exibir em grade" className={`grid h-10 w-12 place-items-center border-l border-borda ${modo === "grade" ? "bg-marca-clara text-marca" : "bg-white text-suave"}`}><Icone n="grade" tam={20} /></button>
+                      <button type="button" onClick={() => trocarModo("lista")} aria-pressed={modo === "lista"} title="Lista" aria-label="Exibir em lista" className={`grid h-12 w-14 place-items-center ${modo === "lista" ? "bg-marca-clara text-marca" : "bg-white text-suave"}`}><Icone n="lista" tam={20} /></button>
+                      <button type="button" onClick={() => trocarModo("grade")} aria-pressed={modo === "grade"} title="Grade" aria-label="Exibir em grade" className={`grid h-12 w-14 place-items-center border-l border-borda ${modo === "grade" ? "bg-marca-clara text-marca" : "bg-white text-suave"}`}><Icone n="grade" tam={20} /></button>
                     </div>
                   </>
                 )}
@@ -511,8 +510,8 @@ export default function Organizacional() {
             )}
           </div>
 
-          {emLixeira && <p className="mb-2 mt-0 rounded-xl bg-[#f1f3f4] px-4 py-2 text-sm text-suave">Os itens da lixeira podem ser restaurados. Para liberar espaço, exclua permanentemente.</p>}
-          {ocupado && <div role="status" className="mb-2 rounded-xl bg-marca-clara px-4 py-2 text-sm font-bold text-marca-esc">{ocupado}</div>}
+          {emLixeira && <p className="mb-2 mt-0 rounded-xl bg-[#f1f3f4] px-4 py-2 text-[16px] text-suave">Os itens da lixeira podem ser restaurados. Para liberar espaço, exclua permanentemente.</p>}
+          {ocupado && <div role="status" className="mb-2 rounded-xl bg-marca-clara px-4 py-2 text-[16px] font-bold text-marca-esc">{ocupado}</div>}
 
           {/* ---- conteúdo ---- */}
           {vista === "compartilhados" ? (
@@ -523,9 +522,9 @@ export default function Organizacional() {
                 return (
                   <div key={l.id} className="flex flex-wrap items-center gap-3 border-b border-borda px-4 py-2 last:border-b-0">
                     <span className="text-[#5f6368]"><Icone n={l.pasta_id ? "pasta" : "arquivo"} tam={22} /></span>
-                    <div className="min-w-0 flex-1 leading-tight"><b className="block truncate text-sm font-medium">{nomeItem}</b><span className="text-xs text-suave">Qualquer pessoa com o link · {validade(l)}</span></div>
-                    <Botao v="sec" onClick={async () => { try { await navigator.clipboard.writeText(urlLink(l.token)); aviso("Link copiado."); } catch { aviso("Não consegui copiar."); } }} className="!min-h-10 !rounded-full !px-4 !text-sm">Copiar link</Botao>
-                    <Botao v="sec" onClick={() => setPartilha({ tipo: l.pasta_id ? "pasta" : "arquivo", id: (l.pasta_id ?? l.arquivo_id)!, nome: nomeItem ?? "" })} className="!min-h-10 !rounded-full !px-4 !text-sm">Gerenciar</Botao>
+                    <div className="min-w-0 flex-1 leading-tight"><b className="block truncate text-[16px] font-medium">{nomeItem}</b><span className="text-[14px] text-suave">Qualquer pessoa com o link · {validade(l)}</span></div>
+                    <Botao v="sec" onClick={async () => { try { await navigator.clipboard.writeText(urlLink(l.token)); aviso("Link copiado."); } catch { aviso("Não consegui copiar."); } }} className="!min-h-10 !rounded-full !px-4 !text-[16px]">Copiar link</Botao>
+                    <Botao v="sec" onClick={() => setPartilha({ tipo: l.pasta_id ? "pasta" : "arquivo", id: (l.pasta_id ?? l.arquivo_id)!, nome: nomeItem ?? "" })} className="!min-h-10 !rounded-full !px-4 !text-[16px]">Gerenciar</Botao>
                   </div>
                 );
               })}
@@ -534,13 +533,12 @@ export default function Organizacional() {
             <div className="grid place-items-center gap-2 px-4 py-16 text-center text-suave">
               <span className="text-[#bdc1c6]"><Icone n={emLixeira ? "lixo" : vista === "favoritos" ? "estrela" : "pasta"} tam={72} /></span>
               <b className="text-lg text-texto">{nq || filtro ? "Nenhum resultado" : emLixeira ? "A lixeira está vazia" : vista === "favoritos" ? "Nenhum item com estrela" : vista === "recentes" ? "Nada recente" : pode ? "Um lugar para todos os seus arquivos" : "Esta pasta está vazia"}</b>
-              <span className="text-sm">{nq || filtro ? "Tente outros termos ou remova os filtros." : emLixeira ? "" : vista === "favoritos" ? "Adicione estrela aos itens importantes para encontrá-los rápido." : pode && vista === "drive" ? "Arraste arquivos ou pastas para cá, ou use o botão Novo." : ""}</span>
+              <span className="text-[16px]">{nq || filtro ? "Tente outros termos ou remova os filtros." : emLixeira ? "" : vista === "favoritos" ? "Adicione estrela aos itens importantes para encontrá-los rápido." : pode && vista === "drive" ? "Arraste arquivos ou pastas para cá, ou use o botão Novo." : ""}</span>
             </div>
           ) : modo === "lista" ? (
             <div className="overflow-hidden rounded-2xl border border-borda bg-white">
-              <div className="hidden grid-cols-[minmax(0,1fr)_110px_120px_90px_40px] items-center gap-3 border-b border-borda px-3 py-2 text-xs font-bold text-suave md:grid">
+              <div className="hidden grid-cols-[minmax(0,1fr)_110px_90px_44px] items-center gap-3 border-b border-borda px-3 py-3 text-[14px] font-bold text-suave md:grid">
                 <button type="button" onClick={() => setOrdem((o) => ({ c: "nome", dir: o.c === "nome" ? (-o.dir as 1 | -1) : 1 }))} className="pl-[52px] text-left hover:text-texto">Nome{ordem.c === "nome" ? (ordem.dir === 1 ? " ↑" : " ↓") : ""}</button>
-                <span>Tipo</span>
                 <button type="button" onClick={() => setOrdem((o) => ({ c: "data", dir: o.c === "data" ? (-o.dir as 1 | -1) : -1 }))} className="text-left hover:text-texto">Modificado{ordem.c === "data" ? (ordem.dir === 1 ? " ↑" : " ↓") : ""}</button>
                 <button type="button" onClick={() => setOrdem((o) => ({ c: "tam", dir: o.c === "tam" ? (-o.dir as 1 | -1) : -1 }))} className="text-left hover:text-texto">Tamanho{ordem.c === "tam" ? (ordem.dir === 1 ? " ↑" : " ↓") : ""}</button>
                 <span />
@@ -549,24 +547,24 @@ export default function Organizacional() {
             </div>
           ) : (
             <div className="flex flex-col gap-4">
-              {itens.some((i) => i.pasta) && <div><h3 className="mb-2 mt-0 text-sm font-medium text-suave">Pastas</h3><div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 lg:grid-cols-3">{itens.filter((i) => i.pasta).map(cartaoGrade)}</div></div>}
-              {itens.some((i) => i.arq) && <div><h3 className="mb-2 mt-0 text-sm font-medium text-suave">Arquivos</h3><div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">{itens.filter((i) => i.arq).map(cartaoGrade)}</div></div>}
+              {itens.some((i) => i.pasta) && <div><h3 className="mb-2 mt-0 text-[16px] font-medium text-suave">Pastas</h3><div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 lg:grid-cols-3">{itens.filter((i) => i.pasta).map(cartaoGrade)}</div></div>}
+              {itens.some((i) => i.arq) && <div><h3 className="mb-2 mt-0 text-[16px] font-medium text-suave">Arquivos</h3><div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">{itens.filter((i) => i.arq).map(cartaoGrade)}</div></div>}
             </div>
           )}
-          <p className="mb-0 mt-3 text-xs text-suave">{toque ? "Toque para abrir. Os três pontos abrem o menu." : "Clique para selecionar, dois cliques para abrir, botão direito para o menu."}</p>
+          <p className="mb-0 mt-3 text-[14px] text-suave">{toque ? "Toque para abrir. Os três pontos abrem o menu." : "Clique para selecionar, dois cliques para abrir, botão direito para o menu."}</p>
         </section>
       </div>
 
       {/* ---- botão + (celular) ---- */}
       {pode && vista === "drive" && <button type="button" onClick={(e) => abrirNovo(e.currentTarget)} aria-label="Novo" className="fixed bottom-24 right-4 z-30 grid h-14 w-14 place-items-center rounded-2xl bg-marca text-white shadow-lg md:hidden"><Icone n="mais_grande" tam={28} /></button>}
 
-      {arrastando && <div className="pointer-events-none fixed inset-0 z-[55] grid place-items-center border-4 border-marca bg-marca/15"><div className="rounded-2xl bg-white px-8 py-6 text-center text-lg font-bold shadow-xl">Solte aqui para fazer upload{cur ? <><br /><span className="text-sm font-medium text-suave">em “{mapa.get(cur)?.nome}”</span></> : <><br /><span className="text-sm font-medium text-suave">em Meu Drive</span></>}</div></div>}
+      {arrastando && <div className="pointer-events-none fixed inset-0 z-[55] grid place-items-center border-4 border-marca bg-marca/15"><div className="rounded-2xl bg-white px-8 py-6 text-center text-lg font-bold shadow-xl">Solte aqui para fazer upload{cur ? <><br /><span className="text-[16px] font-medium text-suave">em “{mapa.get(cur)?.nome}”</span></> : <><br /><span className="text-[16px] font-medium text-suave">em Meu Drive</span></>}</div></div>}
 
       {/* ---- menu Novo ---- */}
       {novoMenu && (
         <>
           <Chapeu onClose={() => setNovoMenu(null)} />
-          <ul role="menu" className="fixed z-[61] m-0 w-64 list-none overflow-hidden rounded-xl bg-white py-2 shadow-[0_2px_10px_rgba(0,0,0,.3)]" style={{ left: novoMenu.x, top: novoMenu.y }}>
+          <ul role="menu" className="fixed z-[61] m-0 w-72 list-none overflow-hidden rounded-xl bg-white py-2 shadow-[0_2px_10px_rgba(0,0,0,.3)]" style={{ left: novoMenu.x, top: novoMenu.y }}>
             {itemMenu({ rotulo: "Nova pasta", icone: "nova_pasta", onClick: () => { setNovoMenu(null); setNome(""); setNovaPasta(true); } }, 0)}
             {itemMenu({ rotulo: "Upload de arquivo", icone: "subir", sep: true, onClick: () => { setNovoMenu(null); arquivosRef.current?.click(); } }, 1)}
             {itemMenu({ rotulo: "Upload de pasta", icone: "pasta_up", onClick: () => { setNovoMenu(null); pastaRef.current?.click(); } }, 2)}
@@ -580,12 +578,12 @@ export default function Organizacional() {
       ) : (
         <>
           <Chapeu onClose={() => setMenu(null)} />
-          <ul role="menu" className="fixed z-[61] m-0 w-64 list-none overflow-hidden rounded-xl bg-white py-2 shadow-[0_2px_10px_rgba(0,0,0,.3)]" style={{ left: menu.x, top: menu.y }}>{acoesDe(menu.item).map(itemMenu)}</ul>
+          <ul role="menu" className="fixed z-[61] m-0 w-72 list-none overflow-hidden rounded-xl bg-white py-2 shadow-[0_2px_10px_rgba(0,0,0,.3)]" style={{ left: menu.x, top: menu.y }}>{acoesDe(menu.item).map(itemMenu)}</ul>
         </>
       ))}
 
       {prev && <Previa arquivo={prev} lista={listaPrev} onTrocar={(a) => setPrev(arqMap.get(a.id) ?? null)} onFechar={() => setPrev(null)}
-        extra={<button type="button" onClick={() => setPartilha({ tipo: "arquivo", id: prev.id, nome: prev.nome })} className="flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-sm font-bold text-white hover:bg-white/10"><Icone n="compartilhar" tam={20} />Compartilhar</button>} />}
+        extra={<button type="button" onClick={() => setPartilha({ tipo: "arquivo", id: prev.id, nome: prev.nome })} className="flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-[16px] font-bold text-white hover:bg-white/10"><Icone n="compartilhar" tam={20} />Compartilhar</button>} />}
       {partilha && <Compartilhar item={partilha} podeMudar={pode} onFechar={() => setPartilha(null)} onMudou={linksQ.recarregar} />}
 
       {novaPasta && (
@@ -611,17 +609,17 @@ export default function Organizacional() {
       )}
       {detalhes && (
         <Janela titulo="Informações" onFechar={() => setDetalhes(null)}>
-          <dl className="m-0 flex flex-col gap-3 overflow-y-auto pb-2 text-sm">
+          <dl className="m-0 flex flex-col gap-3 overflow-y-auto pb-2 text-[16px]">
             <div className="flex items-center gap-3">{iconeItem(detalhes, true)}<b className="break-all text-base">{detalhes.nome}</b></div>
             {([["Tipo", aoVivo(detalhes)], ["Local", caminhoTxt(detalhes.pasta ? detalhes.pasta.pai_id : detalhes.arq!.area_id)], ...(detalhes.arq ? [["Tamanho", tam(detalhes.tam)]] : [["Itens dentro", String(pastasAtivas.filter((p) => p.pai_id === detalhes.id).length + arqsAtivos.filter((a) => a.area_id === detalhes.id).length)]]), ["Modificado", dataBr(detalhes.data)], ["Criado", dataBr(detalhes.pasta?.criado_em ?? detalhes.arq!.criado_em)]] as string[][]).map(([r, v]) => <div key={r} className="flex justify-between gap-4 border-b border-borda pb-2 last:border-0"><dt className="text-suave">{r}</dt><dd className="m-0 text-right font-medium">{v}</dd></div>)}
-            <div><Botao v="sec" onClick={async () => { try { await navigator.clipboard.writeText(urlInterno(tipoFav(detalhes.k), detalhes.id)); aviso("Link copiado."); } catch { aviso("Não consegui copiar."); } }} className="!min-h-10 !rounded-full !text-sm">Copiar link interno</Botao></div>
+            <div><Botao v="sec" onClick={async () => { try { await navigator.clipboard.writeText(urlInterno(tipoFav(detalhes.k), detalhes.id)); aviso("Link copiado."); } catch { aviso("Não consegui copiar."); } }} className="!min-h-10 !rounded-full !text-[16px]">Copiar link interno</Botao></div>
           </dl>
         </Janela>
       )}
       {confirma && (
         <Janela titulo={confirma.todos ? "Esvaziar a lixeira?" : "Excluir permanentemente?"} onFechar={() => setConfirma(null)}>
           <div className="flex flex-col gap-3">
-            <p className="m-0 text-sm">{confirma.todos ? `Os ${confirma.itens.length} itens da lixeira` : confirma.itens.length === 1 ? `“${confirma.itens[0].nome}”` : `${confirma.itens.length} itens`} {confirma.itens.some((i) => i.pasta) ? "(com tudo que há dentro das pastas) " : ""}serão excluídos para sempre e os links deles deixam de funcionar. Não dá para desfazer.</p>
+            <p className="m-0 text-[16px]">{confirma.todos ? `Os ${confirma.itens.length} itens da lixeira` : confirma.itens.length === 1 ? `“${confirma.itens[0].nome}”` : `${confirma.itens.length} itens`} {confirma.itens.some((i) => i.pasta) ? "(com tudo que há dentro das pastas) " : ""}serão excluídos para sempre e os links deles deixam de funcionar. Não dá para desfazer.</p>
             <div className="flex justify-end gap-2"><Botao v="sec" onClick={() => setConfirma(null)} className="!rounded-full">Cancelar</Botao><Botao v="perigo" disabled={!!ocupado} onClick={() => apagarDeVez(confirma.itens)} className="!rounded-full">{ocupado || "Excluir"}</Botao></div>
           </div>
         </Janela>
@@ -630,13 +628,13 @@ export default function Organizacional() {
       {/* ---- bandeja de uploads ---- */}
       {envios.length > 0 && (
         <div className="fixed bottom-24 left-4 right-20 z-30 overflow-hidden rounded-xl bg-white shadow-[0_2px_10px_rgba(0,0,0,.3)] md:bottom-6 md:left-auto md:right-6 md:w-80">
-          <div className="flex items-center gap-2 bg-[#202124] px-4 py-2.5 text-sm text-white">
+          <div className="flex items-center gap-2 bg-[#202124] px-4 py-2.5 text-[16px] text-white">
             <b className="flex-1 font-medium">{emAndamento ? `Fazendo upload de ${envios.length} ${envios.length === 1 ? "item" : "itens"}` : `${concluidos} ${concluidos === 1 ? "upload concluído" : "uploads concluídos"}`}</b>
             <button type="button" onClick={() => setBandejaAberta((a) => !a)} aria-label={bandejaAberta ? "Recolher" : "Expandir"} className="h-8 w-8 rounded-full hover:bg-white/10">{bandejaAberta ? "▾" : "▴"}</button>
             <button type="button" onClick={() => setEnvios([])} aria-label="Fechar" className="h-8 w-8 rounded-full text-lg hover:bg-white/10">×</button>
           </div>
           {bandejaAberta && <ul className="m-0 max-h-60 list-none overflow-y-auto p-0">{envios.map((e) => (
-            <li key={e.id} className="flex items-center gap-3 border-b border-borda px-4 py-2 text-sm last:border-b-0"><span className="min-w-0 flex-1 truncate">{e.nome}</span>
+            <li key={e.id} className="flex items-center gap-3 border-b border-borda px-4 py-2 text-[16px] last:border-b-0"><span className="min-w-0 flex-1 truncate">{e.nome}</span>
               <span className={e.estado === "ok" ? "font-bold text-green-700" : e.estado === "erro" ? "font-bold text-alerta" : "text-suave"}>{e.estado === "ok" ? "✓" : e.estado === "erro" ? "Falhou" : e.estado === "enviando" ? "…" : "Na fila"}</span></li>))}</ul>}
         </div>
       )}
@@ -645,5 +643,5 @@ export default function Organizacional() {
 }
 
 function BotaoIcone({ t, ic, onClick }: { t: string; ic: string; onClick: (el: HTMLElement) => void }) {
-  return <button type="button" title={t} aria-label={t} onClick={(e) => onClick(e.currentTarget)} className="grid h-10 w-10 place-items-center rounded-full hover:bg-black/5"><Icone n={ic} tam={20} /></button>;
+  return <button type="button" title={t} aria-label={t} onClick={(e) => onClick(e.currentTarget)} className="grid h-12 w-12 place-items-center rounded-full hover:bg-black/5"><Icone n={ic} tam={24} /></button>;
 }
