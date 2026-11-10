@@ -51,7 +51,12 @@ function useNomes() {
 }
 
 type Cfg = { x: number; y: number; tam: number; cor_texto: string; por_pagina: number; fx: number; fy: number; fw: number; fh: number; redonda: boolean; faixa: boolean; faixa_h: number; faixa_cor: string };
-const CFG0: Cfg = { x: 50, y: 62, tam: 7, cor_texto: "#111111", por_pagina: 8, fx: 50, fy: 35, fw: 40, fh: 30, redonda: true, faixa: false, faixa_h: 22, faixa_cor: "#ffffff" };
+/** Modelos prontos dos crachás de encontristas, um por rede/tipo (arquivos em public/crachas). A edição escolhe sozinha. */
+const MODELOS_PRONTOS = new Set(["Roxa", "Azul", "Amarela", "Laranja", "Vermelha", "Verde", "Branca", "Base"]);
+const urlPronto = (chave: string) => `/crachas/enc_${chave.toLowerCase()}.png`;
+/** A arte do Base tem o adesivo no alto à direita: o nome desce um pouco para a faixa não cobri-lo. */
+const AJUSTE_PRONTO: Record<string, Partial<Cfg>> = { Base: { y: 62 } };
+const CFG0: Cfg = { x: 50, y: 62, tam: 7, cor_texto: "#111111", por_pagina: 8, fx: 50, fy: 35, fw: 40, fh: 30, redonda: true, faixa: false, faixa_h: 27, faixa_cor: "#ffffff" };
 
 const lerArquivo = (f: Blob) => new Promise<string>((ok) => { const r = new FileReader(); r.onload = () => ok(r.result as string); r.readAsDataURL(f); });
 const carregarImg = (src: string) => new Promise<HTMLImageElement>((ok, no) => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => no(new Error("imagem inválida")); im.src = src; });
@@ -112,15 +117,18 @@ function Crachas() {
     return [ed.cor ?? "Roxa", ed.rede2].filter(Boolean) as string[];
   }, [ed]);
   const chave = redeSel && chaves.includes(redeSel) ? redeSel : chaves[0] ?? "Roxa";
-  const cfg = cfgs[tipo];
+  const cfgBase = cfgs[tipo];
   const arquivoModelo = modelos[chave + "|" + tipo];
-  const temModelo = !!arquivoModelo;
+  const usaPronto = tipo === "encontrista" && !arquivoModelo && MODELOS_PRONTOS.has(chave);
+  const temModelo = !!arquivoModelo || usaPronto;
+  const cfg = { ...cfgBase, ...(usaPronto ? AJUSTE_PRONTO[chave] : {}) };
   const rotuloTipo = tipo === "servo" ? "servos" : "encontristas";
 
   useEffect(() => {
     setPrevia("");
     if (arquivoModelo) supabase.storage.from("crachas").createSignedUrl(arquivoModelo, 600).then(({ data }) => setPrevia(data?.signedUrl ?? ""));
-  }, [arquivoModelo]);
+    else if (usaPronto) setPrevia(urlPronto(chave));
+  }, [arquivoModelo, usaPronto, chave]);
 
   async function subirModelo(f: File) {
     if (f.type !== "image/png") { aviso("Envie um arquivo PNG."); return; }
@@ -132,6 +140,13 @@ function Crachas() {
     setSubindo(false);
     if (r.error) { aviso(msgErro(r.error)); return; }
     aviso(`Modelo de ${rotuloTipo} salvo.`); carregar();
+  }
+  async function voltarAoPronto() {
+    setSubindo(true);
+    const r = await supabase.from("crachas_modelos").delete().eq("cor", chave).eq("tipo", tipo);
+    setSubindo(false);
+    if (r.error) { aviso(msgErro(r.error)); return; }
+    aviso("Voltou para o modelo automático."); carregar();
   }
   async function salvarCfg(n: Cfg) { setCfgs((s) => ({ ...s, [tipo]: n })); await supabase.from("crachas_cfg").update(n).eq("id", tipo === "servo" ? 2 : 1); }
   const mudar = (p: Partial<Cfg>) => setCfgs((s) => ({ ...s, [tipo]: { ...s[tipo], ...p } }));
@@ -173,8 +188,9 @@ function Crachas() {
     setGerando(true);
     try {
       const { jsPDF } = await import("jspdf");
-      const { data: su } = await supabase.storage.from("crachas").createSignedUrl(arquivoModelo, 600);
-      const dataUrl = await lerArquivo(await (await fetch(su!.signedUrl)).blob());
+      const urlModelo = arquivoModelo ? (await supabase.storage.from("crachas").createSignedUrl(arquivoModelo, 600)).data?.signedUrl : urlPronto(chave);
+      if (!urlModelo) throw new Error("não achei o modelo");
+      const dataUrl = await lerArquivo(await (await fetch(urlModelo)).blob());
       const dim = await carregarImg(dataUrl);
       // fotos dos servos
       const imgs = new Map<string, HTMLImageElement>();
@@ -253,8 +269,11 @@ function Crachas() {
       </div>
 
       <div className="flex items-center justify-between gap-3">
-        <span className="text-sm">{temModelo ? <Selo tom="ok">Modelo enviado</Selo> : <span className="text-alerta">Falta o modelo (PNG) de {rotuloTipo}.</span>}</span>
-        <Botao v="sec" className="!min-h-10" onClick={() => arq.current?.click()} disabled={subindo}>{subindo ? "Enviando…" : temModelo ? "Trocar PNG" : "Enviar PNG"}</Botao>
+        <span className="text-sm">{usaPronto ? <Selo tom="ok">Modelo automático: {chave}</Selo> : arquivoModelo ? <Selo tom="ok">Modelo enviado por você</Selo> : <span className="text-alerta">Falta o modelo (PNG) de {rotuloTipo}.</span>}</span>
+        <div className="flex gap-2">
+          {arquivoModelo && tipo === "encontrista" && MODELOS_PRONTOS.has(chave) && <Botao v="sec" className="!min-h-10" onClick={voltarAoPronto} disabled={subindo}>Usar o automático</Botao>}
+          <Botao v="sec" className="!min-h-10" onClick={() => arq.current?.click()} disabled={subindo}>{subindo ? "Enviando…" : arquivoModelo ? "Trocar PNG" : usaPronto ? "Usar outro PNG" : "Enviar PNG"}</Botao>
+        </div>
       </div>
 
       {previa && (
@@ -273,26 +292,26 @@ function Crachas() {
       <details className="rounded-2xl border border-borda px-3 py-2">
         <summary className="min-h-9 cursor-pointer text-sm font-bold">Ajustar posições</summary>
         <div className="mt-2 grid grid-cols-3 gap-2 text-sm">
-          <Campo rotulo="Nome →" inputMode="numeric" value={String(cfg.x)} onChange={(e) => mudar({ x: Number(e.target.value) || 0 })} onBlur={() => salvarCfg(cfg)} />
-          <Campo rotulo="Nome ↓" inputMode="numeric" value={String(cfg.y)} onChange={(e) => mudar({ y: Number(e.target.value) || 0 })} onBlur={() => salvarCfg(cfg)} />
-          <Campo rotulo="Letra" inputMode="numeric" value={String(cfg.tam)} onChange={(e) => mudar({ tam: Number(e.target.value) || 1 })} onBlur={() => salvarCfg(cfg)} />
-          <Seletor rotulo="Faixa do nome" value={cfg.faixa ? "s" : "n"} onChange={(e) => salvarCfg({ ...cfg, faixa: e.target.value === "s" })}><option value="s">Com faixa</option><option value="n">Sem faixa</option></Seletor>
+          <Campo rotulo="Nome →" inputMode="numeric" value={String(cfg.x)} onChange={(e) => mudar({ x: Number(e.target.value) || 0 })} onBlur={() => salvarCfg(cfgBase)} />
+          <Campo rotulo="Nome ↓" disabled={usaPronto && AJUSTE_PRONTO[chave]?.y !== undefined} inputMode="numeric" value={String(cfg.y)} onChange={(e) => mudar({ y: Number(e.target.value) || 0 })} onBlur={() => salvarCfg(cfgBase)} />
+          <Campo rotulo="Letra" inputMode="numeric" value={String(cfg.tam)} onChange={(e) => mudar({ tam: Number(e.target.value) || 1 })} onBlur={() => salvarCfg(cfgBase)} />
+          <Seletor rotulo="Faixa do nome" value={cfg.faixa ? "s" : "n"} onChange={(e) => salvarCfg({ ...cfgBase, faixa: e.target.value === "s" })}><option value="s">Com faixa</option><option value="n">Sem faixa</option></Seletor>
           {cfg.faixa && (
             <>
-              <Campo rotulo="Altura da faixa" inputMode="numeric" value={String(cfg.faixa_h)} onChange={(e) => mudar({ faixa_h: Number(e.target.value) || 1 })} onBlur={() => salvarCfg(cfg)} />
-              <Campo rotulo="Cor da faixa" value={cfg.faixa_cor} onChange={(e) => mudar({ faixa_cor: e.target.value })} onBlur={() => salvarCfg(cfg)} />
+              <Campo rotulo="Altura da faixa" inputMode="numeric" value={String(cfg.faixa_h)} onChange={(e) => mudar({ faixa_h: Number(e.target.value) || 1 })} onBlur={() => salvarCfg(cfgBase)} />
+              <Campo rotulo="Cor da faixa" value={cfg.faixa_cor} onChange={(e) => mudar({ faixa_cor: e.target.value })} onBlur={() => salvarCfg(cfgBase)} />
             </>
           )}
           {tipo === "servo" && (
             <>
-              <Campo rotulo="Foto →" inputMode="numeric" value={String(cfg.fx)} onChange={(e) => mudar({ fx: Number(e.target.value) || 0 })} onBlur={() => salvarCfg(cfg)} />
-              <Campo rotulo="Foto ↓" inputMode="numeric" value={String(cfg.fy)} onChange={(e) => mudar({ fy: Number(e.target.value) || 0 })} onBlur={() => salvarCfg(cfg)} />
-              <Campo rotulo="Largura" inputMode="numeric" value={String(cfg.fw)} onChange={(e) => mudar({ fw: Number(e.target.value) || 1 })} onBlur={() => salvarCfg(cfg)} />
-              <Campo rotulo="Altura" inputMode="numeric" value={String(cfg.fh)} onChange={(e) => mudar({ fh: Number(e.target.value) || 1 })} onBlur={() => salvarCfg(cfg)} />
-              <Seletor rotulo="Formato" value={cfg.redonda ? "r" : "q"} onChange={(e) => salvarCfg({ ...cfg, redonda: e.target.value === "r" })}><option value="r">Redonda</option><option value="q">Retangular</option></Seletor>
+              <Campo rotulo="Foto →" inputMode="numeric" value={String(cfg.fx)} onChange={(e) => mudar({ fx: Number(e.target.value) || 0 })} onBlur={() => salvarCfg(cfgBase)} />
+              <Campo rotulo="Foto ↓" inputMode="numeric" value={String(cfg.fy)} onChange={(e) => mudar({ fy: Number(e.target.value) || 0 })} onBlur={() => salvarCfg(cfgBase)} />
+              <Campo rotulo="Largura" inputMode="numeric" value={String(cfg.fw)} onChange={(e) => mudar({ fw: Number(e.target.value) || 1 })} onBlur={() => salvarCfg(cfgBase)} />
+              <Campo rotulo="Altura" inputMode="numeric" value={String(cfg.fh)} onChange={(e) => mudar({ fh: Number(e.target.value) || 1 })} onBlur={() => salvarCfg(cfgBase)} />
+              <Seletor rotulo="Formato" value={cfg.redonda ? "r" : "q"} onChange={(e) => salvarCfg({ ...cfgBase, redonda: e.target.value === "r" })}><option value="r">Redonda</option><option value="q">Retangular</option></Seletor>
             </>
           )}
-          <Seletor rotulo="Por página" value={String(cfg.por_pagina)} onChange={(e) => salvarCfg({ ...cfg, por_pagina: Number(e.target.value) })}>{[1, 2, 4, 6, 8, 9].map((n) => <option key={n}>{n}</option>)}</Seletor>
+          <Seletor rotulo="Por página" value={String(cfg.por_pagina)} onChange={(e) => salvarCfg({ ...cfgBase, por_pagina: Number(e.target.value) })}>{[1, 2, 4, 6, 8, 9].map((n) => <option key={n}>{n}</option>)}</Seletor>
         </div>
       </details>
 

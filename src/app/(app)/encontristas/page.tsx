@@ -193,7 +193,7 @@ function Importar({ edicaoId, edicaoNome, onFechar, onFeito }: { edicaoId: strin
     setEnviando(false);
     if (error) { setErro(msgErro(error)); return; }
     const r = data as { novos: number; atualizados: number };
-    aviso(`${r.novos} novos, ${r.atualizados} atualizados.`);
+    aviso(`${r.novos} novos, ${r.atualizados} atualizados. Os crachás já estão prontos em Secretaria 1 › Crachás.`);
     onFeito(); onFechar();
   }
 

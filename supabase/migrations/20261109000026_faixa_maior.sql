@@ -1,1 +1,1 @@
-update public.crachas_cfg set faixa_h = 22 where id = 1;  -- faixa maior: cabe nome em duas linhas
+update public.crachas_cfg set faixa_h = 27 where id = 1;  -- faixa aprovada na prévia
