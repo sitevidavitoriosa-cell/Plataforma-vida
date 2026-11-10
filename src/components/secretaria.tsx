@@ -50,8 +50,8 @@ function useNomes() {
   return { nomes, recarregar: carregar };
 }
 
-type Cfg = { x: number; y: number; tam: number; cor_texto: string; por_pagina: number; fx: number; fy: number; fw: number; fh: number; redonda: boolean };
-const CFG0: Cfg = { x: 50, y: 62, tam: 7, cor_texto: "#111111", por_pagina: 8, fx: 50, fy: 35, fw: 40, fh: 30, redonda: true };
+type Cfg = { x: number; y: number; tam: number; cor_texto: string; por_pagina: number; fx: number; fy: number; fw: number; fh: number; redonda: boolean; faixa: boolean; faixa_h: number; faixa_cor: string };
+const CFG0: Cfg = { x: 50, y: 62, tam: 7, cor_texto: "#111111", por_pagina: 8, fx: 50, fy: 35, fw: 40, fh: 30, redonda: true, faixa: false, faixa_h: 16, faixa_cor: "#ffffff" };
 
 const lerArquivo = (f: Blob) => new Promise<string>((ok) => { const r = new FileReader(); r.onload = () => ok(r.result as string); r.readAsDataURL(f); });
 const carregarImg = (src: string) => new Promise<HTMLImageElement>((ok, no) => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => no(new Error("imagem inválida")); im.src = src; });
@@ -200,11 +200,17 @@ function Crachas() {
           const px = Math.round(bw * 12), py = Math.round(bh * 12); // ~300 dpi
           pdf.addImage(recortar(im, px, py, cfg.redonda), cfg.redonda ? "PNG" : "JPEG", x + (cfg.fx / 100) * w - bw / 2, y + (cfg.fy / 100) * h - bh / 2, bw, bh);
         }
+        if (cfg.faixa) {
+          const [fr, fg, fb] = [1, 3, 5].map((k) => parseInt((cfg.faixa_cor || "#ffffff").slice(k, k + 2), 16) || 0);
+          const fh = (cfg.faixa_h / 100) * h;
+          pdf.setFillColor(fr, fg, fb);
+          pdf.rect(x, y + (cfg.y / 100) * h - fh / 2, w, fh, "F");
+        }
         let fs = (cfg.tam / 100) * h * 2.835;
         pdf.setTextColor(r, g, b); pdf.setFont("helvetica", "bold");
         const nome = n.nome.toUpperCase();
         pdf.setFontSize(fs);
-        while (pdf.getTextWidth(nome) > w * 0.9 && fs > 6) { fs -= 0.5; pdf.setFontSize(fs); }
+        while (pdf.getTextWidth(nome) > w * 0.92 && fs > 4) { fs -= 0.5; pdf.setFontSize(fs); }
         pdf.text(nome, x + (cfg.x / 100) * w, y + (cfg.y / 100) * h, { align: "center", baseline: "middle" });
       });
       baixar(pdf.output("blob"), `Crachas_${slug(ed.nome)}_${rotuloTipo}.pdf`);
@@ -245,7 +251,8 @@ function Crachas() {
             <span className="absolute grid -translate-x-1/2 -translate-y-1/2 place-items-center border-2 border-dashed border-marca bg-white/60 text-[10px] font-bold text-marca"
               style={{ left: `${cfg.fx}%`, top: `${cfg.fy}%`, width: `${cfg.fw}%`, height: `${cfg.fh * prop}cqw`, borderRadius: cfg.redonda ? "50%" : 6 }}>FOTO</span>
           )}
-          <span className="absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap font-extrabold" style={{ left: `${cfg.x}%`, top: `${cfg.y}%`, fontSize: `${cfg.tam * prop * 0.7}cqw`, color: cfg.cor_texto }}>NOME</span>
+          {cfg.faixa && <span className="absolute left-0 w-full -translate-y-1/2" style={{ top: `${cfg.y}%`, height: `${cfg.faixa_h}%`, background: cfg.faixa_cor || "#fff" }} />}
+          <span className="absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap font-extrabold" style={{ left: `${cfg.x}%`, top: `${cfg.y}%`, fontSize: `${cfg.tam * prop * 0.7}cqw`, color: cfg.cor_texto }}>NOME COMPLETO</span>
         </div>
       )}
 
@@ -255,6 +262,13 @@ function Crachas() {
           <Campo rotulo="Nome →" inputMode="numeric" value={String(cfg.x)} onChange={(e) => mudar({ x: Number(e.target.value) || 0 })} onBlur={() => salvarCfg(cfg)} />
           <Campo rotulo="Nome ↓" inputMode="numeric" value={String(cfg.y)} onChange={(e) => mudar({ y: Number(e.target.value) || 0 })} onBlur={() => salvarCfg(cfg)} />
           <Campo rotulo="Letra" inputMode="numeric" value={String(cfg.tam)} onChange={(e) => mudar({ tam: Number(e.target.value) || 1 })} onBlur={() => salvarCfg(cfg)} />
+          <Seletor rotulo="Faixa do nome" value={cfg.faixa ? "s" : "n"} onChange={(e) => salvarCfg({ ...cfg, faixa: e.target.value === "s" })}><option value="s">Com faixa</option><option value="n">Sem faixa</option></Seletor>
+          {cfg.faixa && (
+            <>
+              <Campo rotulo="Altura da faixa" inputMode="numeric" value={String(cfg.faixa_h)} onChange={(e) => mudar({ faixa_h: Number(e.target.value) || 1 })} onBlur={() => salvarCfg(cfg)} />
+              <Campo rotulo="Cor da faixa" value={cfg.faixa_cor} onChange={(e) => mudar({ faixa_cor: e.target.value })} onBlur={() => salvarCfg(cfg)} />
+            </>
+          )}
           {tipo === "servo" && (
             <>
               <Campo rotulo="Foto →" inputMode="numeric" value={String(cfg.fx)} onChange={(e) => mudar({ fx: Number(e.target.value) || 0 })} onBlur={() => salvarCfg(cfg)} />
