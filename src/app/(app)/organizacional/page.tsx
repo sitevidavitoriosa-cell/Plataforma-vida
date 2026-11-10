@@ -19,7 +19,6 @@ type Filtro = "pasta" | Tipo | null;
 const chave = (i: { k: string; id: string }) => `${i.k}:${i.id}`;
 const tipoFav = (k: "p" | "a") => (k === "p" ? "pasta" : "arquivo");
 const MIME = "text/vv-org";
-const FILTROS: { v: Exclude<Filtro, null>; t: string }[] = [{ v: "pasta", t: "Pastas" }, { v: "pdf", t: "PDFs" }, { v: "imagem", t: "Imagens" }, { v: "docx", t: "Documentos" }, { v: "planilha", t: "Planilhas" }, { v: "video", t: "Vídeos" }];
 
 /** Lê arquivos e pastas soltos na tela (arrastar e soltar), mantendo o caminho das subpastas. */
 async function lerSoltos(dt: DataTransfer): Promise<{ f: File; rel: string }[]> {
@@ -463,11 +462,6 @@ export default function Organizacional() {
             {q && <button type="button" onClick={() => setQ("")} aria-label="Limpar pesquisa" className="h-9 w-9 text-xl font-bold text-suave">×</button>}
           </label>
 
-          {vista !== "compartilhados" && vista !== "lixeira" && (
-            <div className="mt-3 flex gap-2 overflow-x-auto">
-              {FILTROS.map((f) => <button key={f.v} type="button" onClick={() => { setFiltro(filtro === f.v ? null : f.v); limparSel(); }} aria-pressed={filtro === f.v} className={`inline-flex min-h-9 shrink-0 items-center gap-1 rounded-lg border px-3 text-sm font-medium ${filtro === f.v ? "border-transparent bg-marca-clara text-marca-esc" : "border-borda bg-white hover:bg-[#f1f3f4]"}`}>{filtro === f.v && "✓ "}{f.t}</button>)}
-            </div>
-          )}
 
           {/* ---- cabeçalho: caminho ou barra de seleção ---- */}
           <div className="mt-3 flex min-h-12 flex-wrap items-center gap-2">
