@@ -86,20 +86,17 @@ function Geral({ itens, envios, onAbrir }: { itens: Item[]; envios: Envio[]; onA
   const aviso = useAviso();
   const fora = (id: string) => envios.filter((x) => x.item_id === id && x.aplicado == null).reduce((s, x) => s + Number(x.env), 0);
   const [q, setQ] = useState("");
-  const [tipo, setTipo] = useState<"cons" | "ncons">("cons");
   const [soFalta, setSoFalta] = useState(false);
   const [abertos, setAbertos] = useState<Record<string, boolean>>({});
   const nq = norm(q);
-  const doTipo = itens.filter((i) => (tipo === "cons" ? i.cons : !i.cons));
-  const filtrados = doTipo.filter((i) => (!soFalta || emFalta(i)) && (!nq || norm(i.nome + " " + i.setor).includes(nq)));
+  const filtrados = itens.filter((i) => (!soFalta || emFalta(i)) && (!nq || norm(i.nome + " " + i.setor).includes(nq)));
   const grupos = useMemo(() => {
     const m = new Map<string, Item[]>();
     filtrados.forEach((i) => { if (!m.has(i.setor)) m.set(i.setor, []); m.get(i.setor)!.push(i); });
     return Array.from(m.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   }, [filtrados]);
-  const nFalta = doTipo.filter(emFalta).length;
+  const nFalta = itens.filter(emFalta).length;
   const faltaCons = itens.filter((i) => i.cons && emFalta(i)).length;
-  const faltaNao = itens.filter((i) => !i.cons && emFalta(i)).length;
   const forcarAberto = !!nq || soFalta;
 
   async function copiarCompras() {
@@ -109,53 +106,56 @@ function Geral({ itens, envios, onAbrir }: { itens: Item[]; envios: Envio[]; onA
     catch { aviso("Não consegui copiar. Tente de novo."); }
   }
 
+  const linha = (i: Item) => {
+    const r = i.min > 0 ? Math.min(1, i.qtd / i.min) : 1, low = emFalta(i);
+    return (
+      <button key={i.id} type="button" onClick={() => onAbrir(i)} className="flex min-h-16 w-full items-center gap-3 border-t border-borda px-4 py-2 text-left">
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <b className="text-[15px]">{i.nome}</b>
+          {i.min > 0 && <div className="h-1.5 overflow-hidden rounded-full bg-[#ecebe6]"><div className={cx("h-full", low ? "bg-alerta" : "bg-marca")} style={{ width: `${Math.round(r * 100)}%` }} /></div>}
+        </div>
+        <div className="text-right leading-tight">
+          <b className={cx("text-[22px]", low && "text-alerta")}>{fmtN(i.qtd)}</b>
+          <div className="text-xs text-suave">{i.un}{i.min > 0 ? ` · mín. ${fmtN(i.min)}` : ""}{fora(i.id) > 0 ? ` · ${fmtN(fora(i.id))} em edição` : ""}</div>
+        </div>
+      </button>
+    );
+  };
+
   return (
     <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-2 gap-2">
-        {([["cons", "Consumíveis", "acabam com o uso", faltaCons], ["ncons", "Não consumíveis", "voltam depois do retiro", faltaNao]] as const).map(([k, t, d, f]) => (
-          <button key={k} type="button" onClick={() => { setTipo(k); setSoFalta(false); }} className={cx("flex min-h-16 flex-col items-start justify-center rounded-2xl border-2 px-4 text-left", tipo === k ? "border-marca bg-marca-clara" : "border-borda bg-white")}>
-            <span className="flex items-center gap-2"><b className="text-[16px]">{t}</b>{f > 0 && <Selo tom="alerta">{f}</Selo>}</span>
-            <span className="text-xs text-suave">{d} · {itens.filter((i) => (k === "cons" ? i.cons : !i.cons)).length} itens</span>
-          </button>
-        ))}
-      </div>
       <div className="flex items-center gap-2 rounded-2xl border border-borda bg-white px-3">
         <Icone n="busca" tam={20} />
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar item pelo nome (ex.: álcool)" aria-label="Buscar item" className="min-h-12 flex-1 bg-transparent outline-none" />
       </div>
       {nFalta > 0 && (
         <button type="button" onClick={() => setSoFalta((v) => !v)} className={cx("flex min-h-12 items-center justify-between rounded-2xl px-4 text-[15px] font-extrabold", soFalta ? "bg-alerta text-white" : "bg-alerta-clara text-[#8e2e18]")}>
-          <span>{tipo === "cons" ? `${nFalta} ${nFalta === 1 ? "consumível para comprar" : "consumíveis para comprar"}` : `${nFalta} ${nFalta === 1 ? "item abaixo do necessário" : "itens abaixo do necessário"}`}</span><span>{soFalta ? "Ver todos" : "Ver só eles"}</span>
+          <span>{nFalta} {nFalta === 1 ? "item abaixo do mínimo" : "itens abaixo do mínimo"}</span><span>{soFalta ? "Ver todos" : "Ver só eles"}</span>
         </button>
       )}
-      {tipo === "cons" && faltaCons > 0 && <Botao v="sec" onClick={copiarCompras} className="!min-h-11">Copiar lista de compras ({faltaCons})</Botao>}
+      {faltaCons > 0 && <Botao v="sec" onClick={copiarCompras} className="!min-h-11">Copiar lista de compras dos consumíveis ({faltaCons})</Botao>}
       {grupos.length === 0 && <Vazio>Nenhum item encontrado.</Vazio>}
       {grupos.map(([setor, lista]) => {
         const aberto = forcarAberto || abertos[setor] || grupos.length === 1;
         const faltas = lista.filter(emFalta).length;
+        const cons = lista.filter((i) => i.cons), ncons = lista.filter((i) => !i.cons);
         return (
           <Cartao key={setor} className="overflow-hidden">
             <button type="button" onClick={() => setAbertos((a) => ({ ...a, [setor]: !a[setor] }))} className="flex min-h-[60px] w-full items-center gap-2.5 px-4 text-left">
               <b className="flex-1 text-[17px]">{setor}</b>
-              {faltas > 0 && <Selo tom="alerta">{faltas} {tipo === "cons" ? "p/ comprar" : "em falta"}</Selo>}
+              {faltas > 0 && <Selo tom="alerta">{faltas} em falta</Selo>}
               <span className="text-sm text-suave">{lista.length} {lista.length === 1 ? "item" : "itens"}</span>
               <span className={cx("text-suave transition", aberto && "rotate-180")}><Icone n="seta" tam={18} /></span>
             </button>
-            {aberto && lista.map((i) => {
-              const r = i.min > 0 ? Math.min(1, i.qtd / i.min) : 1, low = emFalta(i);
-              return (
-                <button key={i.id} type="button" onClick={() => onAbrir(i)} className="flex min-h-16 w-full items-center gap-3 border-t border-borda px-4 py-2 text-left">
-                  <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                    <b className="text-[15px]">{i.nome}</b>
-                    {i.min > 0 && <div className="h-1.5 overflow-hidden rounded-full bg-[#ecebe6]"><div className={cx("h-full", low ? "bg-alerta" : "bg-marca")} style={{ width: `${Math.round(r * 100)}%` }} /></div>}
-                  </div>
-                  <div className="text-right leading-tight">
-                    <b className={cx("text-[22px]", low && "text-alerta")}>{fmtN(i.qtd)}</b>
-                    <div className="text-xs text-suave">{i.un}{i.min > 0 ? ` · mín. ${fmtN(i.min)}` : ""}{fora(i.id) > 0 ? ` · ${fmtN(fora(i.id))} em edição` : ""}</div>
-                  </div>
-                </button>
-              );
-            })}
+            {aberto && ([["Consumíveis", "acabam com o uso", cons], ["Não consumíveis", "voltam depois", ncons]] as const).map(([t, d, l]) => l.length > 0 && (
+              <div key={t}>
+                <div className="flex items-center justify-between gap-2 border-t border-borda bg-fundo px-4 py-2">
+                  <span className="text-[13px] font-extrabold uppercase tracking-wide text-marca">{t} · {l.length}</span>
+                  <span className="text-xs text-suave">{d}{l.filter(emFalta).length > 0 ? ` · ${l.filter(emFalta).length} ${t === "Consumíveis" ? "p/ comprar" : "em falta"}` : ""}</span>
+                </div>
+                {l.map(linha)}
+              </div>
+            ))}
           </Cartao>
         );
       })}
