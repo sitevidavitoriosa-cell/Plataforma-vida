@@ -10,7 +10,7 @@ import { Botao, Campo, Carregando, Chip, Cartao, Icone, Janela, Passo, Selo, Sel
 
 type Aba = "geral" | "enviado" | "balanco";
 const UNIDADES = ["un", "pacotes", "caixas", "rolos", "pares", "kg", "litros", "metros", "garrafas", "cilindros"];
-const emFalta = (i: Item) => i.min > 0 && i.qtd < i.min;
+const emFalta = (i: Item) => !i.alugado && i.min > 0 && i.qtd < i.min;
 
 export function Estoque({ setor }: { setor?: string }) {
   const { acesso } = useAuth();
@@ -114,7 +114,8 @@ function Geral({ itens, envios, onAbrir }: { itens: Item[]; envios: Envio[]; onA
       <button key={i.id} type="button" onClick={() => onAbrir(i)} className="flex min-h-16 w-full items-center gap-3 border-t border-borda px-4 py-2 text-left">
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <b className="text-[15px]">{i.nome}</b>
-          {i.min > 0 && <div className="h-1.5 overflow-hidden rounded-full bg-[#ecebe6]"><div className={cx("h-full", low ? "bg-alerta" : "bg-marca")} style={{ width: `${Math.round(r * 100)}%` }} /></div>}
+          {i.alugado && <span className="self-start"><Selo tom="aviso">Alugado</Selo></span>}
+          {i.min > 0 && !i.alugado && <div className="h-1.5 overflow-hidden rounded-full bg-[#ecebe6]"><div className={cx("h-full", low ? "bg-alerta" : "bg-marca")} style={{ width: `${Math.round(r * 100)}%` }} /></div>}
         </div>
         <div className="text-right leading-tight">
           <b className={cx("text-[22px]", low && "text-alerta")}>{fmtN(i.qtd)}</b>
@@ -175,7 +176,7 @@ function Enviado({ travada, equipe, itens, envios, edicoes, ed, recarregar, setI
   const [q, setQ] = useState("");
   const nq = norm(q);
   const doEd = (id: string) => envios.find((x) => x.edicao_id === ed.id && x.item_id === id);
-  const lista = itens.filter((i) => !nq || norm(i.nome + " " + i.setor).includes(nq));
+  const lista = itens.filter((i) => !i.alugado && (!nq || norm(i.nome + " " + i.setor).includes(nq)));
   const ord = (a: Item, b: Item) => a.setor.localeCompare(b.setor) || a.nome.localeCompare(b.nome);
   const enviados = lista.filter((i) => doEd(i.id)).sort(ord);
   const resto = equipe ? [] : lista.filter((i) => !doEd(i.id)).sort(ord);
@@ -408,7 +409,7 @@ function ItemJanela({ item, setores, setorPadrao, onFechar, onMudou, aviso }: { 
   const [movs, setMovs] = useState<Mov[]>([]);
   const [qtd, setQtd] = useState(item?.qtd ?? 0);
   const [obs, setObs] = useState("");
-  const [f, setF] = useState({ nome: item?.nome ?? "", setor: item?.setor ?? setorPadrao ?? "", un: item?.un ?? "un", qtd: "0", min: String(item?.min ?? 0).replace(".", ","), preco: String(item?.preco ?? 0).replace(".", ","), cons: item?.cons ?? false });
+  const [f, setF] = useState({ nome: item?.nome ?? "", setor: item?.setor ?? setorPadrao ?? "", un: item?.un ?? "un", qtd: "0", min: String(item?.min ?? 0).replace(".", ","), preco: String(item?.preco ?? 0).replace(".", ","), cons: item?.cons ?? false, alugado: item?.alugado ?? false });
   const [confirmaDel, setConfirmaDel] = useState(false);
 
   const pode = item ? podeEscrever(acesso, "estoque", item.setor) : true;
@@ -443,7 +444,7 @@ function ItemJanela({ item, setores, setorPadrao, onFechar, onMudou, aviso }: { 
     if (!setor) { aviso("Escolha o setor."); return; }
     const min = num(f.min || "0"), preco = num(f.preco || "0"), q = num(f.qtd || "0");
     if ([min, preco, q].some((n) => !isFinite(n) || n < 0)) { aviso("Confira os números: não podem ser negativos."); return; }
-    const dados = { nome, setor, un: f.un, min, preco, cons: f.cons };
+    const dados = { nome, setor, un: f.un, min: f.alugado ? 0 : min, preco, cons: f.alugado ? false : f.cons, alugado: f.alugado };
     const r = item ? await supabase.from("itens").update({ ...dados, atualizado_em: new Date().toISOString() }).eq("id", item.id) : await supabase.from("itens").insert({ ...dados, qtd: q });
     if (r.error) { aviso(msgErro(r.error)); return; }
     onMudou(); aviso(item ? "Item atualizado." : "Item cadastrado."); onFechar();
@@ -460,7 +461,7 @@ function ItemJanela({ item, setores, setorPadrao, onFechar, onMudou, aviso }: { 
     return (
       <Janela titulo={item.nome} onFechar={onFechar}>
         <div className="flex flex-col gap-4">
-          <div className="text-sm text-suave">{item.setor} · {item.cons ? "consumível" : "não consumível"}{item.min > 0 ? ` · mínimo ${fmtN(item.min)}` : ""}</div>
+          <div className="text-sm text-suave">{item.setor} · {item.alugado ? "alugado (terceirizado)" : item.cons ? "consumível" : "não consumível"}{item.min > 0 ? ` · mínimo ${fmtN(item.min)}` : ""}</div>
           <Cartao className="flex flex-col items-center gap-3 p-4">
             <span className="text-xs font-bold uppercase text-suave">No estoque ({item.un})</span>
             {pode ? <Passo grande valor={qtd} onMudar={mudarQtd} /> : <b className="text-4xl">{fmtN(qtd)}</b>}
@@ -518,6 +519,10 @@ function ItemJanela({ item, setores, setorPadrao, onFechar, onMudou, aviso }: { 
             ))}
           </div>
         </div>
+        <label className={cx("flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-3", f.alugado ? "border-marca bg-marca-clara" : "border-borda bg-white")}>
+          <input type="checkbox" checked={f.alugado} onChange={(e) => setF({ ...f, alugado: e.target.checked })} className="mt-1 h-5 w-5 accent-[#16294d]" />
+          <span><b className="block text-[15px]">Item alugado (terceirizado)</b><span className="text-xs text-suave">Não existe no paiol, só na lista de controle (ex.: gás hélio, cadeira, fantasminha). Não entra em “em falta”; o aluguel de cada edição é lançado no Financeiro.</span></span>
+        </label>
         <Botao type="submit" bloco>Salvar</Botao>
         {item && !confirmaDel && <Botao v="sec" bloco onClick={() => setConfirmaDel(true)} className="!text-alerta"><Icone n="lixo" tam={18} />Excluir item</Botao>}
         {item && confirmaDel && <Botao v="perigo" bloco onClick={excluir}>Confirmar: excluir “{item.nome}”</Botao>}

@@ -1,4 +1,4 @@
-export type Item = { id: string; nome: string; setor: string; un: string; qtd: number; min: number; cons: boolean; preco: number; obs: string | null };
+export type Item = { id: string; nome: string; setor: string; un: string; qtd: number; min: number; cons: boolean; preco: number; obs: string | null; alugado?: boolean };
 export type Edicao = { id: string; nome: string; data_ini: string | null; data_fim: string | null; local: string | null; resp: string | null; enc: number; status: "planejada" | "aberta" | "fechada"; tipo: "rede" | "base" | "kids" | "beone"; cor: string | null; rede2: string | null; dados_limpos_em?: string | null };
 export type Envio = { edicao_id: string; item_id: string; env: number; comp: number; volta: number | null; aplicado: number | null; informado?: boolean; volta_informada?: number | null };
 export type Equipe = { id: string; nome: string; setores: string[] };

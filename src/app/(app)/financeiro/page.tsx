@@ -1,38 +1,72 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { msgErro, useLista } from "@/lib/dados";
 import { brl, dmy, norm, num, type Item } from "@/lib/tipos";
 import { podeEscrever } from "@/lib/perm";
 import { useAuth, useAviso, useEdicao } from "@/components/provedores";
+import { AlugadosTab, Barras, ComprarTab, type Alug, type Rep } from "@/components/financeiroIntegrado";
 import { Botao, Campo, Carregando, Cartao, Chip, Icone, Janela, Seletor, Titulo, Vazio, cx } from "@/components/ui";
 
-type Lanc = { id: string; edicao_id: string | null; tipo: "entrada" | "saida"; descricao: string; categoria: string | null; valor: number; data: string; setor: string | null; comp_path: string | null; comp_nome: string | null };
+type Lanc = { id: string; edicao_id: string | null; tipo: "entrada" | "saida"; descricao: string; categoria: string | null; valor: number; data: string; setor: string | null; comp_path: string | null; comp_nome: string | null; origem?: "manual" | "reposicao" | "aluguel" };
 const CATEGORIAS = ["Alimentação", "Material", "Transporte", "Local / hospedagem", "Impressão", "Inscrições", "Doações", "Outros"];
+
+type Aba = "resumo" | "comprar" | "alugados" | "lancamentos";
 
 export default function Financeiro() {
   const { acesso } = useAuth();
   const { ed } = useEdicao();
   const aviso = useAviso();
   const lanc = useLista<Lanc>("lancamentos", "*", "data");
-  const itens = useLista<Item>("itens", "setor");
+  const itens = useLista<Item>("itens", "*", "nome");
+  const alugQ = useLista<Alug>("alugueis", "*", "criado_em");
+  const [rep, setRep] = useState<Rep[] | null>(null);
+  const [aba, setAba] = useState<Aba>("resumo");
   const [tipo, setTipo] = useState<"todos" | "entrada" | "saida">("todos");
   const [setor, setSetor] = useState("");
   const [form, setForm] = useState<Lanc | "novo" | null>(null);
   const [lim, setLim] = useState(50);
   const pode = podeEscrever(acesso, "financeiro") && ed?.status !== "fechada";
 
+  const carregarRep = useCallback(async () => {
+    const { data, error } = await supabase.rpc("reposicao_prevista");
+    if (error) { aviso(msgErro(error)); setRep([]); return; }
+    setRep(((data as Rep[]) ?? []).map((r) => ({ ...r, qtd: Number(r.qtd), minimo: Number(r.minimo), preco: Number(r.preco), falta: Number(r.falta), previsto: Number(r.previsto) })));
+  }, [aviso]);
+  useEffect(() => { carregarRep(); }, [carregarRep]);
+  useEffect(() => { try { const a = localStorage.getItem("vv-aba-fin") as Aba | null; if (a) setAba(a); } catch {} }, []);
+  const trocaAba = (a: Aba) => { setAba(a); try { localStorage.setItem("vv-aba-fin", a); } catch {} };
+  const mudou = () => { lanc.recarregar(); itens.recarregar(); alugQ.recarregar(); carregarRep(); };
+
   const todos = useMemo(() => (lanc.dados ?? []).filter((l) => l.edicao_id === ed?.id), [lanc.dados, ed]);
   const setores = useMemo(() => Array.from(new Set([...(itens.dados ?? []).map((i) => i.setor), ...todos.map((l) => l.setor ?? "")].filter(Boolean))).sort((a, b) => a.localeCompare(b)), [itens.dados, todos]);
-  const cats = useMemo(() => Array.from(new Set([...CATEGORIAS, ...(lanc.dados ?? []).map((l) => l.categoria ?? "")].filter(Boolean))), [lanc.dados]);
+  const cats = useMemo(() => Array.from(new Set([...CATEGORIAS, "Reposição de estoque", "Aluguel", ...(lanc.dados ?? []).map((l) => l.categoria ?? "")].filter(Boolean))), [lanc.dados]);
+  const mapaItens = useMemo(() => new Map((itens.dados ?? []).map((i) => [i.id, i])), [itens.dados]);
 
   if (!ed) return <Vazio>Crie uma edição primeiro.</Vazio>;
-  if (!lanc.dados) return <Carregando />;
+  if (!lanc.dados || !itens.dados || !alugQ.dados || !rep) return <Carregando />;
 
+  const repOk: Rep[] = rep;
   const soma = (t: "entrada" | "saida") => todos.filter((l) => l.tipo === t).reduce((s, l) => s + Number(l.valor), 0);
   const ent = soma("entrada"), sai = soma("saida");
+  const alugEd = alugQ.dados.filter((a) => a.edicao_id === ed.id);
+  const prevRep = rep.reduce((s, r) => s + Number(r.previsto), 0);
+  const prevAlug = alugEd.filter((a) => !a.lancamento_id).reduce((s, a) => s + Number(a.valor), 0);
+  const aPagar = prevRep + prevAlug;
+  const semPreco = rep.filter((r) => !(Number(r.preco) > 0)).length;
   const vis = todos.filter((l) => (tipo === "todos" || l.tipo === tipo) && (!setor || l.setor === setor)).sort((a, b) => b.data.localeCompare(a.data) || 0);
-  const porSetor = new Map<string, number>(); todos.filter((l) => l.tipo === "saida").forEach((l) => { const k = l.setor || "Sem setor"; porSetor.set(k, (porSetor.get(k) ?? 0) + Number(l.valor)); });
+
+  // gráficos: pago (lançamentos de saída) + a pagar (reposição e aluguéis ainda não pagos)
+  const porSetor = new Map<string, { pago: number; previsto: number }>();
+  const soma2 = (m: Map<string, { pago: number; previsto: number }>, k: string, campo: "pago" | "previsto", v: number) => { const x = m.get(k) ?? { pago: 0, previsto: 0 }; x[campo] += v; m.set(k, x); };
+  todos.filter((l) => l.tipo === "saida").forEach((l) => soma2(porSetor, l.setor || "Sem setor", "pago", Number(l.valor)));
+  rep.forEach((r) => soma2(porSetor, r.setor, "previsto", Number(r.previsto)));
+  alugEd.filter((a) => !a.lancamento_id).forEach((a) => soma2(porSetor, mapaItens.get(a.item_id)?.setor ?? "Sem setor", "previsto", Number(a.valor)));
+  const porCat = new Map<string, { pago: number; previsto: number }>();
+  todos.filter((l) => l.tipo === "saida").forEach((l) => soma2(porCat, l.categoria || "Sem categoria", "pago", Number(l.valor)));
+  if (prevRep > 0) soma2(porCat, "Reposição de estoque", "previsto", prevRep);
+  if (prevAlug > 0) soma2(porCat, "Aluguel", "previsto", prevAlug);
+  const linhas = (m: Map<string, { pago: number; previsto: number }>) => Array.from(m.entries()).map(([nome, v]) => ({ nome, ...v })).filter((l) => l.pago + l.previsto > 0).sort((a, b) => b.pago + b.previsto - (a.pago + a.previsto));
 
   async function anexo(l: Lanc) {
     if (!l.comp_path) return;
@@ -44,67 +78,95 @@ export default function Financeiro() {
     const XLSX = await import("xlsx");
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Data", "Tipo", "Descrição", "Categoria", "Setor", "Valor", "Anexo"], ...todos.slice().sort((a, b) => a.data.localeCompare(b.data)).map((l) => [dmy(l.data), l.tipo === "entrada" ? "Entrada" : "Saída", l.descricao, l.categoria ?? "", l.setor ?? "", l.tipo === "entrada" ? Number(l.valor) : -Number(l.valor), l.comp_nome ?? ""]), [], ["", "", "", "", "Entradas", ent], ["", "", "", "", "Saídas", -sai], ["", "", "", "", "Resultado", ent - sai]]), "Lançamentos");
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Setor", "Gasto"], ...Array.from(porSetor.entries()).sort((a, b) => b[1] - a[1])]), "Gastos por setor");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Setor", "Pago", "A pagar"], ...linhas(porSetor).map((l) => [l.nome, l.pago, l.previsto])]), "Por setor");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Item", "Setor", "Tem", "Mínimo", "Comprar", "Unidade", "Preço unit.", "Previsto"], ...repOk.map((r) => [r.nome, r.setor, r.qtd, r.minimo, r.falta, r.un, r.preco, r.previsto])]), "A comprar");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Item", "Setor", "Qtd", "Fornecedor", "Valor", "Situação"], ...alugEd.map((a) => [mapaItens.get(a.item_id)?.nome ?? "", mapaItens.get(a.item_id)?.setor ?? "", Number(a.qtd), a.fornecedor ?? "", Number(a.valor), a.lancamento_id ? "Pago" : "A pagar"])]), "Alugados");
     XLSX.writeFile(wb, `Financeiro_${ed!.nome.replace(/[^a-zA-Z0-9]+/g, "_")}.xlsx`);
   }
 
+  const ABAS: { v: Aba; t: string; n?: number }[] = [{ v: "resumo", t: "Resumo" }, { v: "comprar", t: "A comprar", n: rep.length }, { v: "alugados", t: "Alugados", n: alugEd.filter((a) => !a.lancamento_id).length }, { v: "lancamentos", t: "Lançamentos" }];
+
   return (
     <div className="pb-28">
-      <Titulo direita={<Botao v="sec" className="!min-h-11" onClick={excel} disabled={todos.length === 0}>Exportar</Botao>}>Financeiro</Titulo>
-      <p className="m-0 pb-3 text-sm text-suave">{ed.nome}</p>
+      <Titulo direita={<Botao v="sec" className="!min-h-11" onClick={excel}>Exportar</Botao>}>Financeiro</Titulo>
+      <p className="m-0 pb-3 text-sm text-suave">{ed.nome} · o que é gasto aqui vale para esta edição</p>
 
-      <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-3xl border border-borda bg-white p-3"><div className="text-xs text-suave">Entrou</div><b className="text-lg text-[#1e7a50]">{brl(ent)}</b></div>
-        <div className="rounded-3xl border border-borda bg-white p-3"><div className="text-xs text-suave">Saiu</div><b className="text-lg text-alerta">{brl(sai)}</b></div>
-        <div className="rounded-3xl border border-borda bg-white p-3"><div className="text-xs text-suave">Sobrou</div><b className={cx("text-lg", ent - sai < 0 && "text-alerta")}>{brl(ent - sai)}</b></div>
+      <div className="flex gap-2 overflow-x-auto pb-3">
+        {ABAS.map((a) => <Chip key={a.v} ativo={aba === a.v} onClick={() => trocaAba(a.v)}>{a.t}{a.n ? <span className={cx("ml-2 rounded-full px-2 text-xs", aba === a.v ? "bg-white/25" : "bg-alerta-clara text-[#8e2e18]")}>{a.n}</span> : null}</Chip>)}
       </div>
 
-      {porSetor.size > 0 && (
-        <Cartao className="mt-4 flex flex-col gap-2 p-4">
-          <b>Gastos por setor</b>
-          {Array.from(porSetor.entries()).sort((a, b) => b[1] - a[1]).map(([s, v]) => (
-            <div key={s} className="flex items-center gap-3 text-sm"><span className="w-28 shrink-0 truncate font-bold">{s}</span>
-              <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-fundo"><div className="h-full rounded-full bg-marca" style={{ width: `${(v / Math.max(...porSetor.values())) * 100}%` }} /></div><span className="w-24 text-right">{brl(v)}</span></div>
-          ))}
-        </Cartao>
+      {aba === "resumo" && (
+        <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <div className="rounded-3xl border border-borda bg-white p-4"><div className="text-xs text-suave">Entrou</div><b className="text-xl text-[#1e7a50]">{brl(ent)}</b></div>
+            <div className="rounded-3xl border border-borda bg-white p-4"><div className="text-xs text-suave">Saiu (pago)</div><b className="text-xl text-alerta">{brl(sai)}</b></div>
+            <div className="rounded-3xl border border-borda bg-white p-4"><div className="text-xs text-suave">Sobrou agora</div><b className={cx("text-xl", ent - sai < 0 && "text-alerta")}>{brl(ent - sai)}</b></div>
+            <button type="button" onClick={() => trocaAba("comprar")} className="rounded-3xl border-2 border-[#e8a400] bg-white p-4 text-left"><div className="text-xs text-suave">Ainda a pagar</div><b className="text-xl">{brl(aPagar)}</b><div className="text-xs text-suave">Reposição {brl(prevRep)} · Aluguéis {brl(prevAlug)}</div></button>
+          </div>
+          <Cartao className={cx("flex flex-wrap items-center justify-between gap-2 p-4", ent - sai - aPagar < 0 && "!border-alerta")}>
+            <span className="text-sm text-suave">Se tudo que está previsto for pago, o caixa desta edição fica em</span>
+            <b className={cx("text-xl", ent - sai - aPagar < 0 && "text-alerta")}>{brl(ent - sai - aPagar)}</b>
+          </Cartao>
+          {semPreco > 0 && (
+            <button type="button" onClick={() => trocaAba("comprar")} className="rounded-2xl bg-aviso-clara px-4 py-3 text-left text-sm font-bold text-aviso">{semPreco} {semPreco === 1 ? "item abaixo do mínimo está" : "itens abaixo do mínimo estão"} sem preço, então o custo previsto está subestimado. Toque para informar os preços.</button>
+          )}
+          <div className="grid gap-4 md:grid-cols-2">
+            <Barras titulo="Por setor" linhas={linhas(porSetor)} />
+            <Barras titulo="Por categoria" linhas={linhas(porCat)} />
+          </div>
+          <Cartao className="p-4">
+            <b>Últimos lançamentos</b>
+            {todos.length === 0 && <p className="m-0 mt-2 text-sm text-suave">Nenhum lançamento ainda.</p>}
+            {todos.slice().sort((a, b) => b.data.localeCompare(a.data)).slice(0, 5).map((l) => (
+              <div key={l.id} className="flex items-center justify-between gap-3 border-t border-borda py-2 first:mt-2 first:border-t-0"><span className="min-w-0 truncate text-sm">{l.descricao}<span className="block text-xs text-suave">{dmy(l.data)}</span></span><b className={cx("shrink-0 text-sm", l.tipo === "saida" ? "text-alerta" : "text-[#1e7a50]")}>{l.tipo === "saida" ? "− " : "+ "}{brl(Number(l.valor))}</b></div>
+            ))}
+            {todos.length > 5 && <button type="button" onClick={() => trocaAba("lancamentos")} className="mt-2 text-sm font-bold text-marca">Ver todos</button>}
+          </Cartao>
+        </div>
       )}
 
-      <div className="mt-4 flex gap-2 overflow-x-auto pb-2">
-        <Chip ativo={tipo === "todos"} onClick={() => setTipo("todos")}>Tudo</Chip>
-        <Chip ativo={tipo === "saida"} onClick={() => setTipo("saida")}>Despesas</Chip>
-        <Chip ativo={tipo === "entrada"} onClick={() => setTipo("entrada")}>Receitas</Chip>
-      </div>
-      <div className="flex gap-2 overflow-x-auto pb-3">
-        <Chip ativo={!setor} onClick={() => setSetor("")}>Todos os setores</Chip>
-        {setores.map((s) => <Chip key={s} ativo={setor === s} onClick={() => setSetor(setor === s ? "" : s)}>{s}</Chip>)}
-      </div>
+      {aba === "comprar" && <ComprarTab rep={rep} pode={pode} edicaoId={ed.id} onMudou={mudou} />}
+      {aba === "alugados" && <AlugadosTab alug={alugQ.dados} itens={itens.dados} pode={pode} edicaoId={ed.id} onMudou={mudou} />}
 
-      {vis.length === 0 && <Vazio>Nenhum lançamento encontrado.</Vazio>}
-      <Cartao className="overflow-hidden">
-        {vis.slice(0, lim).map((l, i) => {
-          const neg = l.tipo === "saida";
-          return (
-            <div key={l.id} className={cx("flex items-center gap-3 px-4 py-3", i > 0 && "border-t border-borda")}>
-              <div className={cx("grid h-10 w-10 shrink-0 place-items-center rounded-full text-lg font-extrabold", neg ? "bg-alerta-clara text-alerta" : "bg-[#e3f5ec] text-[#1e7a50]")}>{neg ? "−" : "+"}</div>
-              <div className="min-w-0 flex-1">
-                <b className="block truncate">{l.descricao}</b>
-                <span className="text-xs text-suave">{dmy(l.data)} · {l.setor || (neg ? "Sem setor" : "Receita")}{l.categoria ? ` · ${l.categoria}` : ""}</span>
-                <div className="text-xs">{l.comp_path ? <button type="button" onClick={() => anexo(l)} className="font-bold text-marca">Ver anexo</button> : neg ? <span className="text-suave">Sem anexo</span> : null}</div>
-              </div>
-              <b className={cx("shrink-0", neg ? "text-alerta" : "text-[#1e7a50]")}>{neg ? "− " : "+ "}{brl(Number(l.valor))}</b>
-              {pode && <button type="button" aria-label={`Editar ${l.descricao}`} onClick={() => setForm(l)} className="grid h-10 w-10 shrink-0 place-items-center text-suave"><Icone n="lapis" tam={18} /></button>}
-            </div>
-          );
-        })}
-      </Cartao>
-      {vis.length > lim && <div className="pt-3 text-center"><Botao v="sec" className="!min-h-11" onClick={() => setLim(lim + 50)}>Ver mais ({vis.length - lim})</Botao></div>}
+      {aba === "lancamentos" && (
+        <>
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            <Chip ativo={tipo === "todos"} onClick={() => setTipo("todos")}>Tudo</Chip>
+            <Chip ativo={tipo === "saida"} onClick={() => setTipo("saida")}>Despesas</Chip>
+            <Chip ativo={tipo === "entrada"} onClick={() => setTipo("entrada")}>Receitas</Chip>
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-3">
+            <Chip ativo={!setor} onClick={() => setSetor("")}>Todos os setores</Chip>
+            {setores.map((s) => <Chip key={s} ativo={setor === s} onClick={() => setSetor(setor === s ? "" : s)}>{s}</Chip>)}
+          </div>
+          {vis.length === 0 && <Vazio>Nenhum lançamento encontrado.</Vazio>}
+          <Cartao className="overflow-hidden">
+            {vis.slice(0, lim).map((l, i) => {
+              const neg = l.tipo === "saida";
+              return (
+                <div key={l.id} className={cx("flex items-center gap-3 px-4 py-3", i > 0 && "border-t border-borda")}>
+                  <div className={cx("grid h-10 w-10 shrink-0 place-items-center rounded-full text-lg font-extrabold", neg ? "bg-alerta-clara text-alerta" : "bg-[#e3f5ec] text-[#1e7a50]")}>{neg ? "−" : "+"}</div>
+                  <div className="min-w-0 flex-1">
+                    <b className="block truncate">{l.descricao}</b>
+                    <span className="text-xs text-suave">{dmy(l.data)} · {l.setor || (neg ? "Sem setor" : "Receita")}{l.categoria ? ` · ${l.categoria}` : ""}</span>
+                    <div className="text-xs">{l.origem === "reposicao" && <span className="mr-2 font-bold text-marca">Reposição do estoque</span>}{l.origem === "aluguel" && <span className="mr-2 font-bold text-marca">Aluguel</span>}{l.comp_path ? <button type="button" onClick={() => anexo(l)} className="font-bold text-marca">Ver anexo</button> : neg ? <span className="text-suave">Sem anexo</span> : null}</div>
+                  </div>
+                  <b className={cx("shrink-0", neg ? "text-alerta" : "text-[#1e7a50]")}>{neg ? "− " : "+ "}{brl(Number(l.valor))}</b>
+                  {pode && <button type="button" aria-label={`Editar ${l.descricao}`} onClick={() => setForm(l)} className="grid h-10 w-10 shrink-0 place-items-center text-suave"><Icone n="lapis" tam={18} /></button>}
+                </div>
+              );
+            })}
+          </Cartao>
+          {vis.length > lim && <div className="pt-3 text-center"><Botao v="sec" className="!min-h-11" onClick={() => setLim(lim + 50)}>Ver mais ({vis.length - lim})</Botao></div>}
+        </>
+      )}
 
-      {pode && (
+      {pode && (aba === "resumo" || aba === "lancamentos") && (
         <button type="button" onClick={() => setForm("novo")} className="fixed right-4 z-30 flex min-h-14 items-center gap-2 rounded-full bg-marca px-5 text-base font-extrabold text-white shadow-lg md:bottom-8 md:right-8" style={{ bottom: "calc(env(safe-area-inset-bottom) + 84px)" }}>
           <Icone n="mais1" tam={20} />Lançar valor
         </button>
       )}
-      {form && <FormLanc l={form === "novo" ? null : form} edicaoId={ed.id} setores={setores} cats={cats} onFechar={() => setForm(null)} onSalvo={() => { setForm(null); lanc.recarregar(); }} />}
+      {form && <FormLanc l={form === "novo" ? null : form} edicaoId={ed.id} setores={setores} cats={cats} onFechar={() => setForm(null)} onSalvo={() => { setForm(null); lanc.recarregar(); alugQ.recarregar(); }} />}
     </div>
   );
 }
