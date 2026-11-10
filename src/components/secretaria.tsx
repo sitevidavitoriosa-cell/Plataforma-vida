@@ -51,7 +51,7 @@ function useNomes() {
 }
 
 type Cfg = { x: number; y: number; tam: number; cor_texto: string; por_pagina: number; fx: number; fy: number; fw: number; fh: number; redonda: boolean; faixa: boolean; faixa_h: number; faixa_cor: string };
-const CFG0: Cfg = { x: 50, y: 62, tam: 7, cor_texto: "#111111", por_pagina: 8, fx: 50, fy: 35, fw: 40, fh: 30, redonda: true, faixa: false, faixa_h: 16, faixa_cor: "#ffffff" };
+const CFG0: Cfg = { x: 50, y: 62, tam: 7, cor_texto: "#111111", por_pagina: 8, fx: 50, fy: 35, fw: 40, fh: 30, redonda: true, faixa: false, faixa_h: 22, faixa_cor: "#ffffff" };
 
 const lerArquivo = (f: Blob) => new Promise<string>((ok) => { const r = new FileReader(); r.onload = () => ok(r.result as string); r.readAsDataURL(f); });
 const carregarImg = (src: string) => new Promise<HTMLImageElement>((ok, no) => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => no(new Error("imagem inválida")); im.src = src; });
@@ -208,10 +208,24 @@ function Crachas() {
         }
         let fs = (cfg.tam / 100) * h * 2.835;
         pdf.setTextColor(r, g, b); pdf.setFont("helvetica", "bold");
-        const nome = n.nome.toUpperCase();
+        const nome = n.nome.toUpperCase().replace(/\s+/g, " ").trim();
+        const maxW = w * 0.92, maxH = cfg.faixa ? (cfg.faixa_h / 100) * h * 0.86 : h;
         pdf.setFontSize(fs);
-        while (pdf.getTextWidth(nome) > w * 0.92 && fs > 4) { fs -= 0.5; pdf.setFontSize(fs); }
-        pdf.text(nome, x + (cfg.x / 100) * w, y + (cfg.y / 100) * h, { align: "center", baseline: "middle" });
+        // cabe numa linha? senão quebra em duas, no ponto que deixa as linhas mais equilibradas
+        let linhasNome = [nome];
+        if (pdf.getTextWidth(nome) > maxW) {
+          const pal = nome.split(" ");
+          let melhor = Infinity;
+          for (let k = 1; k < pal.length; k++) {
+            const a = pal.slice(0, k).join(" "), b = pal.slice(k).join(" ");
+            const lar = Math.max(pdf.getTextWidth(a), pdf.getTextWidth(b));
+            if (lar < melhor) { melhor = lar; linhasNome = [a, b]; }
+          }
+        }
+        const alturaLinha = (f: number) => (f / 2.835) * 1.15;
+        while ((Math.max(...linhasNome.map((t) => pdf.getTextWidth(t))) > maxW || alturaLinha(fs) * linhasNome.length > maxH) && fs > 4) { fs -= 0.5; pdf.setFontSize(fs); }
+        const cx = x + (cfg.x / 100) * w, cy = y + (cfg.y / 100) * h, lh = alturaLinha(fs);
+        linhasNome.forEach((t, k) => pdf.text(t, cx, cy + (k - (linhasNome.length - 1) / 2) * lh, { align: "center", baseline: "middle" }));
       });
       baixar(pdf.output("blob"), `Crachas_${slug(ed.nome)}_${rotuloTipo}.pdf`);
       aviso(`${lista.length} crachás gerados.`);
@@ -252,7 +266,7 @@ function Crachas() {
               style={{ left: `${cfg.fx}%`, top: `${cfg.fy}%`, width: `${cfg.fw}%`, height: `${cfg.fh * prop}cqw`, borderRadius: cfg.redonda ? "50%" : 6 }}>FOTO</span>
           )}
           {cfg.faixa && <span className="absolute left-0 w-full -translate-y-1/2" style={{ top: `${cfg.y}%`, height: `${cfg.faixa_h}%`, background: cfg.faixa_cor || "#fff" }} />}
-          <span className="absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap font-extrabold" style={{ left: `${cfg.x}%`, top: `${cfg.y}%`, fontSize: `${cfg.tam * prop * 0.7}cqw`, color: cfg.cor_texto }}>NOME COMPLETO</span>
+          <span className="absolute -translate-x-1/2 -translate-y-1/2 w-[92%] text-center font-extrabold leading-[1.1]" style={{ left: `${cfg.x}%`, top: `${cfg.y}%`, fontSize: `${cfg.tam * prop * 0.7}cqw`, color: cfg.cor_texto }}>NOME COMPLETO DO ENCONTRISTA</span>
         </div>
       )}
 
