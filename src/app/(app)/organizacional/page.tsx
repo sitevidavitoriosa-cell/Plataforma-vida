@@ -371,7 +371,7 @@ export default function Organizacional() {
   const linhaLista = (i: Item) => {
     const { marcado, props } = propsLinha(i);
     return (
-      <div key={chave(i)} {...props} className={`grid cursor-pointer select-none items-center gap-3 border-b border-borda px-3 py-3 outline-none last:border-b-0 focus-visible:bg-marca-clara md:grid-cols-[minmax(0,1fr)_110px_90px_44px] grid-cols-[minmax(0,1fr)_44px] ${marcado ? "bg-marca-clara" : "hover:bg-[#f1f3f4]"}`}>
+      <div key={chave(i)} {...props} className={`grid cursor-pointer select-none items-center gap-3 border-b border-borda px-3 py-3 outline-none last:border-b-0 focus-visible:bg-marca-clara lg:grid-cols-[minmax(0,1fr)_140px_130px_100px_44px] md:grid-cols-[minmax(0,1fr)_110px_90px_44px] grid-cols-[minmax(0,1fr)_44px] ${marcado ? "bg-marca-clara" : "hover:bg-[#f1f3f4]"}`}>
         <div className="flex min-w-0 items-center gap-3">
           <input type="checkbox" checked={marcado} onChange={() => alternarSel(i)} onClick={(e) => e.stopPropagation()} aria-label={`Selecionar ${i.nome}`} className="h-5 w-5 shrink-0 accent-[#16294d]" />
           {iconeItem(i)}
@@ -379,6 +379,7 @@ export default function Organizacional() {
             <span className="block truncate text-[14px] text-suave md:hidden">{dataBr(i.data)}{i.arq ? ` · ${tam(i.tam)}` : ""}</span>
             {(vista !== "drive" || nq) && <span className="block truncate text-[14px] text-suave">{caminhoTxt(i.pasta ? i.pasta.pai_id : i.arq!.area_id)}</span>}</div>
         </div>
+        <span className="hidden text-[16px] text-suave lg:block">{aoVivo(i)}</span>
         <span className="hidden text-[16px] text-suave md:block">{dataBr(i.data)}</span>
         <span className="hidden text-[16px] text-suave md:block">{i.arq ? tam(i.tam) : "—"}</span>
         {botaoMais(i)}
@@ -439,9 +440,9 @@ export default function Organizacional() {
       <input ref={pastaRef} type="file" hidden {...({ webkitdirectory: "", directory: "" } as Record<string, string>)} multiple onChange={(e) => { subir(Array.from(e.target.files ?? []).map((f) => ({ f, rel: (f as File & { webkitRelativePath?: string }).webkitRelativePath || f.name }))); e.target.value = ""; }} />
       <h1 className="sr-only">Organizacional</h1>
 
-      <div className="md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6">
+      <div className="md:grid md:grid-cols-[240px_minmax(0,1fr)] md:gap-8">
         {/* ---- lateral (computador) ---- */}
-        <aside className="hidden md:block">
+        <aside className="hidden self-start md:sticky md:top-4 md:block">
           {pode && <button type="button" onClick={(e) => abrirNovo(e.currentTarget)} className="mb-5 flex min-h-16 items-center gap-3 rounded-2xl bg-white px-6 text-[17px] font-bold shadow-[0_1px_3px_rgba(60,64,67,.3),0_4px_8px_3px_rgba(60,64,67,.15)] hover:bg-[#f8f9fa]"><span className="text-marca"><Icone n="mais_grande" tam={30} /></span>Novo</button>}
           <nav className="flex flex-col gap-0.5" aria-label="Seções do drive">
             {navVisivel.map((n) => <button key={n.v} type="button" onClick={() => irPara(n.v)} aria-current={vista === n.v} className={`flex min-h-12 items-center gap-4 rounded-full px-5 text-[16px] text-[16px] ${vista === n.v ? "bg-marca-clara font-bold text-marca" : "font-medium hover:bg-[#f1f3f4]"}`}><Icone n={n.ic} tam={20} />{n.t}</button>)}
@@ -537,8 +538,9 @@ export default function Organizacional() {
             </div>
           ) : modo === "lista" ? (
             <div className="overflow-hidden rounded-2xl border border-borda bg-white">
-              <div className="hidden grid-cols-[minmax(0,1fr)_110px_90px_44px] items-center gap-3 border-b border-borda px-3 py-3 text-[14px] font-bold text-suave md:grid">
+              <div className="hidden lg:grid-cols-[minmax(0,1fr)_140px_130px_100px_44px] grid-cols-[minmax(0,1fr)_110px_90px_44px] items-center gap-3 border-b border-borda px-3 py-3 text-[14px] font-bold text-suave md:grid">
                 <button type="button" onClick={() => setOrdem((o) => ({ c: "nome", dir: o.c === "nome" ? (-o.dir as 1 | -1) : 1 }))} className="pl-[52px] text-left hover:text-texto">Nome{ordem.c === "nome" ? (ordem.dir === 1 ? " ↑" : " ↓") : ""}</button>
+                <span className="hidden lg:block">Tipo</span>
                 <button type="button" onClick={() => setOrdem((o) => ({ c: "data", dir: o.c === "data" ? (-o.dir as 1 | -1) : -1 }))} className="text-left hover:text-texto">Modificado{ordem.c === "data" ? (ordem.dir === 1 ? " ↑" : " ↓") : ""}</button>
                 <button type="button" onClick={() => setOrdem((o) => ({ c: "tam", dir: o.c === "tam" ? (-o.dir as 1 | -1) : -1 }))} className="text-left hover:text-texto">Tamanho{ordem.c === "tam" ? (ordem.dir === 1 ? " ↑" : " ↓") : ""}</button>
                 <span />
@@ -547,8 +549,8 @@ export default function Organizacional() {
             </div>
           ) : (
             <div className="flex flex-col gap-4">
-              {itens.some((i) => i.pasta) && <div><h3 className="mb-2 mt-0 text-[16px] font-medium text-suave">Pastas</h3><div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 lg:grid-cols-3">{itens.filter((i) => i.pasta).map(cartaoGrade)}</div></div>}
-              {itens.some((i) => i.arq) && <div><h3 className="mb-2 mt-0 text-[16px] font-medium text-suave">Arquivos</h3><div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">{itens.filter((i) => i.arq).map(cartaoGrade)}</div></div>}
+              {itens.some((i) => i.pasta) && <div><h3 className="mb-2 mt-0 text-[16px] font-medium text-suave">Pastas</h3><div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">{itens.filter((i) => i.pasta).map(cartaoGrade)}</div></div>}
+              {itens.some((i) => i.arq) && <div><h3 className="mb-2 mt-0 text-[16px] font-medium text-suave">Arquivos</h3><div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">{itens.filter((i) => i.arq).map(cartaoGrade)}</div></div>}
             </div>
           )}
           <p className="mb-0 mt-3 text-[14px] text-suave">{toque ? "Toque para abrir. Os três pontos abrem o menu." : "Clique para selecionar, dois cliques para abrir, botão direito para o menu."}</p>
