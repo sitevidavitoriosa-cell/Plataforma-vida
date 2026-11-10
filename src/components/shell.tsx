@@ -16,6 +16,7 @@ const ITENS = [
   { href: "/encontristas", modulo: "encontristas", rotulo: "Encontristas", icone: "pessoas" },
   { href: "/financeiro", modulo: "financeiro", rotulo: "Financeiro", icone: "financeiro" },
   { href: "/decisoes", modulo: "decisoes", rotulo: "Decisões", icone: "decisoes" },
+  { href: "/organizacional", modulo: "organizacional", rotulo: "Organizacional", icone: "pasta" },
   { href: "/pessoas", modulo: "pessoas", rotulo: "Pessoas", icone: "pessoas" },
 ];
 
@@ -77,7 +78,7 @@ function SeletorEdicao() {
 }
 
 /** Páginas que entendem "Todas as edições"; nas demais, pede para escolher uma edição. */
-const PAGINAS_TODAS = ["/", "/estoque", "/relatorio", "/relatorio-anual", "/edicoes", "/pessoas"];
+const PAGINAS_TODAS = ["/", "/estoque", "/relatorio", "/relatorio-anual", "/edicoes", "/pessoas", "/organizacional"];
 function EscolhaEdicao() {
   const { eds, trocar } = useEdicao();
   return (
@@ -159,7 +160,7 @@ export function Protegido({ children }: { children: React.ReactNode }) {
         </button>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl print:max-w-none px-4 pb-32 md:px-8 md:pb-12">{ed?.status === "fechada" && !["/edicoes", "/pessoas"].includes(path) && <div className="mt-3 rounded-2xl bg-fundo px-4 py-3 text-sm font-bold text-suave print:hidden">Edição fechada: os dados ficam só para consulta. Para mexer de novo, reabra em Edições.</div>}
+      <main className="mx-auto w-full max-w-5xl print:max-w-none px-4 pb-32 md:px-8 md:pb-12">{ed?.status === "fechada" && !["/edicoes", "/pessoas", "/organizacional"].includes(path) && <div className="mt-3 rounded-2xl bg-fundo px-4 py-3 text-sm font-bold text-suave print:hidden">Edição fechada: os dados ficam só para consulta. Para mexer de novo, reabra em Edições.</div>}
         {todas && !PAGINAS_TODAS.includes(path) ? <EscolhaEdicao /> : children}</main>
 
       {/* menu de baixo, fixo (celular) */}

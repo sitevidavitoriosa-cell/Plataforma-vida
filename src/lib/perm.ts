@@ -19,7 +19,7 @@ export const PERFIS: Record<Perfil, { nome: string; desc: string }> = {
 
 const ESCREVE: Record<Perfil, string[] | "*"> = {
   admin: "*",
-  coordenacao: ["edicoes", "financeiro", "decisoes"],
+  coordenacao: ["edicoes", "financeiro", "decisoes", "organizacional"],
   financeiro: ["financeiro"],
   estoque: ["estoque"],
   decisoes: ["decisoes"],
@@ -33,6 +33,7 @@ const VE: Record<string, Perfil[]> = {
   decisoes: ["admin", "coordenacao", "decisoes", "admin_edicao"],
   encontristas: ["admin", "admin_edicao"],
   pessoas: ["admin"],
+  organizacional: ["admin", "coordenacao", "financeiro", "estoque", "decisoes", "saude", "admin_edicao", "visitante"],
 };
 
 export const setoresDaEquipe = (a: Acesso | null) => (a ? a.equipes.flatMap((e) => e.setores) : []);

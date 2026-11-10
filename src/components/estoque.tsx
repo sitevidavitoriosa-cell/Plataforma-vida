@@ -179,7 +179,6 @@ function Enviado({ travada, equipe, itens, envios, edicoes, ed, recarregar, setI
   const ord = (a: Item, b: Item) => a.setor.localeCompare(b.setor) || a.nome.localeCompare(b.nome);
   const enviados = lista.filter((i) => doEd(i.id)).sort(ord);
   const resto = equipe ? [] : lista.filter((i) => !doEd(i.id)).sort(ord);
-  const anterior = edicoes.filter((e) => e.id !== ed.id && (e.data_ini ?? "") <= (ed.data_ini ?? "") && envios.some((x) => x.edicao_id === e.id)).sort((a, b) => (b.data_ini ?? "").localeCompare(a.data_ini ?? ""))[0];
   const totalItens = envios.filter((x) => x.edicao_id === ed.id).length;
   const totalUn = envios.filter((x) => x.edicao_id === ed.id).reduce((s, x) => s + Number(x.env), 0);
 
@@ -205,13 +204,6 @@ function Enviado({ travada, equipe, itens, envios, edicoes, ed, recarregar, setI
     recarregar();
   }
 
-  async function copiar() {
-    if (!anterior) return;
-    const { data, error } = await supabase.rpc("copiar_envio", { p_edicao: ed.id, p_origem: anterior.id });
-    if (error) aviso(msgErro(error)); else aviso(`${data ?? 0} itens copiados de ${anterior.nome}.`);
-    recarregar();
-  }
-
   const linha = (i: Item) => {
     const x = doEd(i.id), v = x ? Number(x.env) : 0, fechado = !!x && (x.aplicado != null || !!x.informado);
     const pode = !equipe && ehPaiol(acesso) && !travada;
@@ -234,7 +226,6 @@ function Enviado({ travada, equipe, itens, envios, edicoes, ed, recarregar, setI
           <Icone n="busca" tam={20} />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar item pelo nome" aria-label="Buscar item" className="min-h-12 min-w-0 flex-1 bg-transparent outline-none" />
         </div>
-        {!equipe && !travada && anterior && ehPaiol(acesso) && <Botao v="suave" onClick={copiar} className="!px-3 !text-sm">Copiar da última</Botao>}
       </div>
       {enviados.length > 0 && <div className="px-1 pt-1 text-[13px] font-extrabold uppercase tracking-wide text-marca">Enviados · {enviados.length}</div>}
       {enviados.map(linha)}

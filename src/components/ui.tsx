@@ -20,6 +20,9 @@ export function Icone({ n, tam = 22 }: { n: string; tam?: number }) {
     lapis: <path d="M4 20h4L19 9l-4-4L4 16zM13 7l4 4" />,
     lixo: <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />,
     chave: <><circle cx="8" cy="15" r="4" /><path d="M11 12l9-9M16 7l3 3" /></>,
+    pasta: <path d="M3 6a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />,
+    arquivo: <path d="M6 3h8l5 5v13H6zM14 3v5h5" />,
+    baixar: <path d="M12 4v11M7 11l5 5 5-5M5 20h14" />,
     alerta: <path d="M12 3l10 18H2zM12 10v5M12 18h.01" />,
   };
   return (
