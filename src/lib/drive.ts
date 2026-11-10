@@ -4,7 +4,7 @@ export const BUCKET = "organizacional";
 export const LIMITE = 50 * 1024 * 1024;
 
 export type Pasta = { id: string; nome: string; pai_id: string | null; apagado_em: string | null; criado_em: string };
-export type Arq = { id: string; area_id: string; nome: string; caminho: string; tamanho: number; tipo: string | null; criado_em: string; apagado_em: string | null };
+export type Arq = { id: string; area_id: string | null; nome: string; caminho: string; tamanho: number; tipo: string | null; criado_em: string; apagado_em: string | null };
 /** Arquivo como a prévia precisa (serve para o drive e para o link público). */
 export type ArqPrev = { id: string; nome: string; caminho: string; tamanho: number; tipo: string | null; criado_em: string };
 
