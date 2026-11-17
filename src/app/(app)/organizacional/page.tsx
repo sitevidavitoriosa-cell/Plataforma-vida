@@ -68,13 +68,30 @@ export default function Organizacional() {
   const [envios, setEnvios] = useState<Envio[]>([]);
   const [bandejaAberta, setBandejaAberta] = useState(true);
   const [arrastando, setArrastando] = useState(false);
+  // soltar arquivos vale na janela inteira (senão o navegador abriria o arquivo); o destino é a pasta aberta
+  const soltarRef = useRef<{ pode: boolean; vista: string; subir: (e: { f: File; rel: string }[], dest?: string | null) => void; aviso: (m: string) => void } | null>(null);
+  useEffect(() => {
+    let n = 0;
+    const arq = (e: DragEvent) => !!e.dataTransfer && Array.from(e.dataTransfer.types).includes("Files");
+    const entra = (e: DragEvent) => { if (!arq(e)) return; e.preventDefault(); n++; if (soltarRef.current?.pode && soltarRef.current.vista === "drive") setArrastando(true); };
+    const sobre = (e: DragEvent) => { if (!arq(e)) return; e.preventDefault(); if (e.dataTransfer) e.dataTransfer.dropEffect = soltarRef.current?.pode && soltarRef.current.vista === "drive" ? "copy" : "none"; };
+    const sai = (e: DragEvent) => { if (!arq(e)) return; if (--n <= 0) { n = 0; setArrastando(false); } };
+    const solta = async (e: DragEvent) => {
+      if (!arq(e)) return;
+      e.preventDefault(); n = 0; setArrastando(false);
+      const c = soltarRef.current; if (!c) return;
+      if (!c.pode || c.vista !== "drive") { c.aviso(c.pode ? "Abra “Meu Drive” ou uma pasta para soltar arquivos." : "Só administrador e coordenação enviam arquivos."); return; }
+      c.subir(await lerSoltos(e.dataTransfer!));
+    };
+    window.addEventListener("dragenter", entra); window.addEventListener("dragover", sobre); window.addEventListener("dragleave", sai); window.addEventListener("drop", solta);
+    return () => { window.removeEventListener("dragenter", entra); window.removeEventListener("dragover", sobre); window.removeEventListener("dragleave", sai); window.removeEventListener("drop", solta); };
+  }, []);
   const [modo, setModo] = useState<"lista" | "grade">("lista");
   const [ordem, setOrdem] = useState<{ c: "nome" | "data" | "tam"; dir: 1 | -1 }>({ c: "nome", dir: 1 });
   const [toque, setToque] = useState(false);
   const [thumbs, setThumbs] = useState<Map<string, string>>(new Map());
   const arquivosRef = useRef<HTMLInputElement>(null);
   const pastaRef = useRef<HTMLInputElement>(null);
-  const profundidade = useRef(0);
   const linkInicial = useRef(false);
 
   useEffect(() => {
@@ -255,8 +272,9 @@ export default function Organizacional() {
     recarregar(); aviso("Cópia criada.");
   }
 
-  async function subir(entradas: { f: File; rel: string }[]) {
+  async function subir(entradas: { f: File; rel: string }[], destino?: string | null) {
     if (!entradas.length) return;
+    const raiz = destino === undefined ? cur : destino;
     const base = Date.now();
     const lista: Envio[] = entradas.map((e, n) => ({ id: `${base}-${n}`, nome: e.rel, estado: "fila" }));
     setEnvios(lista); setBandejaAberta(true);
@@ -276,7 +294,7 @@ export default function Organizacional() {
       const { f, rel } = entradas[n], id = lista[n].id;
       marca(id, "enviando");
       if (f.size > LIMITE) { marca(id, "erro"); aviso(`“${f.name}” passa de 50 MB e não foi enviado.`); continue; }
-      let dest: string | null = cur, falhou = false;
+      let dest: string | null = raiz, falhou = false;
       for (const parte of rel.split("/").slice(0, -1)) { const r = await acharPasta(dest, parte); if (!r) { falhou = true; break; } dest = r; }
       if (falhou) { marca(id, "erro"); continue; }
       const caminho = `${dest ?? "raiz"}/${crypto.randomUUID()}-${seguro(f.name)}`;
@@ -309,10 +327,11 @@ export default function Organizacional() {
   const compartilhar = (i: Item) => { setMenu(null); setPartilha({ tipo: tipoFav(i.k), id: i.id, nome: i.nome }); };
 
   /* ----- arrastar e soltar ----- */
-  const externo = (e: React.DragEvent) => pode && vista === "drive" && e.dataTransfer.types.includes("Files");
+  soltarRef.current = { pode, vista, subir, aviso };
   const alvoPasta = (destId: string | null) => pode && vista === "drive" ? {
     onDragOver: (e: React.DragEvent) => { if (e.dataTransfer.types.includes(MIME)) { e.preventDefault(); e.stopPropagation(); } },
-    onDrop: (e: React.DragEvent) => {
+    onDrop: async (e: React.DragEvent) => {
+      if (destId && e.dataTransfer.types.includes("Files")) { e.preventDefault(); e.stopPropagation(); setArrastando(false); subir(await lerSoltos(e.dataTransfer), destId); return; }
       const dados = e.dataTransfer.getData(MIME); if (!dados) return;
       e.preventDefault(); e.stopPropagation();
       const its = (JSON.parse(dados) as string[]).map((c) => porChave.get(c)).filter(Boolean) as Item[];
@@ -430,10 +449,6 @@ export default function Organizacional() {
 
   return (
     <div
-      onDragEnter={(e) => { if (externo(e)) { profundidade.current++; setArrastando(true); } }}
-      onDragOver={(e) => { if (externo(e)) e.preventDefault(); }}
-      onDragLeave={(e) => { if (externo(e) && --profundidade.current <= 0) { profundidade.current = 0; setArrastando(false); } }}
-      onDrop={async (e) => { if (!externo(e)) return; e.preventDefault(); profundidade.current = 0; setArrastando(false); subir(await lerSoltos(e.dataTransfer)); }}
       className="pt-4"
     >
       <input ref={arquivosRef} type="file" multiple hidden onChange={(e) => { subir(Array.from(e.target.files ?? []).map((f) => ({ f, rel: f.name }))); e.target.value = ""; }} />
