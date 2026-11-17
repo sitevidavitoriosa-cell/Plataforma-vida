@@ -1,4 +1,5 @@
 "use client";
+import { podeEscrever } from "@/lib/perm";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { msgErro } from "@/lib/dados";
@@ -106,7 +107,7 @@ export function Saude() {
 function Detalhe({ l, onFechar, onSalvo }: { l: Linha; onFechar: () => void; onSalvo: () => void }) {
   const aviso = useAviso();
   const { acesso } = useAuth();
-  const edita = acesso?.perfil !== "secretaria1"; // Secretaria 1 só lê a saúde
+  const edita = acesso?.perfil === "servo" ? podeEscrever(acesso, "saude") : acesso?.perfil !== "secretaria1"; // Secretaria 1 só lê a saúde
   const [obs, setObs] = useState(l.observacao ?? "");
   const [salvando, setSalvando] = useState(false);
   const [confirma, setConfirma] = useState(false);

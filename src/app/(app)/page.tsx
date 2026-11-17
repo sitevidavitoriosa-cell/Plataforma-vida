@@ -32,7 +32,7 @@ export default function Painel() {
     if (podeVer(acesso, "estoque")) atalhos.push({ href: "/estoque", t: "Estoque da edição", d: "O que sai da lista mãe para esta edição e o balanço na volta." });
     if (podeVer(acesso, "decisoes")) atalhos.push({ href: "/decisoes", t: "Decisões", d: "Registro e lista de decisões." });
     if (podeVer(acesso, "financeiro")) atalhos.push({ href: "/financeiro", t: "Financeiro", d: "Entradas, saídas e comprovantes." });
-    atalhos.push({ href: "/relatorio", t: "Relatório geral", d: "Materiais, pessoas e decisões. Imprime, PDF, Excel e apresentação." });
+    if (acesso.perfil !== "servo") atalhos.push({ href: "/relatorio", t: "Relatório geral", d: "Materiais, pessoas e decisões. Imprime, PDF, Excel e apresentação." });
   }
 
   return (

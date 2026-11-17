@@ -105,8 +105,8 @@ function Convite({ c, onFechar }: { c: { nome: string; email: string; codigo: st
 
 function FormPessoa({ p, equipes, onFechar, onSalvo }: { p: Pessoa | null; equipes: Equipe[]; onFechar: () => void; onSalvo: (c?: { nome: string; email: string; codigo: string }) => void }) {
   const aviso = useAviso();
-  const [f, setF] = useState({ nome: p?.nome ?? "", email: p?.email ?? "", perfil: (p?.perfil ?? "visitante") as Perfil, ativo: p?.ativo ?? true, telefone: p?.telefone ?? "" });
-  const [perm, setPerm] = useState<Permissoes>(() => { const b = baseDoPerfil((p?.perfil ?? "visitante") as Perfil); return p?.permissoes ? { ver: p.permissoes.ver.filter((x) => b.ver.includes(x)), editar: p.permissoes.editar.filter((x) => b.editar.includes(x)) } : b; });
+  const [f, setF] = useState({ nome: p?.nome ?? "", email: p?.email ?? "", perfil: (p?.perfil ?? "servo") as Perfil, ativo: p?.ativo ?? true, telefone: p?.telefone ?? "" });
+  const [perm, setPerm] = useState<Permissoes>(() => { if (!p || p.perfil === "servo") return { ver: p?.permissoes?.ver ?? [], editar: p?.permissoes?.editar ?? [] }; const b = baseDoPerfil(p.perfil as Perfil); return p?.permissoes ? { ver: p.permissoes.ver.filter((x) => b.ver.includes(x)), editar: p.permissoes.editar.filter((x) => b.editar.includes(x)) } : b; });
   const [sel, setSel] = useState<string[]>(p?.equipe_membros.map((m) => m.equipe_id) ?? []);
   const [selEd, setSelEd] = useState<string[]>(p?.pessoa_edicoes?.map((m) => m.edicao_id) ?? []);
   const { eds } = useEdicao();
@@ -117,7 +117,8 @@ function FormPessoa({ p, equipes, onFechar, onSalvo }: { p: Pessoa | null; equip
     const email = f.email.trim().toLowerCase();
     if (!f.nome.trim()) { aviso("Informe o nome."); return; }
     if (!email.includes("@")) { aviso("Informe um e-mail válido."); return; }
-    const restricao = f.perfil === "admin" || igualAoPadrao(f.perfil, perm) ? null : perm;
+    const restricao = f.perfil === "admin" || f.perfil === "admin_edicao" ? null : f.perfil === "servo" ? perm : igualAoPadrao(f.perfil, perm) ? null : perm;
+    if (f.perfil === "admin_edicao" && selEd.length === 0) { aviso("Escolha pelo menos uma edição para o coordenador."); return; }
     let id = p?.id ?? "";
     let codigo = "";
     if (p) {
@@ -154,27 +155,27 @@ function FormPessoa({ p, equipes, onFechar, onSalvo }: { p: Pessoa | null; equip
         <Campo rotulo="Nome" value={f.nome} onChange={(e) => setF({ ...f, nome: e.target.value })} />
         <Campo rotulo="E-mail" type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} readOnly={!!p} dica={p ? "O e-mail não muda depois do convite." : "Ela vai usar esse e-mail para entrar."} />
         <Campo rotulo="WhatsApp (opcional)" inputMode="tel" value={f.telefone} onChange={(e) => setF({ ...f, telefone: e.target.value })} />
-        <Seletor rotulo="Perfil de acesso" value={f.perfil} onChange={(e) => { const novo = e.target.value as Perfil; setF({ ...f, perfil: novo }); setPerm(baseDoPerfil(novo)); }}>
-          {(Object.keys(PERFIS) as Perfil[]).map((k) => <option key={k} value={k}>{PERFIS[k].nome} — {PERFIS[k].desc}</option>)}
+        <Seletor rotulo="Perfil de acesso" value={f.perfil} onChange={(e) => { const novo = e.target.value as Perfil; setF({ ...f, perfil: novo }); setPerm(novo === "servo" ? { ver: [], editar: [] } : baseDoPerfil(novo)); }}>
+          {(Object.keys(PERFIS) as Perfil[]).filter((k) => ["admin", "admin_edicao", "servo"].includes(k) || k === p?.perfil).map((k) => <option key={k} value={k}>{PERFIS[k].nome} — {PERFIS[k].desc}</option>)}
         </Seletor>
-        {f.perfil !== "admin" && (() => {
-          const base = baseDoPerfil(f.perfil), mudou = !igualAoPadrao(f.perfil, perm);
+        {f.perfil !== "admin" && f.perfil !== "admin_edicao" && (() => {
+          const base = baseDoPerfil(f.perfil), servo = f.perfil === "servo", mudou = !servo && !igualAoPadrao(f.perfil, perm);
           const alternaVer = (id: string) => setPerm((x) => x.ver.includes(id) ? { ver: x.ver.filter((i) => i !== id), editar: x.editar.filter((i) => i !== id) } : { ...x, ver: [...x.ver, id] });
           const alternaEditar = (id: string) => setPerm((x) => x.editar.includes(id) ? { ...x, editar: x.editar.filter((i) => i !== id) } : { ver: x.ver.includes(id) ? x.ver : [...x.ver, id], editar: [...x.editar, id] });
           return (
             <div className="rounded-2xl border border-borda p-3">
               <div className="flex flex-wrap items-center justify-between gap-2 pb-1">
-                <b className="text-[15px]">O que esta pessoa pode acessar</b>
+                <b className="text-[15px]">{servo ? "O que este servo pode acessar" : "O que esta pessoa pode acessar"}</b>
                 {mudou && <button type="button" onClick={() => setPerm(base)} className="text-sm font-extrabold text-marca">Voltar ao padrão do perfil</button>}
               </div>
-              <p className="m-0 pb-2 text-xs text-suave">Já vem marcado o que o perfil “{PERFIS[f.perfil].nome}” permite. Desmarque o que ela não deve ver ou mexer no site. Áreas esmaecidas não fazem parte deste perfil. Estas caixas só tiram acesso; o banco de dados continua limitado pelo perfil.</p>
+              <p className="m-0 pb-2 text-xs text-suave">{servo ? "Marque só as áreas da função dele. Ex.: Saúde para quem cuida da saúde; Secretaria 1 para a secretaria (crachás, quartos, etiquetas e material). “Ver” só consulta; “Mexer” também altera." : <>Já vem marcado o que o perfil “{PERFIS[f.perfil].nome}” permite. Desmarque o que ela não deve ver ou mexer no site. Áreas esmaecidas não fazem parte deste perfil. Estas caixas só tiram acesso; o banco de dados continua limitado pelo perfil.</>}</p>
               <div className="flex flex-col">
                 {MODULOS.map((m) => {
                   const podeV = base.ver.includes(m.id), podeE = !!m.editar && base.editar.includes(m.id);
                   const ver = perm.ver.includes(m.id), edita = perm.editar.includes(m.id);
                   return (
                     <div key={m.id} className={cx("flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-borda py-2 first:border-t-0", !podeV && "opacity-45")}>
-                      <div className="min-w-[150px] flex-1"><b className="block text-[14px]">{m.nome}</b><span className="text-xs text-suave">{podeV ? m.desc : "Não disponível neste perfil"}{podeE ? ` · Mexer: ${m.editar}` : ""}</span></div>
+                      <div className="min-w-[150px] flex-1"><b className="block text-[14px]">{m.nome}</b><span className="text-xs text-suave">{podeV ? m.desc : servo ? "Só administrador e coordenador" : "Não disponível neste perfil"}{podeE ? ` · Mexer: ${m.editar}` : ""}</span></div>
                       <div className="flex gap-4 text-sm">
                         <label className="flex min-h-11 items-center gap-2"><input type="checkbox" className="h-5 w-5 accent-[#16294d]" disabled={!podeV} checked={podeV && ver} onChange={() => alternaVer(m.id)} />Ver</label>
                         <label className={cx("flex min-h-11 items-center gap-2", !podeE && "opacity-50")} title={m.editar ?? ""}><input type="checkbox" className="h-5 w-5 accent-[#16294d]" disabled={!podeE} checked={podeE && edita} onChange={() => alternaEditar(m.id)} />Mexer</label>
