@@ -121,6 +121,7 @@ export function Protegido({ children }: { children: React.ReactNode }) {
   }
 
   const itens = ITENS.filter((i) => i.modulo === "inicio" || podeVer(acesso, i.modulo));
+  const ativo = (h: string) => (h === "/" ? path === "/" : path.startsWith(h));
   const principais = itens.filter((i) => i.modulo !== "pessoas");
   // Celular: no máximo 4 atalhos fixos (os mais usados) + "Mais"; o resto vai para a folha "Mais".
   const PRIORIDADE = ["inicio", "estoque", "setores", "encontristas", "financeiro", "decisoes", "edicoes", "organizacional"];
@@ -129,7 +130,6 @@ export function Protegido({ children }: { children: React.ReactNode }) {
   const noMais = [...ordenados.slice(naBarra.length), ...itens.filter((i) => i.modulo === "pessoas")];
   const maisAtivo = noMais.some((i) => ativo(i.href));
   const unico = entradas.length === 1 ? entradas[0] : null; // só uma área (ex.: servo da Saúde): vai direto, com o nome dela
-  const ativo = (h: string) => (h === "/" ? path === "/" : path.startsWith(h));
 
   return (
     <div className="min-h-dvh md:pl-64 print:pl-0">
