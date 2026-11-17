@@ -101,9 +101,9 @@ export function Estoque({ setor }: { setor?: string }) {
       )}
 
       {(aba === "geral" || ed) && (
-        <div className="flex justify-end pb-3"><Botao v="sec" onClick={exportarPdf} className="!min-h-11"><Icone n="baixar" tam={18} />Exportar lista em PDF</Botao></div>
+        <div className="flex justify-end pb-2"><Botao v="sec" onClick={exportarPdf} className="!min-h-9 !px-3 !text-sm"><Icone n="baixar" tam={16} />Exportar lista em PDF</Botao></div>
       )}
-      {travada && <div className="mb-3 rounded-2xl bg-fundo px-4 py-3 text-sm font-bold text-suave">Edição fechada: só consulta. Para mexer nas quantidades, reabra a edição em Edições.</div>}
+      {travada && <div className="mb-2 rounded-xl bg-fundo px-3 py-2 text-xs font-bold text-suave">Edição fechada: só consulta. Para mexer nas quantidades, reabra a edição em Edições.</div>}
       {aba !== "geral" && !ed && <Vazio>Crie uma edição em “Edições” para usar a retirada e o balanço.</Vazio>}
 
       {aba === "geral" && !setor && podeEscrever(acesso, "estoque") && (
@@ -318,36 +318,34 @@ function BalancoEquipe({ travada, setor, itens, envios, ed, recarregar }: { trav
 
   if (lista.length === 0) return <Vazio>Nada foi enviado para a sua equipe nesta edição. Quando o paiol enviar, o balanço aparece aqui.</Vazio>;
   return (
-    <div className="flex flex-col gap-2.5">
-      <p className="m-0 px-1 text-sm text-suave">Para cada item, diga quanto <b>voltou</b>. O que não voltou conta como usado. Não dá para passar do que você levou.</p>
+    <div className="flex flex-col gap-1.5">
+      <p className="m-0 px-1 text-xs text-suave">Diga quanto <b>voltou</b> de cada item. O que não voltou conta como usado.</p>
       {lista.map((r) => {
         const v = volta(r.x), levou = Number(r.x.env) + Number(r.x.comp), usou = levou - v;
         const conferido = r.x.aplicado != null, enviado = !!r.x.informado && !conferido, livre = !conferido && !enviado && !travada;
         return (
-          <div key={r.x.item_id} className={cx("flex flex-col gap-2.5 rounded-3xl border-2 bg-white p-3.5", conferido ? "border-[#a9d3c2]" : "border-borda")}>
+          <div key={r.x.item_id} className={cx("flex flex-col gap-1 rounded-2xl border bg-white px-3 py-2", conferido ? "border-[#a9d3c2]" : "border-borda")}>
             <div className="flex items-center justify-between gap-2">
-              <b className="text-base">{r.it.nome}</b>
-              <span className="whitespace-nowrap text-[13px] text-suave">levou <b className="text-[15px] text-texto">{fmtN(levou)}</b> {r.it.un}</span>
-            </div>
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex flex-col"><span className="text-xs font-bold text-suave">Voltou</span>
-                <span className="text-[13px] font-bold">{usou === 0 ? "nada usado" : `usou ${fmtN(usou)}`}</span></div>
-              {livre ? <Passo grande valor={v} onMudar={(n) => salvar(r, "volta", n)} /> : <b className="text-[26px]">{fmtN(v)}</b>}
+              <div className="min-w-0">
+                <b className="block truncate text-[15px] leading-tight">{r.it.nome}</b>
+                <span className="text-xs text-suave">levou {fmtN(levou)} {r.it.un} · {usou === 0 ? "nada usado" : `usou ${fmtN(usou)}`}</span>
+              </div>
+              {livre ? <Passo valor={v} onMudar={(n) => salvar(r, "volta", n)} /> : <span className="text-right"><span className="block text-[10px] font-bold uppercase text-suave">voltou</span><b className="text-xl leading-none">{fmtN(v)}</b></span>}
             </div>
             {livre && (
-              <label className="flex items-center justify-end gap-1.5 text-xs text-suave">comprado/extra levado
-                <input inputMode="decimal" defaultValue={String(r.x.comp).replace(".", ",")} onBlur={(e) => { const n = num(e.target.value || "0"); if (isFinite(n) && n >= 0 && n !== Number(r.x.comp)) salvar(r, "comp", n); }} className="h-9 w-14 rounded-lg border border-borda bg-white text-center text-texto" aria-label="Quantidade comprada" />
+              <label className="flex items-center justify-end gap-1.5 text-[11px] text-suave">comprado/extra levado
+                <input inputMode="decimal" defaultValue={String(r.x.comp).replace(".", ",")} onBlur={(e) => { const n = num(e.target.value || "0"); if (isFinite(n) && n >= 0 && n !== Number(r.x.comp)) salvar(r, "comp", n); }} className="h-8 w-12 rounded-lg border border-borda bg-white text-center text-sm text-texto" aria-label="Quantidade comprada" />
               </label>
             )}
-            {enviado && <span className="text-xs font-bold text-suave">Enviado ao paiol, aguardando a conferência.</span>}
-            {conferido && <span className="text-xs font-bold text-marca">Conferido pelo paiol ✓</span>}
+            {enviado && <span className="text-[11px] font-bold text-suave">Enviado ao paiol, aguardando a conferência.</span>}
+            {conferido && <span className="text-[11px] font-bold text-marca">Conferido pelo paiol ✓</span>}
           </div>
         );
       })}
-      <div className="h-24" />
+      <div className="h-20" />
       {editaveis.length > 0 && (
-        <div className="fixed inset-x-0 z-30 flex flex-col gap-2 border-t border-borda bg-white px-4 py-3 md:left-64" style={{ bottom: "calc(env(safe-area-inset-bottom) + 66px)" }}>
-          <div className="text-[13px] text-suave">Quando tudo estiver certo, envie ao paiol. Depois de enviar, só o paiol altera.</div>
+        <div className="fixed inset-x-0 z-30 flex flex-col gap-1 border-t border-borda bg-white px-4 py-2 md:left-64" style={{ bottom: "calc(env(safe-area-inset-bottom) + 66px)" }}>
+          <div className="text-xs text-suave">Depois de enviar, só o paiol altera.</div>
           <Botao onClick={enviar} disabled={enviando} bloco>{enviando ? "Enviando…" : `Enviar balanço ao paiol (${editaveis.length})`}</Botao>
         </div>
       )}
@@ -399,49 +397,45 @@ function BalancoPaiol({ travada, itens, envios, ed, recarregar }: { travada: boo
 
   let ultimo = "";
   return (
-    <div className="flex flex-col gap-2.5">
-      <div className="flex items-center justify-between rounded-2xl bg-marca-clara px-4 py-3 text-sm"><b>{conferidos} de {lista.length} itens conferidos</b><span className="text-suave">todo o material enviado</span></div>
-      <p className="m-0 px-1 text-sm text-suave">Aqui você diz quanto voltou de cada item desta edição. Cada equipe informa o que voltou; você confere a contagem no paiol e confirma, e só então o que voltou retorna para a lista mãe (as outras edições enxergam a nova quantidade).{aguardando ? ` ${aguardando} item(ns) ainda sem balanço do setor.` : ""}</p>
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center justify-between rounded-xl bg-marca-clara px-3 py-2 text-sm"><b>{conferidos} de {lista.length} conferidos</b>{aguardando > 0 && <span className="text-xs text-suave">{aguardando} sem balanço do setor</span>}</div>
+      <p className="m-0 px-1 text-xs text-suave">Confira a contagem no paiol e confirme: só então o que voltou retorna para a lista mãe.</p>
       {lista.map((r) => {
         const levou = Number(r.x.env) + Number(r.x.comp), v = contada(r.x), inf = r.x.informado, conf = r.x.aplicado != null;
         const dif = inf && !conf && v !== informada(r.x);
         const cab = r.it.setor !== ultimo ? (ultimo = r.it.setor) : "";
         return (
-          <div key={r.x.item_id} className="flex flex-col gap-2.5">
-            {cab && <div className="px-1 pt-3 text-[13px] font-extrabold uppercase tracking-wide text-suave">{cab}</div>}
-            <div className={cx("flex flex-col gap-2.5 rounded-3xl border-2 bg-white p-3.5", conf ? "border-[#a9d3c2]" : dif ? "border-[#e7b8ab]" : "border-borda")}>
+          <div key={r.x.item_id} className="flex flex-col gap-1.5">
+            {cab && <div className="px-1 pt-2 text-xs font-extrabold uppercase tracking-wide text-suave">{cab}</div>}
+            <div className={cx("flex flex-col gap-1.5 rounded-2xl border bg-white px-3 py-2", conf ? "border-[#a9d3c2]" : dif ? "border-[#e7b8ab]" : "border-borda")}>
               <div className="flex items-center justify-between gap-2">
-                <b className="text-base">{r.it.nome}</b>
-                <span className="whitespace-nowrap text-[13px] text-suave">levou <b className="text-[15px] text-texto">{fmtN(levou)}</b></span>
-              </div>
-              <div className="text-xs font-bold text-suave">
-                {conf ? <span className="text-marca">Conferido: voltou {fmtN(Number(r.x.aplicado))} · usou {fmtN(levou - Number(r.x.aplicado))}</span>
-                  : inf ? <>O setor informou: voltou {fmtN(informada(r.x))} · usou {fmtN(levou - informada(r.x))}</>
-                  : <>O setor ainda não informou. Conte no paiol e confirme (começa como "voltou tudo").</>}
-              </div>
-              {pode && (
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex flex-col"><span className="text-xs font-bold text-suave">{conf ? "Contagem confirmada" : "Sua contagem"}</span>
-                    <span className="text-[13px] font-bold">{levou - v === 0 ? "nada usado" : `usado ${fmtN(levou - v)}`}</span></div>
-                  <Passo grande valor={v} onMudar={(n) => { if (n > levou) { aviso(`Só foram ${fmtN(levou)}.`); return; } setConta((c) => ({ ...c, [r.x.item_id]: n })); }} />
+                <div className="min-w-0">
+                  <b className="block truncate text-[15px] leading-tight">{r.it.nome}</b>
+                  <span className="text-xs text-suave">levou {fmtN(levou)} · {pode ? (levou - v === 0 ? "nada usado" : `usado ${fmtN(levou - v)}`) : `voltou ${fmtN(v)}`}</span>
                 </div>
-              )}
-              {dif && <div className="rounded-xl bg-alerta-clara px-3 py-2 text-[13px] font-bold text-[#8e2e18]">O setor informou {fmtN(informada(r.x))}, você contou {fmtN(v)}. Se confirmar, vale a sua contagem.</div>}
+                {pode && <Passo valor={v} onMudar={(n) => { if (n > levou) { aviso(`Só foram ${fmtN(levou)}.`); return; } setConta((c) => ({ ...c, [r.x.item_id]: n })); }} />}
+              </div>
+              <div className="text-[11px] font-bold text-suave">
+                {conf ? <span className="text-marca">Conferido: voltou {fmtN(Number(r.x.aplicado))} · usou {fmtN(levou - Number(r.x.aplicado))}</span>
+                  : inf ? <>Setor informou: voltou {fmtN(informada(r.x))}</>
+                  : <>Setor ainda não informou (começa como “voltou tudo”).</>}
+              </div>
+              {dif && <div className="rounded-lg bg-alerta-clara px-2.5 py-1.5 text-xs font-bold text-[#8e2e18]">Setor informou {fmtN(informada(r.x))}, você contou {fmtN(v)}. Vale a sua contagem.</div>}
               {pode && !conf && (
                 <div className="flex gap-2">
-                  {inf && <Botao v="sec" onClick={() => devolver(r)} className="!min-h-11 flex-1">Devolver ao setor</Botao>}
-                  <Botao onClick={() => conferir(r)} className="!min-h-11 flex-1">Confirmar e devolver à lista mãe</Botao>
+                  {inf && <Botao v="sec" onClick={() => devolver(r)} className="!min-h-9 !px-3 !text-sm flex-1">Devolver ao setor</Botao>}
+                  <Botao onClick={() => conferir(r)} className="!min-h-9 !px-3 !text-sm flex-1">Confirmar</Botao>
                 </div>
               )}
-              {pode && conf && v !== Number(r.x.aplicado) && <Botao onClick={() => conferir(r)} className="!min-h-11">Corrigir contagem</Botao>}
+              {pode && conf && v !== Number(r.x.aplicado) && <Botao onClick={() => conferir(r)} className="!min-h-9 !text-sm">Corrigir contagem</Botao>}
             </div>
           </div>
         );
       })}
-      <div className="h-24" />
+      <div className="h-20" />
       {pode && aConferir.length > 0 && (
-        <div className="fixed inset-x-0 z-30 flex flex-col gap-2 border-t border-borda bg-white px-4 py-3 md:left-64" style={{ bottom: "calc(env(safe-area-inset-bottom) + 66px)" }}>
-          <div className="text-[13px] text-suave">Confirma de uma vez os itens que o setor informou ou que você já contou aqui. Os demais você confirma um a um.</div>
+        <div className="fixed inset-x-0 z-30 flex flex-col gap-1 border-t border-borda bg-white px-4 py-2 md:left-64" style={{ bottom: "calc(env(safe-area-inset-bottom) + 66px)" }}>
+          <div className="text-xs text-suave">Confirma de uma vez os informados ou já contados.</div>
           <Botao onClick={confirmarTodos} disabled={lote} bloco>{lote ? "Confirmando…" : `Confirmar informados e contados (${aConferir.length})`}</Botao>
         </div>
       )}
