@@ -90,7 +90,7 @@ export function EtiquetasCama() {
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="m-0 text-sm text-suave">Uma etiqueta para cada encontrista, só com o nome (em duas linhas quando o nome é comprido). Escolha os quartos que quer imprimir, o modelo da sua folha adesiva ou ajuste as medidas à mão — cada marca usa uma medida diferente, então confira na embalagem.</p>
+      <p className="m-0 text-sm text-suave">Uma etiqueta para cada encontrista, só com o nome abreviado (primeiro nome, iniciais no meio e o último sobrenome inteiro, tudo em uma linha). Escolha os quartos que quer imprimir, o modelo da sua folha adesiva ou ajuste as medidas à mão — cada marca usa uma medida diferente, então confira na embalagem.</p>
 
       <Cartao className="flex flex-col gap-3 p-4">
         <b>{etqs.length} {etqs.length === 1 ? "etiqueta" : "etiquetas"}</b>

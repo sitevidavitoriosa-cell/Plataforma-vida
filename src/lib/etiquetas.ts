@@ -45,8 +45,16 @@ export function conferir(c: Cfg): string | null {
   return null;
 }
 
-/** Uma etiqueta por encontrista, em ordem alfabética. */
-export const montar = (nomes: string[]): Etq[] => nomes.slice().sort((a, b) => a.localeCompare(b, "pt-BR")).map((nome) => ({ nome }));
+const PARTICULAS = new Set(["de", "da", "do", "das", "dos", "e", "di", "du"]);
+/** Primeiro nome inteiro, nomes do meio só com a inicial e o último sobrenome inteiro. Ex.: "João Pedro da Silva Albuquerque" → "João P. S. Albuquerque". */
+export function nomeCurto(nome: string): string {
+  const partes = nome.trim().replace(/\s+/g, " ").split(" ").filter(Boolean);
+  if (partes.length <= 2) return partes.join(" ");
+  const meio = partes.slice(1, -1).filter((p) => !PARTICULAS.has(p.toLowerCase())).map((p) => p[0].toLocaleUpperCase("pt-BR") + ".");
+  return [partes[0], ...meio, partes[partes.length - 1]].join(" ");
+}
+/** Uma etiqueta por encontrista, em ordem alfabética, com o nome abreviado. */
+export const montar = (nomes: string[]): Etq[] => nomes.slice().sort((a, b) => a.localeCompare(b, "pt-BR")).map((nome) => ({ nome: nomeCurto(nome) }));
 
 const MM_PT = 25.4 / 72;
 type Medir = (texto: string, pt: number, negrito: boolean) => number; // largura em mm
@@ -58,32 +66,17 @@ export function ajustar(texto: string, larguraMm: number, max: number, min: numb
   return Math.max(min, pt);
 }
 
-/** Desenho de uma etiqueta: só o nome, centralizado, no maior tamanho que couber (em duas linhas se o nome for comprido). */
+/** Desenho de uma etiqueta: só o nome, centralizado, em uma linha, no maior tamanho que couber (fonte pequena). */
 export function desenhar(r: Rect, e: Etq, c: Cfg, cor: string, medir: Medir): Prim[] {
   const p: Prim[] = [];
   const esc = c.fonte / 100;
   const faixa = c.faixa ? Math.min(3.2, r.w * 0.06) : 0;
-  const pad = Math.min(3, r.w * 0.06);
+  const pad = Math.min(2.5, r.w * 0.05);
   const larg = r.w - faixa - 2 * pad, cx = r.x + faixa + pad + larg / 2;
   if (c.faixa) p.push({ t: "ret", x: r.x, y: r.y, w: faixa, h: r.h, cor });
   const nome = e.nome.trim().replace(/\s+/g, " ");
-  const maxPt = Math.min(24, (r.h * 0.42) / MM_PT) * esc, minPt = 5;
-  const um = ajustar(nome, larg, maxPt, minPt, medir);
-  const palavras = nome.split(" ");
-  let linhas = [nome], pt = um;
-  if (palavras.length > 1 && um < maxPt * 0.75) {
-    let melhor: string[] | null = null, ptM = um;
-    for (let k = 1; k < palavras.length; k++) {
-      const a = palavras.slice(0, k).join(" "), b = palavras.slice(k).join(" ");
-      const maior = medir(a, 10, true) >= medir(b, 10, true) ? a : b;
-      const t = Math.min(ajustar(maior, larg, Math.min(maxPt, (r.h * 0.3) / MM_PT * esc), minPt, medir), maxPt);
-      if (t > ptM) { ptM = t; melhor = [a, b]; }
-    }
-    if (melhor) { linhas = melhor; pt = ptM; }
-  }
-  const alt = pt * MM_PT, bloco = alt * 1.15 * linhas.length;
-  const y0 = r.y + (r.h - bloco) / 2 + alt * 0.95;
-  linhas.forEach((t, i) => p.push({ t: "texto", x: cx, y: y0 + i * alt * 1.15, pt, negrito: true, cor: "#111111", texto: t, centro: true }));
+  const pt = ajustar(nome, larg, Math.min(11, (r.h * 0.3) / MM_PT) * esc, 4, medir);
+  p.push({ t: "texto", x: cx, y: r.y + r.h / 2 + pt * MM_PT * 0.35, pt, negrito: true, cor: "#111111", texto: nome, centro: true });
   return p;
 }
 
