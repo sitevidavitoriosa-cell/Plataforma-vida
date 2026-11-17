@@ -6,6 +6,7 @@ import { norm } from "@/lib/tipos";
 import { TIPOS } from "@/lib/cores";
 import { useAviso, useEdicao } from "@/components/provedores";
 import { Estoque } from "@/components/estoque";
+import { EtiquetasCama } from "@/components/etiquetasCama";
 import { LinkQuartosBotao } from "@/components/linkQuartos";
 import { acharPessoa, baixarModeloQuarto, lerNomesQuarto } from "@/lib/quartosPlanilha";
 import { Botao, Campo, Carregando, Cartao, Chip, Janela, Selo, Seletor, Vazio } from "@/components/ui";
@@ -19,17 +20,19 @@ const slug = (t: string) => norm(t).replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g
 const baixar = (blob: Blob, nome: string) => { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nome; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); };
 
 export function Secretaria() {
-  const [sub, setSub] = useState<"crachas" | "quartos" | "encontristas" | "material">("crachas");
+  const [sub, setSub] = useState<"crachas" | "quartos" | "etiquetas" | "encontristas" | "material">("crachas");
   return (
     <div>
       <div className="flex gap-2 overflow-x-auto pb-3">
         <Chip ativo={sub === "crachas"} onClick={() => setSub("crachas")}>Crachás</Chip>
         <Chip ativo={sub === "quartos"} onClick={() => setSub("quartos")}>Quartos</Chip>
+        <Chip ativo={sub === "etiquetas"} onClick={() => setSub("etiquetas")}>Etiquetas de cama</Chip>
         <Chip ativo={sub === "encontristas"} onClick={() => setSub("encontristas")}>Encontristas</Chip>
         <Chip ativo={sub === "material"} onClick={() => setSub("material")}>Material</Chip>
       </div>
       {sub === "crachas" && <Crachas />}
       {sub === "quartos" && <Quartos />}
+      {sub === "etiquetas" && <EtiquetasCama />}
       {sub === "encontristas" && <EncontristasSec />}
       {sub === "material" && <Estoque setor="Secretaria 1" />}
     </div>
