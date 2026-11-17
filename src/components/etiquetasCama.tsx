@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { msgErro } from "@/lib/dados";
 import { temaDe } from "@/lib/cores";
 import { baixarBlob, nomeArq } from "@/lib/estoquePdf";
-import { CFG_PADRAO, MODELOS, PAPEL, conferir, desenhar, medirTela, montar, pdfEtiquetas, porPagina, posicoes, ptParaMm, type Cfg } from "@/lib/etiquetas";
+import { CFG_PADRAO, MARCAS, MODELOS, PAPEL, conferir, desenhar, medirTela, montar, pdfEtiquetas, porPagina, posicoes, ptParaMm, type Cfg } from "@/lib/etiquetas";
 import { useAviso, useEdicao } from "@/components/provedores";
 import { Botao, Campo, Carregando, Cartao, Chip, Vazio, cx } from "@/components/ui";
 
@@ -22,7 +22,7 @@ export function EtiquetasCama() {
   const [semQuarto, setSemQuarto] = useState<string[]>([]);
   const [escolhidos, setEscolhidos] = useState<Set<string> | null>(null); // null = todos
   const [cfg, setCfg] = useState<Cfg>(CFG_PADRAO);
-  const [modelo, setModelo] = useState("l7160");
+  const [modelo, setModelo] = useState("pimaco-a4256");
   const [inicio, setInicio] = useState(1);
   const [pg, setPg] = useState(0);
   const [zoom, setZoom] = useState(1);
@@ -31,7 +31,10 @@ export function EtiquetasCama() {
   const svgRef = useRef<SVGSVGElement>(null);
   const [gerando, setGerando] = useState(false);
 
-  useEffect(() => { try { const s = localStorage.getItem(CHAVE); if (s) { const o = JSON.parse(s) as { cfg?: Cfg; modelo?: string }; if (o.cfg) setCfg({ ...CFG_PADRAO, ...o.cfg }); if (o.modelo) setModelo(o.modelo); } } catch {} }, []);
+  useEffect(() => { try { const s = localStorage.getItem(CHAVE); if (s) { const o = JSON.parse(s) as { cfg?: Cfg; modelo?: string }; if (o.cfg) setCfg({ ...CFG_PADRAO, ...o.cfg }); if (o.modelo) setModelo(o.modelo === "l7160" || o.modelo === "l7163" || o.modelo === "l7651" ? "avery-" + o.modelo : o.modelo); } } catch {} }, []);
+  const modeloAtual = MODELOS.find((x) => x.id === modelo);
+  const marcaAtual = modeloAtual?.marca ?? "";
+  const modelosMarca = marcaAtual ? MODELOS.filter((x) => x.marca === marcaAtual) : MODELOS;
   const muda = (c: Cfg, m = "personalizado") => { setCfg(c); setModelo(m); setPg(0); try { localStorage.setItem(CHAVE, JSON.stringify({ cfg: c, modelo: m })); } catch {} };
 
   useEffect(() => {
@@ -132,12 +135,19 @@ export function EtiquetasCama() {
         <b>Folha de etiquetas</b>
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
           <div className="order-2 flex min-w-0 flex-col gap-2.5 text-sm lg:order-2 lg:max-h-[82dvh] lg:overflow-y-auto lg:pr-1">
+        <label className="flex flex-col gap-1.5"><span className="text-xs font-bold text-suave">Fabricante</span>
+          <select value={marcaAtual} onChange={(e) => { const m = MODELOS.find((x) => x.marca === e.target.value && x.c.alt === 25.4 && x.papel === "a4") ?? MODELOS.find((x) => x.marca === e.target.value); if (m) muda({ ...cfg, ...m.c, papel: m.papel }, m.id); }} className="min-h-10 rounded-xl border border-borda bg-white px-2 text-sm outline-none focus:border-marca">
+            {marcaAtual === "" && <option value="">Personalizado</option>}
+            {MARCAS.map((m) => <option key={m} value={m}>{m}{MODELOS.some((x) => x.marca === m && x.c.alt === 25.4) ? " (faz 25,4 mm)" : ""}</option>)}
+          </select>
+        </label>
         <label className="flex flex-col gap-1.5"><span className="text-xs font-bold text-suave">Modelo da folha</span>
           <select value={modelo} onChange={(e) => { const m = MODELOS.find((x) => x.id === e.target.value); if (m) muda({ ...cfg, ...m.c, papel: m.papel }, m.id); else setModelo("personalizado"); }} className="min-h-10 rounded-xl border border-borda bg-white px-2 text-sm outline-none focus:border-marca">
-            {MODELOS.map((m) => <option key={m.id} value={m.id}>{m.nome}</option>)}
+            {modelosMarca.map((m) => <option key={m.id} value={m.id}>{m.nome}</option>)}
             <option value="personalizado">Personalizado (medidas ajustadas à mão)</option>
           </select>
         </label>
+        {modeloAtual?.nota && <p className="m-0 rounded-xl bg-[#fff7e0] p-2 text-xs text-[#7a5b00]">{modeloAtual.nota}</p>}
         {erro && <p className="m-0 rounded-xl bg-alerta-clara px-3 py-2 text-xs font-bold text-[#8e2e18]">{erro}</p>}
 
             <p className="m-0 text-xs text-suave">Mexa nos controles ou <b>arraste as bolinhas coloridas direto na folha</b>. A parte que você está ajustando fica destacada em azul.</p>
@@ -163,7 +173,7 @@ export function EtiquetasCama() {
             </details>
             <div className="flex flex-wrap items-end gap-3">
               <div className="w-36 [&_input]:!min-h-9 [&_input]:!rounded-xl [&_input]:!px-3 [&_input]:!text-sm"><Campo rotulo="Começar na etiqueta nº" type="number" min={1} max={n} value={ini} onChange={(e) => { setInicio(e.target.valueAsNumber || 1); setPg(0); }} /></div>
-              <Botao v="sec" className="!min-h-9 !px-3 !text-sm" onClick={() => muda({ ...CFG_PADRAO, papel: "a4" }, "l7160")}>Voltar ao modelo padrão</Botao>
+              <Botao v="sec" className="!min-h-9 !px-3 !text-sm" onClick={() => muda({ ...CFG_PADRAO, papel: "a4" }, "pimaco-a4256")}>Voltar ao modelo padrão</Botao>
             </div>
           </div>
 

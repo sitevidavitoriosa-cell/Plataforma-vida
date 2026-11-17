@@ -18,14 +18,32 @@ export type Prim =
 
 export const PAPEL = { a4: { w: 210, h: 297, nome: "A4" }, carta: { w: 215.9, h: 279.4, nome: "Carta" } };
 
-/** Modelos comuns de folha adesiva. Confira a medida na embalagem da sua folha: cada marca usa a sua. */
-export const MODELOS: { id: string; nome: string; papel: "a4" | "carta"; c: Partial<Cfg> }[] = [
-  { id: "l7160", nome: "3 × 7 · 63,5 × 38,1 mm (Avery L7160 / Pimaco A4356)", papel: "a4", c: { colunas: 3, linhas: 7, larg: 63.5, alt: 38.1, topo: 15.1, esq: 7.2, espCol: 2.5, espLin: 0 } },
-  { id: "l7163", nome: "2 × 7 · 99,1 × 38,1 mm (Avery L7163)", papel: "a4", c: { colunas: 2, linhas: 7, larg: 99.1, alt: 38.1, topo: 15.1, esq: 4.65, espCol: 2.5, espLin: 0 } },
-  { id: "l7651", nome: "5 × 13 · 38,1 × 21,2 mm (Avery L7651)", papel: "a4", c: { colunas: 5, linhas: 13, larg: 38.1, alt: 21.2, topo: 10.7, esq: 4.75, espCol: 2.5, espLin: 0 } },
-  { id: "comum", nome: "Folha comum A4 · 2 × 6, 100 × 45 mm (recortar)", papel: "a4", c: { colunas: 2, linhas: 6, larg: 100, alt: 45, topo: 13.5, esq: 5, espCol: 0, espLin: 0 } },
+/** Folhas adesivas conhecidas. `conferida` = medidas do fabricante; `estimada` = tamanho e quantidade vêm do fabricante, mas as margens foram calculadas (use o teste de alinhamento). */
+export type Modelo = { id: string; marca: string; codigo: string; nome: string; papel: "a4" | "carta"; c: Partial<Cfg>; nota?: string };
+// 25,4 × 63,5 mm, A4, 33 por folha (3 colunas × 11 linhas): Pimaco A4256/A4356, Colacril CA4156/CA4256/CA4356/8042, Maxprint A4356
+const G_A4_33: Partial<Cfg> = { colunas: 3, linhas: 11, larg: 63.5, alt: 25.4, topo: 8.8, esq: 9.75, espCol: 0, espLin: 0 };
+const NOTA_A4_33 = "Tamanho (25,4 × 63,5 mm) e 33 por folha vêm do fabricante; as margens são estimadas (centralizadas na folha A4). Imprima o teste de alinhamento e use o ajuste fino.";
+// 25,4 × 66,7 mm, Carta, 30 por folha (3 × 10): Pimaco 6180, Colacril CC080/CC180/CC280/8005, Maxprint 6180 (mesma grade da Avery 5160)
+const G_CARTA_30: Partial<Cfg> = { colunas: 3, linhas: 10, larg: 66.7, alt: 25.4, topo: 12.7, esq: 4.8, espCol: 3.2, espLin: 0 };
+const NOTA_CARTA_30 = "Folha Carta, 25,4 × 66,7 mm, 30 por folha. Margens da grade padrão 6180/5160; confira com o teste de alinhamento.";
+export const MODELOS: Modelo[] = [
+  { id: "pimaco-a4256", marca: "Pimaco", codigo: "A4256", nome: "Pimaco A4256 · 25,4 × 63,5 mm · A4 · 33 por folha", papel: "a4", c: G_A4_33, nota: NOTA_A4_33 },
+  { id: "pimaco-a4356", marca: "Pimaco", codigo: "A4356", nome: "Pimaco A4356 · 25,4 × 63,5 mm · A4 · 33 por folha", papel: "a4", c: G_A4_33, nota: NOTA_A4_33 },
+  { id: "pimaco-6180", marca: "Pimaco", codigo: "6180", nome: "Pimaco 6180 · 25,4 × 66,7 mm · Carta · 30 por folha", papel: "carta", c: G_CARTA_30, nota: NOTA_CARTA_30 },
+  { id: "colacril-ca4256", marca: "Colacril", codigo: "CA4256", nome: "Colacril CA4256 · 25,4 × 63,5 mm · A4 · 33 por folha", papel: "a4", c: G_A4_33, nota: NOTA_A4_33 },
+  { id: "colacril-ca4356", marca: "Colacril", codigo: "CA4356", nome: "Colacril CA4356 · 25,4 × 63,5 mm · A4 · 33 por folha", papel: "a4", c: G_A4_33, nota: NOTA_A4_33 },
+  { id: "colacril-ca4156", marca: "Colacril", codigo: "CA4156", nome: "Colacril CA4156 · 25,4 × 63,5 mm · A4 · 33 por folha", papel: "a4", c: G_A4_33, nota: NOTA_A4_33 },
+  { id: "colacril-8042", marca: "Colacril", codigo: "8042", nome: "Colacril 8042 · 25,4 × 63,5 mm · A4 · 33 por folha", papel: "a4", c: G_A4_33, nota: NOTA_A4_33 },
+  { id: "colacril-cc180", marca: "Colacril", codigo: "CC180", nome: "Colacril CC080/CC180/CC280 · 25,4 × 66,7 mm · Carta · 30 por folha", papel: "carta", c: G_CARTA_30, nota: NOTA_CARTA_30 },
+  { id: "maxprint-a4356", marca: "Maxprint", codigo: "A4356", nome: "Maxprint A4356 · 25,4 × 63,5 mm · A4 · 33 por folha", papel: "a4", c: G_A4_33, nota: NOTA_A4_33 },
+  { id: "maxprint-6180", marca: "Maxprint", codigo: "6180", nome: "Maxprint 6180 · 25,4 × 66,7 mm · Carta · 30 por folha", papel: "carta", c: G_CARTA_30, nota: NOTA_CARTA_30 },
+  { id: "avery-l7160", marca: "Avery", codigo: "L7160", nome: "Avery L7160 · 63,5 × 38,1 mm · A4 · 21 por folha", papel: "a4", c: { colunas: 3, linhas: 7, larg: 63.5, alt: 38.1, topo: 15.1, esq: 7.2, espCol: 2.5, espLin: 0 } },
+  { id: "avery-l7163", marca: "Avery", codigo: "L7163", nome: "Avery L7163 · 99,1 × 38,1 mm · A4 · 14 por folha", papel: "a4", c: { colunas: 2, linhas: 7, larg: 99.1, alt: 38.1, topo: 15.1, esq: 4.65, espCol: 2.5, espLin: 0 } },
+  { id: "avery-l7651", marca: "Avery", codigo: "L7651", nome: "Avery L7651 · 38,1 × 21,2 mm · A4 · 65 por folha", papel: "a4", c: { colunas: 5, linhas: 13, larg: 38.1, alt: 21.2, topo: 10.7, esq: 4.75, espCol: 2.5, espLin: 0 } },
+  { id: "comum", marca: "Folha comum", codigo: "", nome: "Folha comum A4 · 2 × 6, 100 × 45 mm (recortar)", papel: "a4", c: { colunas: 2, linhas: 6, larg: 100, alt: 45, topo: 13.5, esq: 5, espCol: 0, espLin: 0 } },
 ];
-export const CFG_PADRAO: Cfg = { papel: "a4", colunas: 3, linhas: 7, larg: 63.5, alt: 38.1, topo: 15.1, esq: 7.2, espCol: 2.5, espLin: 0, ajusteX: 0, ajusteY: 0, fonte: 100, faixa: false, borda: false };
+export const MARCAS = Array.from(new Set(MODELOS.map((m) => m.marca)));
+export const CFG_PADRAO: Cfg = { papel: "a4", colunas: 3, linhas: 11, larg: 63.5, alt: 25.4, topo: 8.8, esq: 9.75, espCol: 0, espLin: 0, ajusteX: 0, ajusteY: 0, fonte: 100, faixa: false, borda: false };
 
 export const porPagina = (c: Cfg) => Math.max(1, Math.floor(c.colunas) * Math.floor(c.linhas));
 /** Posição de cada etiqueta da folha (linha por linha, da esquerda para a direita). */
