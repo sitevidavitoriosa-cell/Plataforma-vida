@@ -59,7 +59,7 @@ const VE: Record<string, Perfil[]> = {
   organizacional: ["admin", "coordenacao", "financeiro", "estoque", "decisoes", "saude", "admin_edicao", "visitante"],
 };
 
-export const setoresDaEquipe = (a: Acesso | null) => (a ? a.equipes.flatMap((e) => e.setores) : []);
+export const setoresDaEquipe = (a: Acesso | null) => (!a ? [] : a.perfil === "servo" ? [...(servoTem(a, "saude", "ver") ? ["Saúde"] : []), ...(servoTem(a, "secretaria", "ver") ? ["Secretaria 1"] : [])] : a.equipes.flatMap((e) => e.setores));
 
 export function podeVer(a: Acesso | null, modulo: string): boolean {
   if (!a) return false;

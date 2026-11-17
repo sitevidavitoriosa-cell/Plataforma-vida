@@ -107,7 +107,6 @@ function FormPessoa({ p, equipes, onFechar, onSalvo }: { p: Pessoa | null; equip
   const aviso = useAviso();
   const [f, setF] = useState({ nome: p?.nome ?? "", email: p?.email ?? "", perfil: (p?.perfil ?? "servo") as Perfil, ativo: p?.ativo ?? true, telefone: p?.telefone ?? "" });
   const [perm, setPerm] = useState<Permissoes>(() => { if (!p || p.perfil === "servo") return { ver: p?.permissoes?.ver ?? [], editar: p?.permissoes?.editar ?? [] }; const b = baseDoPerfil(p.perfil as Perfil); return p?.permissoes ? { ver: p.permissoes.ver.filter((x) => b.ver.includes(x)), editar: p.permissoes.editar.filter((x) => b.editar.includes(x)) } : b; });
-  const [sel, setSel] = useState<string[]>(p?.equipe_membros.map((m) => m.equipe_id) ?? []);
   const [selEd, setSelEd] = useState<string[]>(p?.pessoa_edicoes?.map((m) => m.edicao_id) ?? []);
   const { eds } = useEdicao();
   const [del, setDel] = useState(false);
@@ -129,10 +128,6 @@ function FormPessoa({ p, equipes, onFechar, onSalvo }: { p: Pessoa | null; equip
       if (error || !data) { aviso(error?.message.includes("pessoas_email_uk") ? "Já existe alguém com esse e-mail." : msgErro(error)); return; }
       id = data.id; codigo = data.codigo ?? "";
     }
-    const atuais = p?.equipe_membros.map((m) => m.equipe_id) ?? [];
-    const tirar = atuais.filter((x) => !sel.includes(x)), por = sel.filter((x) => !atuais.includes(x));
-    if (tirar.length) await supabase.from("equipe_membros").delete().eq("pessoa_id", id).in("equipe_id", tirar);
-    if (por.length) await supabase.from("equipe_membros").insert(por.map((equipe_id) => ({ pessoa_id: id, equipe_id })));
     const edAtuais = p?.pessoa_edicoes?.map((m) => m.edicao_id) ?? [];
     const edQuer = f.perfil === "admin_edicao" ? selEd : [];
     const edTirar = edAtuais.filter((x) => !edQuer.includes(x)), edPor = edQuer.filter((x) => !edAtuais.includes(x));
@@ -199,15 +194,6 @@ function FormPessoa({ p, equipes, onFechar, onSalvo }: { p: Pessoa | null; equip
             </div>
           </div>
         )}
-        <div>
-          <div className="pb-2 text-[13px] font-bold text-suave">Equipes (cuidam do estoque dos seus setores)</div>
-          <div className="flex flex-wrap gap-2">
-            {equipes.map((e) => {
-              const on = sel.includes(e.id);
-              return <button key={e.id} type="button" onClick={() => setSel(on ? sel.filter((x) => x !== e.id) : [...sel, e.id])} className={cx("min-h-11 rounded-full px-4 text-[15px] font-extrabold", on ? "bg-marca text-white" : "border border-borda bg-white text-suave")}>{e.nome}</button>;
-            })}
-          </div>
-        </div>
         {p && (
           <label className="flex min-h-12 items-center gap-3 rounded-2xl border border-borda bg-white px-4">
             <input type="checkbox" checked={f.ativo} onChange={(e) => setF({ ...f, ativo: e.target.checked })} className="h-5 w-5 accent-[#1f6f5c]" />
