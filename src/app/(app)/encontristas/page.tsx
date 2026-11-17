@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { msgErro, useLista } from "@/lib/dados";
 import { norm, type Edicao } from "@/lib/tipos";
-import { podeVerFicha } from "@/lib/perm";
+import { podeEditarFicha, podeVerFicha } from "@/lib/perm";
 import { lerArquivo, type ItemImport } from "@/lib/importar";
 import { ContatoLinha } from "@/components/contato";
 import { DashboardEncontristas } from "@/components/dashboardEnc";
@@ -56,7 +56,7 @@ export default function Encontristas() {
 
   return (
     <div>
-      <Titulo direita={podeVerFicha(acesso) && ed?.status !== "fechada" ? <Botao onClick={() => setImportando(true)} className="!min-h-11">Importar planilha</Botao> : undefined}>Encontristas</Titulo>
+      <Titulo direita={podeEditarFicha(acesso) && ed?.status !== "fechada" ? <Botao onClick={() => setImportando(true)} className="!min-h-11">Importar planilha</Botao> : undefined}>Encontristas</Titulo>
       {verEsp && <DashboardEncontristas base={base} />}
       <div className="flex flex-col gap-3 pb-4">
         <label className="flex min-h-12 items-center gap-2 rounded-2xl border border-borda bg-white px-3">

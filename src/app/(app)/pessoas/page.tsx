@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { msgErro, useLista } from "@/lib/dados";
 import type { Equipe, Item, Pessoa } from "@/lib/tipos";
-import { PERFIS, podeVer, type Perfil } from "@/lib/perm";
+import { MODULOS, PERFIS, baseDoPerfil, igualAoPadrao, podeVer, type Perfil, type Permissoes } from "@/lib/perm";
 import { RegistroAtividades } from "@/components/auditoria";
 import { useAuth, useAviso, useEdicao } from "@/components/provedores";
 import { Botao, Campo, Carregando, Cartao, Chip, Icone, Janela, Selo, Seletor, Titulo, Vazio, cx } from "@/components/ui";
@@ -53,6 +53,7 @@ export default function Pessoas() {
               </div>
               <div className="flex flex-wrap gap-1.5">
                 <Selo tom="ok">{PERFIS[p.perfil as Perfil]?.nome ?? p.perfil}</Selo>
+                {p.permissoes && p.perfil !== "admin" && <Selo tom="aviso">Permissões ajustadas</Selo>}
                 {p.equipe_membros.map((m) => <Selo key={m.equipe_id} tom="neutro">{nomeEq(m.equipe_id)}</Selo>)}
               </div>
               <div className="flex flex-wrap gap-2 pt-1">
@@ -105,6 +106,7 @@ function Convite({ c, onFechar }: { c: { nome: string; email: string; codigo: st
 function FormPessoa({ p, equipes, onFechar, onSalvo }: { p: Pessoa | null; equipes: Equipe[]; onFechar: () => void; onSalvo: (c?: { nome: string; email: string; codigo: string }) => void }) {
   const aviso = useAviso();
   const [f, setF] = useState({ nome: p?.nome ?? "", email: p?.email ?? "", perfil: (p?.perfil ?? "visitante") as Perfil, ativo: p?.ativo ?? true, telefone: p?.telefone ?? "" });
+  const [perm, setPerm] = useState<Permissoes>(() => { const b = baseDoPerfil((p?.perfil ?? "visitante") as Perfil); return p?.permissoes ? { ver: p.permissoes.ver.filter((x) => b.ver.includes(x)), editar: p.permissoes.editar.filter((x) => b.editar.includes(x)) } : b; });
   const [sel, setSel] = useState<string[]>(p?.equipe_membros.map((m) => m.equipe_id) ?? []);
   const [selEd, setSelEd] = useState<string[]>(p?.pessoa_edicoes?.map((m) => m.edicao_id) ?? []);
   const { eds } = useEdicao();
@@ -115,13 +117,14 @@ function FormPessoa({ p, equipes, onFechar, onSalvo }: { p: Pessoa | null; equip
     const email = f.email.trim().toLowerCase();
     if (!f.nome.trim()) { aviso("Informe o nome."); return; }
     if (!email.includes("@")) { aviso("Informe um e-mail válido."); return; }
+    const restricao = f.perfil === "admin" || igualAoPadrao(f.perfil, perm) ? null : perm;
     let id = p?.id ?? "";
     let codigo = "";
     if (p) {
-      const { error } = await supabase.from("pessoas").update({ nome: f.nome.trim(), perfil: f.perfil, ativo: f.ativo, telefone: f.telefone.trim() || null }).eq("id", p.id);
+      const { error } = await supabase.from("pessoas").update({ nome: f.nome.trim(), perfil: f.perfil, ativo: f.ativo, telefone: f.telefone.trim() || null, permissoes: restricao }).eq("id", p.id);
       if (error) { aviso(msgErro(error)); return; }
     } else {
-      const { data, error } = await supabase.from("pessoas").insert({ nome: f.nome.trim(), email, perfil: f.perfil, ativo: true, telefone: f.telefone.trim() || null }).select("id,codigo").single();
+      const { data, error } = await supabase.from("pessoas").insert({ nome: f.nome.trim(), email, perfil: f.perfil, ativo: true, telefone: f.telefone.trim() || null, permissoes: restricao }).select("id,codigo").single();
       if (error || !data) { aviso(error?.message.includes("pessoas_email_uk") ? "Já existe alguém com esse e-mail." : msgErro(error)); return; }
       id = data.id; codigo = data.codigo ?? "";
     }
@@ -151,9 +154,38 @@ function FormPessoa({ p, equipes, onFechar, onSalvo }: { p: Pessoa | null; equip
         <Campo rotulo="Nome" value={f.nome} onChange={(e) => setF({ ...f, nome: e.target.value })} />
         <Campo rotulo="E-mail" type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} readOnly={!!p} dica={p ? "O e-mail não muda depois do convite." : "Ela vai usar esse e-mail para entrar."} />
         <Campo rotulo="WhatsApp (opcional)" inputMode="tel" value={f.telefone} onChange={(e) => setF({ ...f, telefone: e.target.value })} />
-        <Seletor rotulo="Perfil de acesso" value={f.perfil} onChange={(e) => setF({ ...f, perfil: e.target.value as Perfil })}>
+        <Seletor rotulo="Perfil de acesso" value={f.perfil} onChange={(e) => { const novo = e.target.value as Perfil; setF({ ...f, perfil: novo }); setPerm(baseDoPerfil(novo)); }}>
           {(Object.keys(PERFIS) as Perfil[]).map((k) => <option key={k} value={k}>{PERFIS[k].nome} — {PERFIS[k].desc}</option>)}
         </Seletor>
+        {f.perfil !== "admin" && (() => {
+          const base = baseDoPerfil(f.perfil), mudou = !igualAoPadrao(f.perfil, perm);
+          const alternaVer = (id: string) => setPerm((x) => x.ver.includes(id) ? { ver: x.ver.filter((i) => i !== id), editar: x.editar.filter((i) => i !== id) } : { ...x, ver: [...x.ver, id] });
+          const alternaEditar = (id: string) => setPerm((x) => x.editar.includes(id) ? { ...x, editar: x.editar.filter((i) => i !== id) } : { ver: x.ver.includes(id) ? x.ver : [...x.ver, id], editar: [...x.editar, id] });
+          return (
+            <div className="rounded-2xl border border-borda p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-1">
+                <b className="text-[15px]">O que esta pessoa pode acessar</b>
+                {mudou && <button type="button" onClick={() => setPerm(base)} className="text-sm font-extrabold text-marca">Voltar ao padrão do perfil</button>}
+              </div>
+              <p className="m-0 pb-2 text-xs text-suave">Já vem marcado o que o perfil “{PERFIS[f.perfil].nome}” permite. Desmarque o que ela não deve ver ou mexer no site. Áreas esmaecidas não fazem parte deste perfil. Estas caixas só tiram acesso; o banco de dados continua limitado pelo perfil.</p>
+              <div className="flex flex-col">
+                {MODULOS.map((m) => {
+                  const podeV = base.ver.includes(m.id), podeE = !!m.editar && base.editar.includes(m.id);
+                  const ver = perm.ver.includes(m.id), edita = perm.editar.includes(m.id);
+                  return (
+                    <div key={m.id} className={cx("flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-borda py-2 first:border-t-0", !podeV && "opacity-45")}>
+                      <div className="min-w-[150px] flex-1"><b className="block text-[14px]">{m.nome}</b><span className="text-xs text-suave">{podeV ? m.desc : "Não disponível neste perfil"}{podeE ? ` · Mexer: ${m.editar}` : ""}</span></div>
+                      <div className="flex gap-4 text-sm">
+                        <label className="flex min-h-11 items-center gap-2"><input type="checkbox" className="h-5 w-5 accent-[#16294d]" disabled={!podeV} checked={podeV && ver} onChange={() => alternaVer(m.id)} />Ver</label>
+                        <label className={cx("flex min-h-11 items-center gap-2", !podeE && "opacity-50")} title={m.editar ?? ""}><input type="checkbox" className="h-5 w-5 accent-[#16294d]" disabled={!podeE} checked={podeE && edita} onChange={() => alternaEditar(m.id)} />Mexer</label>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
         {f.perfil === "admin_edicao" && (
           <div>
             <div className="pb-2 text-[13px] font-bold text-suave">Edições que ele administra (só vê e mexe nessas)</div>

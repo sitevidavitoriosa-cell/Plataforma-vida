@@ -130,19 +130,19 @@ export function EtiquetasCama() {
 
       <Cartao className="flex flex-col gap-4 p-4">
         <b>Folha de etiquetas</b>
-        <label className="flex flex-col gap-1.5"><span className="text-[13px] font-bold text-suave">Modelo da folha</span>
-          <select value={modelo} onChange={(e) => { const m = MODELOS.find((x) => x.id === e.target.value); if (m) muda({ ...cfg, ...m.c, papel: m.papel }, m.id); else setModelo("personalizado"); }} className="min-h-12 rounded-2xl border border-borda bg-white px-3 outline-none focus:border-marca">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
+          <div className="order-2 flex min-w-0 flex-col gap-2.5 text-sm lg:order-2 lg:max-h-[82dvh] lg:overflow-y-auto lg:pr-1">
+        <label className="flex flex-col gap-1.5"><span className="text-xs font-bold text-suave">Modelo da folha</span>
+          <select value={modelo} onChange={(e) => { const m = MODELOS.find((x) => x.id === e.target.value); if (m) muda({ ...cfg, ...m.c, papel: m.papel }, m.id); else setModelo("personalizado"); }} className="min-h-10 rounded-xl border border-borda bg-white px-2 text-sm outline-none focus:border-marca">
             {MODELOS.map((m) => <option key={m.id} value={m.id}>{m.nome}</option>)}
             <option value="personalizado">Personalizado (medidas ajustadas à mão)</option>
           </select>
         </label>
-        {erro && <p className="m-0 rounded-xl bg-alerta-clara px-3 py-2 text-sm font-bold text-[#8e2e18]">{erro}</p>}
+        {erro && <p className="m-0 rounded-xl bg-alerta-clara px-3 py-2 text-xs font-bold text-[#8e2e18]">{erro}</p>}
 
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,400px)]">
-          <div className="order-2 flex min-w-0 flex-col gap-3 lg:order-1">
-            <p className="m-0 text-sm text-suave">Mexa nos controles ou <b>arraste as bolinhas coloridas direto na folha</b>. A parte que você está ajustando fica destacada em azul.</p>
-            <div className="flex gap-2"><Chip ativo={cfg.papel === "a4"} onClick={() => muda({ ...cfg, papel: "a4" })}>Folha A4</Chip><Chip ativo={cfg.papel === "carta"} onClick={() => muda({ ...cfg, papel: "carta" })}>Folha Carta</Chip></div>
-            <div className="grid grid-cols-2 gap-3">
+            <p className="m-0 text-xs text-suave">Mexa nos controles ou <b>arraste as bolinhas coloridas direto na folha</b>. A parte que você está ajustando fica destacada em azul.</p>
+            <div className="flex gap-1.5 [&_button]:!min-h-9 [&_button]:!px-3 [&_button]:!text-sm"><Chip ativo={cfg.papel === "a4"} onClick={() => muda({ ...cfg, papel: "a4" })}>Folha A4</Chip><Chip ativo={cfg.papel === "carta"} onClick={() => muda({ ...cfg, papel: "carta" })}>Folha Carta</Chip></div>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-2">
               <Medida k="colunas" rotulo="Colunas" min={1} max={10} passo={1} un="" v={cfg.colunas} onV={ajusta} onAtivo={setAtivo} />
               <Medida k="linhas" rotulo="Linhas" min={1} max={30} passo={1} un="" v={cfg.linhas} onV={ajusta} onAtivo={setAtivo} />
             </div>
@@ -153,7 +153,7 @@ export function EtiquetasCama() {
             <Medida k="topo" rotulo="Margem de cima" min={0} max={80} v={cfg.topo} onV={ajusta} onAtivo={setAtivo} cor="#1f6feb" />
             <Medida k="esq" rotulo="Margem da esquerda" min={0} max={80} v={cfg.esq} onV={ajusta} onAtivo={setAtivo} cor="#c78f00" />
             <details className="rounded-2xl border border-borda px-3 py-2">
-              <summary className="cursor-pointer text-sm font-extrabold">Ajuste fino da impressora e textos</summary>
+              <summary className="cursor-pointer text-[13px] font-extrabold">Ajuste fino da impressora e textos</summary>
               <div className="mt-3 flex flex-col gap-3">
                 <Medida k="ajusteX" rotulo="Deslocar tudo → direita (− esquerda)" min={-8} max={8} v={cfg.ajusteX} onV={ajusta} onAtivo={setAtivo} />
                 <Medida k="ajusteY" rotulo="Deslocar tudo ↓ para baixo (− para cima)" min={-8} max={8} v={cfg.ajusteY} onV={ajusta} onAtivo={setAtivo} />
@@ -162,12 +162,12 @@ export function EtiquetasCama() {
               </div>
             </details>
             <div className="flex flex-wrap items-end gap-3">
-              <div className="w-44"><Campo rotulo="Começar na etiqueta nº" type="number" min={1} max={n} value={ini} onChange={(e) => { setInicio(e.target.valueAsNumber || 1); setPg(0); }} /></div>
-              <Botao v="sec" className="!min-h-12" onClick={() => muda({ ...CFG_PADRAO, papel: "a4" }, "l7160")}>Voltar ao modelo padrão</Botao>
+              <div className="w-36 [&_input]:!min-h-9 [&_input]:!rounded-xl [&_input]:!px-3 [&_input]:!text-sm"><Campo rotulo="Começar na etiqueta nº" type="number" min={1} max={n} value={ini} onChange={(e) => { setInicio(e.target.valueAsNumber || 1); setPg(0); }} /></div>
+              <Botao v="sec" className="!min-h-9 !px-3 !text-sm" onClick={() => muda({ ...CFG_PADRAO, papel: "a4" }, "l7160")}>Voltar ao modelo padrão</Botao>
             </div>
           </div>
 
-          <div className="order-1 flex min-w-0 flex-col gap-2 lg:order-2 lg:sticky lg:top-3 lg:self-start">
+          <div className="order-1 mx-auto flex w-full min-w-0 max-w-[620px] flex-col gap-2 lg:order-1 lg:sticky lg:top-3 lg:self-start">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <b>Prévia · folha {pagina + 1} de {paginas}</b>
               <div className="flex flex-wrap gap-1.5">
@@ -175,8 +175,8 @@ export function EtiquetasCama() {
                 <Chip onClick={() => setPg(Math.max(0, pagina - 1))} disabled={pagina === 0}>‹</Chip><Chip onClick={() => setPg(Math.min(paginas - 1, pagina + 1))} disabled={pagina >= paginas - 1}>›</Chip>
               </div>
             </div>
-            <div className="max-h-[78dvh] overflow-auto rounded-lg border border-borda bg-[#f1f1ef] p-1">
-              <svg ref={svgRef} viewBox={`0 0 ${pp.w} ${pp.h}`} role="img" aria-label="Prévia da folha de etiquetas" style={{ width: `${zoom * 100}%`, touchAction: arrastando ? "none" : "auto" }} className="block bg-white shadow-sm"
+            <div className="max-h-[80dvh] overflow-auto rounded-lg border border-borda bg-[#f1f1ef] p-1">
+              <svg ref={svgRef} viewBox={`0 0 ${pp.w} ${pp.h}`} role="img" aria-label="Prévia da folha de etiquetas" style={{ width: zoom === 1 ? `min(100%, ${(74 * pp.w / pp.h).toFixed(1)}dvh)` : `${zoom * 100}%`, touchAction: arrastando ? "none" : "auto" }} className="mx-auto block bg-white shadow-sm"
                 onPointerMove={mover} onPointerUp={soltar} onPointerCancel={soltar}>
                 {/* realce da parte em ajuste */}
                 {ativo === "topo" && <rect x={0} y={0} width={pp.w} height={slots[0].y} fill="#1f6feb" opacity={0.18} />}
@@ -221,19 +221,19 @@ export function EtiquetasCama() {
   );
 }
 
-/** Uma medida: rótulo, botões − e +, campo numérico e controle deslizante. */
+/** Uma medida, compacta: rótulo, botões − e +, campo numérico e controle deslizante. */
 function Medida({ k, rotulo, v, min, max, passo = 0.1, un = "mm", cor, onV, onAtivo }: { k: keyof Cfg; rotulo: string; v: number; min: number; max: number; passo?: number; un?: string; cor?: string; onV: (k: keyof Cfg, v: number) => void; onAtivo: (k: keyof Cfg | null) => void }) {
   const val = (n: number) => onV(k, Math.min(max, Math.max(min, Math.round(n * 100) / 100)));
-  const botao = "grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-borda bg-white text-xl font-extrabold active:bg-fundo";
+  const botao = "grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-borda bg-white text-base font-extrabold leading-none active:bg-fundo";
   return (
-    <div className="flex flex-col gap-1.5" onFocus={() => onAtivo(k)} onBlur={() => onAtivo(null)} onPointerDown={() => onAtivo(k)} onPointerUp={() => onAtivo(null)}>
-      <span className="flex items-center gap-2 text-[13px] font-bold text-suave">{cor && <i className="h-2.5 w-2.5 rounded-full" style={{ background: cor }} />}{rotulo}</span>
-      <div className="flex items-center gap-2">
+    <div className="flex min-w-0 flex-col gap-1" onFocus={() => onAtivo(k)} onBlur={() => onAtivo(null)} onPointerDown={() => onAtivo(k)} onPointerUp={() => onAtivo(null)}>
+      <span className="flex items-center gap-1.5 text-xs font-bold leading-tight text-suave">{cor && <i className="h-2 w-2 shrink-0 rounded-full" style={{ background: cor }} />}<span className="min-w-0">{rotulo}</span></span>
+      <div className="flex items-center gap-1">
         <button type="button" aria-label={`Diminuir ${rotulo}`} className={botao} onClick={() => val(v - passo)}>−</button>
-        <label className="relative flex-1"><input type="number" step={passo} inputMode="decimal" value={Number.isFinite(v) ? v : 0} onChange={(e) => val(Number.isFinite(e.target.valueAsNumber) ? e.target.valueAsNumber : 0)} className="min-h-11 w-full rounded-xl border border-borda bg-white px-3 pr-10 text-center font-bold outline-none focus:border-marca" />{un && <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-suave">{un}</span>}</label>
+        <label className="relative min-w-0 flex-1"><input type="number" step={passo} inputMode="decimal" value={Number.isFinite(v) ? v : 0} onChange={(e) => val(Number.isFinite(e.target.valueAsNumber) ? e.target.valueAsNumber : 0)} className="h-8 w-full min-w-0 rounded-lg border border-borda bg-white px-1 text-center text-sm font-bold outline-none focus:border-marca" />{un && <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-suave">{un}</span>}</label>
         <button type="button" aria-label={`Aumentar ${rotulo}`} className={botao} onClick={() => val(v + passo)}>+</button>
       </div>
-      <input type="range" aria-label={rotulo} min={min} max={max} step={passo} value={v} onChange={(e) => val(e.target.valueAsNumber)} className="w-full accent-[#16294d]" style={{ touchAction: "pan-y" }} />
+      <input type="range" aria-label={rotulo} min={min} max={max} step={passo} value={v} onChange={(e) => val(e.target.valueAsNumber)} className="h-3 w-full accent-[#16294d]" style={{ touchAction: "pan-y" }} />
     </div>
   );
 }
