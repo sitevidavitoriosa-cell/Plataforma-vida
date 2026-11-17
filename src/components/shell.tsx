@@ -11,7 +11,7 @@ import { entradasSetores, hrefSetor, type EntradaSetor } from "@/lib/setores";
 const ITENS = [
   { href: "/", modulo: "inicio", rotulo: "Painel", icone: "inicio" },
   { href: "/estoque", modulo: "estoque", rotulo: "Estoque", icone: "estoque" },
-  { href: "/setores", modulo: "setores", rotulo: "Equipes", icone: "pessoas" },
+  { href: "/setores", modulo: "setores", rotulo: "Equipes", icone: "grade" },
   { href: "/edicoes", modulo: "edicoes", rotulo: "Edições", icone: "edicoes" },
   { href: "/encontristas", modulo: "encontristas", rotulo: "Encontristas", icone: "pessoas" },
   { href: "/financeiro", modulo: "financeiro", rotulo: "Financeiro", icone: "financeiro" },
@@ -122,6 +122,13 @@ export function Protegido({ children }: { children: React.ReactNode }) {
 
   const itens = ITENS.filter((i) => i.modulo === "inicio" || podeVer(acesso, i.modulo));
   const principais = itens.filter((i) => i.modulo !== "pessoas");
+  // Celular: no máximo 4 atalhos fixos (os mais usados) + "Mais"; o resto vai para a folha "Mais".
+  const PRIORIDADE = ["inicio", "estoque", "setores", "encontristas", "financeiro", "decisoes", "edicoes", "organizacional"];
+  const ordenados = [...principais].sort((a, b) => PRIORIDADE.indexOf(a.modulo) - PRIORIDADE.indexOf(b.modulo));
+  const naBarra = ordenados.length > 5 ? ordenados.slice(0, 4) : ordenados;
+  const noMais = [...ordenados.slice(naBarra.length), ...itens.filter((i) => i.modulo === "pessoas")];
+  const maisAtivo = noMais.some((i) => ativo(i.href));
+  const unico = entradas.length === 1 ? entradas[0] : null; // só uma área (ex.: servo da Saúde): vai direto, com o nome dela
   const ativo = (h: string) => (h === "/" ? path === "/" : path.startsWith(h));
 
   return (
@@ -167,17 +174,21 @@ export function Protegido({ children }: { children: React.ReactNode }) {
 
       {/* menu de baixo, fixo (celular) */}
       <nav className="fixed inset-x-0 bottom-0 z-40 print:hidden flex border-t border-borda bg-white px-1.5 pt-1.5 md:hidden" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 6px)" }}>
-        {(principais.length > 5 ? principais.slice(0, 4) : principais).map((i) => i.modulo === "setores" ? (
+        {naBarra.map((i) => i.modulo === "setores" && !unico ? (
           <button key={i.href} type="button" onClick={() => setFolhaSetores(true)} className={cx("flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl", ativo(i.href) ? "text-marca" : "text-suave")}>
             <Icone n={i.icone} tam={24} /><span className="text-[11px] font-bold">{i.rotulo}</span>
           </button>
+        ) : i.modulo === "setores" && unico ? (
+          <Link key={i.href} href={hrefSetor(unico.id)} className={cx("flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl", ativo(i.href) ? "text-marca" : "text-suave")}>
+            <Icone n={i.icone} tam={24} /><span className="text-[11px] font-bold">{unico.nome}</span>
+          </Link>
         ) : (
           <Link key={i.href} href={i.href} className={cx("flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl", ativo(i.href) ? "text-marca" : "text-suave")}>
             <Icone n={i.icone} tam={24} /><span className="text-[11px] font-bold">{i.rotulo}</span>
           </Link>
         ))}
-        {principais.length > 5 && (
-          <button type="button" onClick={() => setMenu(true)} className="flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl text-suave">
+        {noMais.length > 0 && (
+          <button type="button" onClick={() => setMenu(true)} className={cx("flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl", maisAtivo ? "text-marca" : "text-suave")}>
             <Icone n="mais" tam={24} /><span className="text-[11px] font-bold">Mais</span>
           </button>
         )}
@@ -193,10 +204,9 @@ export function Protegido({ children }: { children: React.ReactNode }) {
         <Janela titulo={acesso.nome} onFechar={() => setMenu(false)}>
           <p className="mb-4 mt-0 text-suave">{acesso.email}<br />{PERFIS[acesso.perfil]?.nome}{acesso.equipes.length ? " · " + acesso.equipes.map((e) => e.nome).join(", ") : ""}</p>
           <div className="flex flex-col gap-2.5">
-            {principais.length > 5 && principais.slice(4).map((i) => (
-              <Link key={i.href} href={i.href} onClick={() => setMenu(false)} className="flex min-h-12 items-center gap-2 rounded-2xl border border-borda bg-white px-4 font-extrabold"><Icone n={i.icone} />{i.rotulo}</Link>
+            {noMais.map((i) => (
+              <Link key={i.href} href={i.href} onClick={() => setMenu(false)} className={cx("flex min-h-12 items-center gap-2 rounded-2xl border px-4 font-extrabold", ativo(i.href) ? "border-marca bg-marca-clara text-marca-esc" : "border-borda bg-white")}><Icone n={i.icone} />{i.modulo === "pessoas" ? "Pessoas e equipes" : i.rotulo}</Link>
             ))}
-            {podeVer(acesso, "pessoas") && <Link href="/pessoas" onClick={() => setMenu(false)} className="flex min-h-12 items-center gap-2 rounded-2xl border border-borda bg-white px-4 font-extrabold"><Icone n="pessoas" />Pessoas e equipes</Link>}
             <Botao v="sec" onClick={sair}><Icone n="sair" tam={18} />Sair</Botao>
           </div>
         </Janela>

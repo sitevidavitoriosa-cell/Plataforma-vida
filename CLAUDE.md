@@ -15,7 +15,7 @@ O site antigo (arquivo único, Firebase) está em `legado/index.html` e serve s�
 - Link público de Decisões (sem login): só pelas funções `link_info` e `registrar_decisao`.
 
 ## Regras
-- Português claro; celular em primeiro lugar, completo no computador. Menu de baixo fixo.
+- Português claro; celular em primeiro lugar, completo no computador. Menu de baixo fixo: até 4 atalhos mais usados (ordem `PRIORIDADE` em `shell.tsx`: Painel, Estoque, Equipes, Encontristas, Financeiro…) + **Mais** (o restante e Pessoas); quem tem uma só área (ex.: servo da Saúde) vê o nome dela direto na barra.
 - Só a chave publicável do Supabase vai no código (`.env.production`). Nunca chaves secretas.
 
 ## Edições (temporadas)
